@@ -3,77 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal de Gestión y Estadísticas</title>
-    <!-- Fuente moderna desde Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Portal de Gestión - Municipalidad de La Costa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #0f172a;        /* Fondo oscuro elegante */
-            --card-bg: #1e293b;         /* Fondo de tarjetas */
-            --text-primary: #f8fafc;    /* Texto principal */
-            --text-secondary: #94a3b8;  /* Texto secundario */
-            --accent-blue: #38bdf8;     /* Color de acento */
-            --accent-hover: #0284c7;    /* Color hover */
-            --border-color: #334155;   /* Bordes sutiles */
+            --bg-radial: radial-gradient(circle, #3a7bd5 0%, #002244 100%);
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding: 40px 20px;
+            background: #002244;
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 120px;
         }
 
+        /* LOGO LA COSTA */
         header {
-            margin-bottom: 40px;
+            margin: 40px 0 30px;
             text-align: center;
+            z-index: 10;
+        }
+
+        .logo-container {
+            width: 220px;
+            margin: 0 auto 15px;
+        }
+
+        .logo-container svg {
+            width: 100%;
+            height: auto;
+            fill: #ffffff;
+            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.2));
         }
 
         header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         header p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 4px;
         }
 
-        /* Grid Responsive de Tarjetas */
+        /* GRID DE TARJETAS BLANCAS */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 24px;
-            width: 100%;
+            width: 90%;
             max-width: 1200px;
+            z-index: 10;
         }
 
-        /* Tarjeta / Card */
         .card {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent-blue);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.35);
         }
 
         .card-header {
@@ -81,14 +99,14 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 2px solid #f1f5f9;
             padding-bottom: 12px;
         }
 
         .card-header h2 {
             font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--accent-blue);
+            font-weight: 700;
+            color: var(--brand-blue);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -99,43 +117,108 @@
             gap: 10px;
         }
 
-        /* Botón de Enlace */
         .btn-link {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: #0f172a;
-            color: var(--text-primary);
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
             text-decoration: none;
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 0.9rem;
-            font-weight: 500;
+            font-weight: 600;
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
         }
 
         .btn-link:hover {
-            background-color: var(--accent-blue);
-            color: #0f172a;
-            font-weight: 600;
+            background-color: var(--brand-blue);
+            color: #ffffff;
+            border-color: var(--brand-blue);
         }
 
         .btn-link span.arrow {
-            font-size: 0.8rem;
-            opacity: 0.5;
+            font-size: 0.9rem;
+            transition: transform 0.2s ease;
         }
 
         .btn-link:hover span.arrow {
-            opacity: 1;
+            transform: translateX(3px);
+        }
+
+        /* ANIMACIÓN DE OLAS "RESPIRANDO" */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        /* Ola Trasera */
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: breathe 8s ease-in-out infinite alternate, waveMove 22s linear infinite;
+        }
+
+        /* Ola Media */
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: breathe 6s ease-in-out infinite alternate-reverse, waveMove 16s linear infinite reverse;
+        }
+
+        /* Ola Delantera */
+        .wave3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,50 C150,110 350,30 500,80 C650,130 900,40 1200,70 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.35)"></path></svg>');
+            animation: breathe 5s ease-in-out infinite alternate, waveMove 10s linear infinite;
+        }
+
+        @keyframes breathe {
+            0% {
+                transform: scaleY(0.85) translateY(10px);
+            }
+            100% {
+                transform: scaleY(1.15) translateY(0px);
+            }
+        }
+
+        @keyframes waveMove {
+            0% {
+                translate: 0 0;
+            }
+            100% {
+                translate: -50% 0;
+            }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Portal de Gestión y Documentación</h1>
-        <p>Acceso rápido a planillas de datos y estadísticas</p>
+        <div class="logo-container">
+            <!-- SVG Oficial La Costa en blanco -->
+            <svg viewBox="0 0 250 130" xmlns="http://www.w3.org/2000/svg">
+                <text x="10" y="90" font-family="'Montserrat', serif" font-size="105" font-weight="400" letter-spacing="-3">C</text>
+                <text x="102" y="48" font-family="'Montserrat', sans-serif" font-size="34" font-weight="400">La</text>
+                <text x="75" y="102" font-family="'Montserrat', serif" font-size="62" font-weight="400">osta</text>
+            </svg>
+        </div>
+        <h1>Portal de Gestión Interna</h1>
+        <p>Sistema de acceso a estadísticas e informes</p>
     </header>
 
     <main class="dashboard-grid">
@@ -148,13 +231,13 @@
             </div>
             <div class="link-list">
                 <a href="TU_LINK_PAMI_2024" target="_blank" class="btn-link">
-                    Estadísticas PAMI - 2024 <span class="arrow">↗</span>
+                    Estadísticas PAMI - 2024 <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_PAMI_2025" target="_blank" class="btn-link">
-                    Estadísticas PAMI - 2025 <span class="arrow">↗</span>
+                    Estadísticas PAMI - 2025 <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_PAMI_2026" target="_blank" class="btn-link">
-                    Estadísticas PAMI - 2026 <span class="arrow">↗</span>
+                    Estadísticas PAMI - 2026 <span class="arrow">➜</span>
                 </a>
             </div>
         </section>
@@ -167,15 +250,15 @@
             </div>
             <div class="link-list">
                 <a href="TU_LINK_CONTROL_SOBRES" target="_blank" class="btn-link">
-                    Control de Sobres <span class="arrow">↗</span>
+                    Control de Sobres <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_SALUD_ESCOLAR" target="_blank" class="btn-link">
-                    Salud Escolar <span class="arrow">↗</span>
+                    Salud Escolar <span class="arrow">➜</span>
                 </a>
             </div>
         </section>
 
-        <!-- TARJETA: FACTURAS -->
+        <!-- TARJETA: FACTURACION -->
         <section class="card">
             <div class="card-header">
                 <span>💳</span>
@@ -183,15 +266,18 @@
             </div>
             <div class="link-list">
                 <a href="TU_LINK_FACTURAS_2025" target="_blank" class="btn-link">
-                    Facturas 2025 <span class="arrow">↗</span>
+                    Facturas 2025 <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_FACTURAS_ADEUDADAS" target="_blank" class="btn-link">
-                    Facturas Adeudadas <span class="arrow">↗</span>
+                    Facturas Adeudadas <span class="arrow">➜</span>
+                </a>
+                <a href="TU_LINK_CONTROL_CUENTAS" target="_blank" class="btn-link">
+                    Control de Cuentas <span class="arrow">➜</span>
                 </a>
             </div>
         </section>
 
-        <!-- TARJETA: OTROS RECURSOS -->
+        <!-- TARJETA: SISTEMAS Y DATOS -->
         <section class="card">
             <div class="card-header">
                 <span>📂</span>
@@ -199,21 +285,28 @@
             </div>
             <div class="link-list">
                 <a href="TU_LINK_EXCEL_CAPITA" target="_blank" class="btn-link">
-                    Excel Cápita PAMI <span class="arrow">↗</span>
+                    Excel Cápita PAMI <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_DATOS" target="_blank" class="btn-link">
-                    Datos Obras Sociales <span class="arrow">↗</span>
+                    Datos Obras Sociales <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_CAPS" target="_blank" class="btn-link">
-                    Listado de CAPS <span class="arrow">↗</span>
+                    Listado de CAPS <span class="arrow">➜</span>
                 </a>
                 <a href="TU_LINK_MONITOR" target="_blank" class="btn-link">
-                    Monitor CIPRES <span class="arrow">↗</span>
+                    Monitor CIPRES (Frann) <span class="arrow">➜</span>
                 </a>
             </div>
         </section>
 
     </main>
+
+    <!-- ESTRUCTURA DE OLAS ANIMADAS EN EL FONDO -->
+    <div class="waves-container">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
 
 </body>
 </html>
