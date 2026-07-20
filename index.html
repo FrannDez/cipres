@@ -45,17 +45,17 @@
             z-index: 10;
         }
 
-        .logo-container {
-            width: 220px;
-            margin: 0 auto 15px;
-        }
+.logo-container {
+    width: 240px;            /* Ajusta el ancho según lo grande que quieras el logo */
+    margin: 0 auto 15px;
+}
 
-        .logo-container svg {
-            width: 100%;
-            height: auto;
-            fill: #ffffff;
-            filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.2));
-        }
+.logo-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3)); /* Sombra suave para destacar sobre el fondo */
+}
 
         header h1 {
             color: #ffffff;
@@ -208,18 +208,13 @@
 </head>
 <body>
 
-    <header>
-        <div class="logo-container">
-            <!-- SVG Oficial La Costa en blanco -->
-            <svg viewBox="0 0 250 130" xmlns="http://www.w3.org/2000/svg">
-                <text x="10" y="90" font-family="'Montserrat', serif" font-size="105" font-weight="400" letter-spacing="-3">C</text>
-                <text x="102" y="48" font-family="'Montserrat', sans-serif" font-size="34" font-weight="400">La</text>
-                <text x="75" y="102" font-family="'Montserrat', serif" font-size="62" font-weight="400">osta</text>
-            </svg>
-        </div>
-        <h1>Portal de Gestión Interna</h1>
-        <p>Sistema de acceso a estadísticas e informes</p>
-    </header>
+<header>
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Portal de Gestión Interna</h1>
+    <p>Sistema de acceso a estadísticas e informes</p>
+</header>
 
     <main class="dashboard-grid">
 
