@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obras Sociales - Municipalidad de La Costa</title>
+    
+    <!-- FAVICON -->
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+
+    <!-- FUENTE MONTSERRAT -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --brand-blue: #0056b3;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: #002244;
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 120px;
+        }
+
+        /* ENCABEZADO Y LOGO */
+        header {
+            margin: 40px 0 20px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .logo-container {
+            width: 220px;
+            margin: 0 auto 15px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* BOTÓN VOLVER */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .btn-back:hover {
+            background-color: #ffffff;
+            color: var(--brand-blue);
+        }
+
+        /* BUSCADOR */
+        .search-container {
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 25px;
+            z-index: 10;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            outline: none;
+        }
+
+        /* GRID DE TARJETAS */
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            z-index: 10;
+        }
+
+        .contact-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.35);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .info-item span.icon {
+            font-size: 1rem;
+            min-width: 20px;
+        }
+
+        .info-item a {
+            color: var(--brand-blue);
+            text-decoration: none;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .info-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* ANIMACIÓN DE OLAS */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: breathe 8s ease-in-out infinite alternate, waveMove 22s linear infinite;
+        }
+
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: breathe 6s ease-in-out infinite alternate-reverse, waveMove 16s linear infinite reverse;
+        }
+
+        .wave3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,50 C150,110 350,30 500,80 C650,130 900,40 1200,70 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.35)"></path></svg>');
+            animation: breathe 5s ease-in-out infinite alternate, waveMove 10s linear infinite;
+        }
+
+        @keyframes breathe {
+            0% { transform: scaleY(0.85) translateY(10px); }
+            100% { transform: scaleY(1.15) translateY(0px); }
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo Municipalidad de La Costa" class="logo-img">
+        </div>
+        <h1>Datos de Obras Sociales y Prepagas</h1>
+        <p>Directorio de contacto e información útil</p>
+    </header>
+
+    <a href="index.html" class="btn-back">
+        ⬅ Volver al Portal Principal
+    </a>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar obra social por nombre, mail o dirección..." onkeyup="filterCards()">
+    </div>
+
+    <main class="contacts-grid" id="contactsGrid">
+        <!-- Las tarjetas se generan automáticamente aquí -->
+    </main>
+
+    <div class="waves-container">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+        <div class="wave wave3"></div>
+    </div>
+
+    <script>
+        // ==========================================================
+        // PEGA AQUÍ TU LISTA COMPLETA DE OBRAS SOCIALES
+        // Formato: "NOMBRE / TELEFONO / EMAIL / DIRECCION",
+        // ==========================================================
+        const datosTexto = [
+"APRES / (54 11) 4002-2222 / info@apres.com.ar / Andrés Baranda 210 Quilmes (1876)",
+"ASI / 0810-888-8274 / asistentevirtual@asi.com.ar / Av. San Martín 2868, Caseros",
+"BRISTOL / 11-2627-6347 (WSP) / autorizaciones@bristolmedicine.com.ar / Amenábar 1074 - Capital Federal",
+"CAJAESCRIBANOS / (0221) 412-1803 (0221) 412-1810 / cepba@colescba.org.ar / Av. 13 N° 770 - La Plata",
+"DOCTORED / 0800 348 1027 / info@doctored.com.ar / Reconquista N° 1019 Piso 9° - CABA",
+"FEDECAMARAS / 0800-345-0770 / abeneficiario@osfedecamaras.com.ar / YERBAL 2540 | C.A.B.A",
+"GALENO / 01143486111/6045 / NAYLASOLEDADPONZIO@GALENOARGENTINA.COM.AR / ELVIRA DELLEPIANE 150 (1107) CABA",
+"HOSP.ITALIANO / (011) 4959-0200 / info@hospital-italiano.org.ar / Tte. Gral. Juan Domingo Perón 4190, Almagro, Ciudad Autónoma de Buenos Aires (C1199ABB)",
+"IOMAC / 0810-999-4662 / prestacionesdpe@gmail.com / Calle 46 N.º 886 entre 12 y 13, La Plata, Provincia de Buenos Aires.",
+"IOMAO / 0810-999-4662 / prestacionesdpe@gmail.com / Calle 46 N.º 886 entre 12 y 13, La Plata, Provincia de Buenos Aires.",
+"IOMAV / 0810-999-4662 / prestacionesdpe@gmail.com / Calle 46 N.º 886 entre 12 y 13, La Plata, Provincia de Buenos Aires.",
+"MEDICUS / 0800-333-7624  011-5555-7336/7381/7347 / contactenos.prestadores@medicus.com.ar  / LARREA 877 (1117) CABA",
+"OBSBA / (011) 4909-3600 / info@obsba.org.ar / Av. Rivadavia 6082, CABA",
+"OMINT / 0810-555-66468 / cgp@omint.com.ar / Bouchard 710, CABA",
+"OSALARA / (011) 4326-2500 (011) 5218-7582 / recepcion@osalara.com.ar / Bolivar 578 CABA",
+"OSAMOC / (011) 4951-6100 / prestaciones@osamoc.ar / BILLINGHURST 1669 (1425) CABA",
+"OSCHOCA / (011) 4378-1000 / 0800-777-0020 / --------------- / San José 1781, CABA.",
+"OSECAC / 0800-345-1120 / info@sec.org.ar / Moreno 625/648, CABA.",
+"OSEIV / (011) 5235-8201 / pagos@oseiv.com.ar / Av. Juan de Garay 371, CABA.",
+"OSETYA / (011) 4301-4175 / informes@osetya.com.ar / Benito Quinquela Martín 1738, CABA.",
+"OSFFENTOS / 0800-555-1133 / osffentos@fentos.org.ar / Pasco 580 PB, CABA",
+"OSLP / (011) 4370-1000 / facturacion.cobranzas@oslpasteur.com.ar / Av. Jujuy 252, CABA",
+"OSMATA / 0800-888-6762 / info@osmata.com.ar / Av. Belgrano 665, CABA",
+"OSMEDICA / 0800-999-5396 / obrasocial@osmedica.com.ar / Marcelo T. de Alvear 867/871, CABA",
+"OSOETSYLAR / 011 3455 1521 (WSP) / --------------- / Culpina 25/29, CABA",
+"OSPA / 011 4823-7121 / pcarbone@ospa.com.ar / Anchorena 1250 - Piso 2 CP.1425 Capital Federal",
+"OSPACA / 0800-888-9888 011 4106-4500 / informes@ospaca.com / ANCHORENA Nº 639  PISO 1 (1170) CABA",
+"OSPACP / 11 6009-2472 11 2186-5563 / charcas@ospacp.org.ar / Charcas 2745, CABA",
+"OSPAGA / (011) 4610-9200 0800-222-6772 / reclamos@ospaga.com.ar / Bacacay 2735, CABA",
+"OSPCN / 0810-888-8646 / atencionalprestador@unionpersonal.com.ar / Tucuman N 949 CP 1083 CABA",
+"OSPECON / 0800-222-0123 / informacion@construirsalud.com.ar / AV. BELGRANO 1862/70 ( 1094) CABA",
+"OSPEDYC / 0800-345-6777 / tesoreria@ospedyc.org.ar / Matheu 631 4° Piso. Caba. CP 1219",
+"OSPEDYM / 0800-345-0337 01152885600 / ostvla-pagos@osdepym.com.ar / RECONQUISTA  N° 458 PISO 15  (1003) CAB",
+"OSPERYH / 0800-266-0066 / osperyh@osperyh.org.ar / Sarmiento 2026, CABA",
+"OSPERYHRA / (011) 5354-6600 / osperyh@osperyh.org.ar / Sarmiento 2026, CABA",
+"OSPETRO / 0800-444-6773 / --------------- / Av. Leandro N. Alem 690, CABA",
+"OSPIFOSFORO / 0800-220-0474 / contacto@ospif.ar / Sarmiento 640 Piso 3 - CABA",
+"OSPIP- INDUS PLASTICO / (011) 2120-8000 interno 4244 / hospitales@ospip.org.ar / ",
+"OSPF- O.S PER FARMACIA / 011 4943-4005/4943-4086 /  / CONSTITUCION 2066- CP 1254",
+"OSPITABACO / 011 4613 0804 / ospit.autorizaciones@gmail.com / Coronel Esteban Bonorino 281 - CABA",
+"OSEP MENDOZA / 0810-810-8537 / interprovinciales@osep.mendoza.gov.ar / Av. José Vicente Zapata 313 Capital, Mendoza.",
+"OSPJANA / (011) 4957-2600 / ospjana@ospjana.org.ar / Bartolomé Mitre 1563, CABA",
+"OSPLAD / 0800-345-6735 / info@osplad.org.ar / Av. Callao 114, CABA",
+"OSPMAESTRANZA / (011) 5354-6500 / info@ospmaestranza.org.ar / México 2070, CABA",
+"OSPRERA / 0800-222-7737 / consultas@osprera.org.ar / Reconquista 630, CABA",
+"OSPSA / (011) 4374-6100 / info@ospsip.org.ar / Piedras 1065, CABA",
+"OSPTV / (011) 4010-9000 / prestadores@osptv.org.ar / Quintino Bocayuva 50, CABA",
+"OSRJA / (011) 4957-8070 / osrja@speedy.com.ar / Venezuela 1283, CABA",
+"OSTEE / (011) 4124-5500 / consultas@ostee.org.ar / Perón 2625, CABA",
+"OSTPBA / (011) 4381-7414 / administracion@ostpba.org.ar / Solís 1158, CABA",
+"OSUOMRA / 0800-222-6668 / info@osuomra.org.ar / Alsina 2501, CABA",
+"OSUTHGRA / 011-43418298 / ape.facturacion@uthgra.org.ar / A. DE MAYO 930 (1084) CABA",
+"POL.FED / 0800-999-1400 / tesoreriados@spf.gob.ar / Manuel Ricardo Trelles 2592, CABA",
+"SANCOR / 0800-777-72583  / notificacionesprestadores@sancorsalud.ar / AV INDEPENDENCIA N° 206 - 1° PISO (2322) SANTA FE ",
+"SWISSMEDICAL / 0810-333-7737 011 52396400 / smg@swissmedical.com.ar / AV. CALLAO NRO. 1190 - (1023) CABA",
+"HOSP.BRITANICO / (011) 4309-6400 0810-222-2748 / AGOAPROVEEDORES@HBRITANICO.COM.AR / PERDRIEL 74 (1280) CABA",
+"HOSP.BRITANICO / 54 341 4229100 54 341 6519620 / dotermin@segurometal.com / Alvear 930 - S2000QGD - Rosario (SF)",
+        ];
+
+        function cargarTarjetas() {
+            const grid = document.getElementById('contactsGrid');
+            grid.innerHTML = '';
+
+            datosTexto.forEach(linea => {
+                const partes = linea.split('/').map(p => p.trim());
+                
+                const nombre = partes[0] || 'Sin Nombre';
+                const telefono = partes[1] || 'No disponible';
+                const email = partes[2] || 'No disponible';
+                const direccion = partes[3] || 'No disponible';
+
+                const telLimpio = telefono.replace(/[^0-9+]/g, '');
+
+                const cardHTML = `
+                    <article class="contact-card">
+                        <h2 class="card-title">${nombre}</h2>
+                        <div class="info-list">
+                            <div class="info-item">
+                                <span class="icon">📞</span>
+                                ${telefono !== 'No disponible' ? `<a href="tel:${telLimpio}">${telefono}</a>` : `<span>${telefono}</span>`}
+                            </div>
+                            <div class="info-item">
+                                <span class="icon">✉️</span>
+                                ${email !== 'No disponible' ? `<a href="mailto:${email}">${email}</a>` : `<span>${email}</span>`}
+                            </div>
+                            <div class="info-item">
+                                <span class="icon">📍</span>
+                                <span>${direccion}</span>
+                            </div>
+                        </div>
+                    </article>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        function filterCards() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.getElementsByClassName('contact-card');
+
+            for (let i = 0; i < cards.length; i++) {
+                const text = cards[i].innerText.toLowerCase();
+                if (text.includes(input)) {
+                    cards[i].style.display = "flex";
+                } else {
+                    cards[i].style.display = "none";
+                }
+            }
+        }
+
+        cargarTarjetas();
+    </script>
+
+</body>
+</html>
