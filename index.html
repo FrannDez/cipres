@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Gestión y Estadísticas</title>
+    <!-- Fuente moderna desde Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;        /* Fondo oscuro elegante */
+            --card-bg: #1e293b;         /* Fondo de tarjetas */
+            --text-primary: #f8fafc;    /* Texto principal */
+            --text-secondary: #94a3b8;  /* Texto secundario */
+            --accent-blue: #38bdf8;     /* Color de acento */
+            --accent-hover: #0284c7;    /* Color hover */
+            --border-color: #334155;   /* Bordes sutiles */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Grid Responsive de Tarjetas */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Tarjeta / Card */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Botón de Enlace */
+        .btn-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #0f172a;
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .btn-link:hover {
+            background-color: var(--accent-blue);
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .btn-link span.arrow {
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .btn-link:hover span.arrow {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Portal de Gestión y Documentación</h1>
+        <p>Acceso rápido a planillas de datos y estadísticas</p>
+    </header>
+
+    <main class="dashboard-grid">
+
+        <!-- TARJETA: ESTADISTICAS PAMI -->
+        <section class="card">
+            <div class="card-header">
+                <span>📊</span>
+                <h2>Estadísticas PAMI</h2>
+            </div>
+            <div class="link-list">
+                <a href="TU_LINK_PAMI_2024" target="_blank" class="btn-link">
+                    Estadísticas PAMI - 2024 <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_PAMI_2025" target="_blank" class="btn-link">
+                    Estadísticas PAMI - 2025 <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_PAMI_2026" target="_blank" class="btn-link">
+                    Estadísticas PAMI - 2026 <span class="arrow">↗</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- TARJETA: SALUD BONAERENSE -->
+        <section class="card">
+            <div class="card-header">
+                <span>🏥</span>
+                <h2>Salud Bonaerense</h2>
+            </div>
+            <div class="link-list">
+                <a href="TU_LINK_CONTROL_SOBRES" target="_blank" class="btn-link">
+                    Control de Sobres <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_SALUD_ESCOLAR" target="_blank" class="btn-link">
+                    Salud Escolar <span class="arrow">↗</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- TARJETA: FACTURAS -->
+        <section class="card">
+            <div class="card-header">
+                <span>💳</span>
+                <h2>Facturación</h2>
+            </div>
+            <div class="link-list">
+                <a href="TU_LINK_FACTURAS_2025" target="_blank" class="btn-link">
+                    Facturas 2025 <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_FACTURAS_ADEUDADAS" target="_blank" class="btn-link">
+                    Facturas Adeudadas <span class="arrow">↗</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- TARJETA: OTROS RECURSOS -->
+        <section class="card">
+            <div class="card-header">
+                <span>📂</span>
+                <h2>Sistemas y Datos</h2>
+            </div>
+            <div class="link-list">
+                <a href="TU_LINK_EXCEL_CAPITA" target="_blank" class="btn-link">
+                    Excel Cápita PAMI <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_DATOS" target="_blank" class="btn-link">
+                    Datos Obras Sociales <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_CAPS" target="_blank" class="btn-link">
+                    Listado de CAPS <span class="arrow">↗</span>
+                </a>
+                <a href="TU_LINK_MONITOR" target="_blank" class="btn-link">
+                    Monitor CIPRES <span class="arrow">↗</span>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
