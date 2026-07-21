@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Registros CAPS - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-radial: radial-gradient(circle, #3a7bd5 0%, #002244 100%);
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: #002244;
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 140px;
+        }
+
+        /* HEADER & LOGO */
+        header {
+            margin: 40px 0 30px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .logo-container {
+            width: 240px;
+            margin: 0 auto 15px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.95rem;
+            margin-top: 4px;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.35);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORMULARIOS Y SELECCIONADORES */
+        .form-group-inline {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="number"] {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        select:focus, input[type="number"]:focus {
+            border-color: var(--brand-blue);
+        }
+
+        /* TABLAS ESTILIZADAS */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 0.88rem;
+        }
+
+        th {
+            background-color: var(--brand-blue);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .calc-field {
+            background-color: #e2e8f0;
+            font-weight: 700;
+            color: var(--brand-blue-hover);
+        }
+
+        /* BOTONES */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            background-color: var(--brand-blue-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-secondary {
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--brand-blue);
+            color: #ffffff;
+            border-color: var(--brand-blue);
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* HISTORIAL */
+        .history-card {
+            margin-top: 15px;
+        }
+
+        .header-caps {
+            background-color: var(--brand-blue);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .header-mes {
+            background-color: #3b82f6;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 6px;
+        }
+
+        .total-pacientes-cell {
+            vertical-align: middle;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--brand-blue-hover);
+            background-color: #ffffff;
+        }
+
+        /* ANIMACIÓN DE OLAS */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: breathe 8s ease-in-out infinite alternate, waveMove 22s linear infinite;
+        }
+
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: breathe 6s ease-in-out infinite alternate-reverse, waveMove 16s linear infinite reverse;
+        }
+
+        .wave3 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,50 C150,110 350,30 500,80 C650,130 900,40 1200,70 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.35)"></path></svg>');
+            animation: breathe 5s ease-in-out infinite alternate, waveMove 10s linear infinite;
+        }
+
+        @keyframes breathe {
+            0% { transform: scaleY(0.85) translateY(10px); }
+            100% { transform: scaleY(1.15) translateY(0px); }
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Registro de Planillas CAPS</h1>
+    <p>Atención Primaria de la Salud</p>
+</header>
+
+<div class="container">
+
+    <!-- FORMULARIO DE CARGA -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Cargar Datos Mensuales</h2>
+        </div>
+        
+        <div class="form-group-inline">
+            <div>
+                <label for="selectCaps">CAPS:</label>
+                <select id="selectCaps">
+                    <option value="Eva Perón">Eva Perón</option>
+                    <option value="Mar de Ajó Norte">Mar de Ajó Norte</option>
+                    <option value="Pedro Rocco">Pedro Rocco</option>
+                    <option value="El Tala (SC)">El Tala (SC)</option>
+                    <option value="La Lucila del Mar">La Lucila del Mar</option>
+                    <option value="Nueva Atlantis">Nueva Atlantis</option>
+                    <option value="San Bernardo">San Bernardo</option>
+                    <option value="Villa Clelia">Villa Clelia</option>
+                    <option value="Costa Azul">Costa Azul</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="selectMes">Mes:</label>
+                <select id="selectMes">
+                    <option value="1">Mes 01</option>
+                    <option value="2">Mes 02</option>
+                    <option value="3">Mes 03</option>
+                    <option value="4">Mes 04</option>
+                    <option value="5">Mes 05</option>
+                    <option value="6">Mes 06</option>
+                    <option value="7">Mes 07</option>
+                    <option value="8">Mes 08</option>
+                    <option value="9">Mes 09</option>
+                    <option value="10">Mes 10</option>
+                    <option value="11">Mes 11</option>
+                    <option value="12">Mes 12</option>
+                </select>
+            </div>
+        </div>
+
+        <form id="formCarga">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Especialidad</th>
+                            <th>Cant. Planillas</th>
+                            <th>Con Diagnóstico</th>
+                            <th>Sin Diagnóstico</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCargaBody">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="margin-top: 20px; text-align: right;">
+                <label for="totalPacientesInput" style="font-size: 1rem;">Total Pacientes Atendidos:</label>
+                <input type="number" id="totalPacientesInput" min="0" value="0" required style="font-size: 1rem; width: 120px;">
+            </div>
+
+            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Registro en la Nube</button>
+        </form>
+    </div>
+
+    <!-- HISTORIAL DE CARGAS -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Registros Cargados</h2>
+        </div>
+        
+        <div class="actions-bar">
+            <button class="btn btn-secondary" id="btnExportar">📥 Guardar Copia (JSON)</button>
+        </div>
+
+        <div class="form-group-inline">
+            <label for="filtroMes">Filtrar por Mes:</label>
+            <select id="filtroMes">
+                <option value="todos">Todos los meses</option>
+                <option value="1">Mes 01</option>
+                <option value="2">Mes 02</option>
+                <option value="3">Mes 03</option>
+                <option value="4">Mes 04</option>
+                <option value="5">Mes 05</option>
+                <option value="6">Mes 06</option>
+                <option value="7">Mes 07</option>
+                <option value="8">Mes 08</option>
+                <option value="9">Mes 09</option>
+                <option value="10">Mes 10</option>
+                <option value="11">Mes 11</option>
+                <option value="12">Mes 12</option>
+            </select>
+        </div>
+
+        <div id="contenedorHistorial">
+            <p style="text-align:center; color: var(--text-muted); padding: 20px;">Conectando con Firebase...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ANIMACIÓN DE OLAS -->
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+    <div class="wave wave3"></div>
+</div>
+
+<!-- CÓDIGO JS CON FIREBASE v10 (MODULAR) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Configuración usando tu base de datos existente
+    const firebaseConfig = { 
+        databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Especialidades fijas
+    const ESPECIALIDADES = [
+        "MEDICO CLINICO", "PSICOLOGIA", "NUTRICIONISTA", "PEDIATRA", 
+        "OBSTETRICIA", "GINECOLOGIA", "DIABETOLOGIA", "FONOAUDIOLOGIA", 
+        "GRUPOS", "ODONTOLOGO", "TALLERES", "PSIQUIATRIA"
+    ];
+
+    let baseDeDatos = {};
+
+    function inicializarFormulario() {
+        const tbody = document.getElementById('tablaCargaBody');
+        tbody.innerHTML = '';
+
+        ESPECIALIDADES.forEach((esp, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${esp}</strong></td>
+                <td><input type="number" id="planillas_${index}" min="0" value="0"></td>
+                <td><input type="number" id="conDiag_${index}" min="0" value="0"></td>
+                <td id="sinDiag_${index}" class="calc-field">0</td>
+            `;
+            tbody.appendChild(tr);
+
+            // Escuchar eventos de cálculo dinámico
+            tr.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', () => calcularSinDiagnostico(index));
+            });
+        });
+    }
+
+    function calcularSinDiagnostico(index) {
+        const planillas = parseInt(document.getElementById(`planillas_${index}`).value) || 0;
+        const conDiag = parseInt(document.getElementById(`conDiag_${index}`).value) || 0;
+        const sinDiag = Math.max(0, planillas - conDiag);
+
+        document.getElementById(`sinDiag_${index}`).innerText = sinDiag;
+    }
+
+    // Leer los datos en tiempo real desde la ruta '/caps_registros'
+    const capsRef = ref(db, 'caps_registros');
+    onValue(capsRef, (snapshot) => {
+        baseDeDatos = snapshot.val() || {};
+        renderizarHistorial();
+    });
+
+    // Guardar registro en Firebase
+    document.getElementById('formCarga').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const caps = document.getElementById('selectCaps').value;
+        const mes = document.getElementById('selectMes').value;
+        const totalPacientes = parseInt(document.getElementById('totalPacientesInput').value) || 0;
+
+        const detalle = ESPECIALIDADES.map((esp, index) => {
+            const planillas = parseInt(document.getElementById(`planillas_${index}`).value) || 0;
+            const conDiag = parseInt(document.getElementById(`conDiag_${index}`).value) || 0;
+            const sinDiag = Math.max(0, planillas - conDiag);
+            return { especialidad: esp, planillas, conDiag, sinDiag };
+        });
+
+        // Limpiar el ID para evitar símbolos no permitidos en rutas de Firebase
+        const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
+        const registroId = `${idCapLimpio}_Mes_${mes}`;
+
+        if (baseDeDatos[registroId]) {
+            if (!confirm(`Ya existen datos cargados para ${caps} en el Mes ${mes}. ¿Deseas reemplazar este registro?`)) {
+                return;
+            }
+        }
+
+        const nuevoRegistro = { caps, mes, totalPacientes, detalle };
+
+        // Escribir en Firebase Realtime Database
+        set(ref(db, 'caps_registros/' + registroId), nuevoRegistro)
+            .then(() => {
+                alert('¡El registro se guardó correctamente en la nube!');
+                document.getElementById('formCarga').reset();
+                ESPECIALIDADES.forEach((_, i) => calcularSinDiagnostico(i));
+            })
+            .catch((error) => {
+                alert('Error al guardar en la nube: ' + error.message);
+            });
+    });
+
+    function renderizarHistorial() {
+        const contenedor = document.getElementById('contenedorHistorial');
+        const filtroMes = document.getElementById('filtroMes').value;
+        contenedor.innerHTML = '';
+
+        const listaRegistros = Object.values(baseDeDatos);
+
+        if (listaRegistros.length === 0) {
+            contenedor.innerHTML = '<p style="text-align:center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún en la base de datos.</p>';
+            return;
+        }
+
+        let datosFiltrados = listaRegistros;
+        if (filtroMes !== 'todos') {
+            datosFiltrados = listaRegistros.filter(item => item.mes === filtroMes);
+        }
+
+        const datosPorMes = {};
+        datosFiltrados.forEach(item => {
+            if (!datosPorMes[item.mes]) datosPorMes[item.mes] = [];
+            datosPorMes[item.mes].push(item);
+        });
+
+        Object.keys(datosPorMes).sort((a,b) => parseInt(a) - parseInt(b)).forEach(mesKey => {
+            const mesHeader = document.createElement('h3');
+            mesHeader.style.color = 'var(--brand-blue)';
+            mesHeader.style.margin = '20px 0 10px';
+            mesHeader.style.fontSize = '1.1rem';
+            mesHeader.innerText = `MES ${mesKey.padStart(2, '0')}`;
+            contenedor.appendChild(mesHeader);
+
+            datosPorMes[mesKey].forEach(registro => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+
+                let filasEspecialidades = '';
+                registro.detalle.forEach((det, i) => {
+                    const celdaTotalPacientes = (i === 0) 
+                        ? `<td rowspan="${registro.detalle.length}" class="total-pacientes-cell">${registro.totalPacientes}</td>` 
+                        : '';
+
+                    filasEspecialidades += `
+                        <tr>
+                            <td><strong>${det.especialidad}</strong></td>
+                            <td>${det.planillas}</td>
+                            <td>${det.conDiag}</td>
+                            <td>${det.sinDiag}</td>
+                            ${celdaTotalPacientes}
+                        </tr>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr><th colspan="5" class="header-caps">${registro.caps.toUpperCase()}</th></tr>
+                                <tr><th colspan="5" class="header-mes">MES ${registro.mes.padStart(2, '0')}</th></tr>
+                                <tr>
+                                    <th>ESPECIALIDAD</th>
+                                    <th>CANT. PLANILLAS</th>
+                                    <th>CON DIAGNOSTICO</th>
+                                    <th>SIN DIAGNOSTICO</th>
+                                    <th>TOTAL PACIENTES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filasEspecialidades}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="text-align: right; margin-top: 8px;">
+                        <button class="btn btn-danger btn-eliminar" data-caps="${registro.caps}" data-mes="${registro.mes}">Eliminar registro</button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        });
+
+        // Event listener para eliminar
+        document.querySelectorAll('.btn-eliminar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const caps = e.target.getAttribute('data-caps');
+                const mes = e.target.getAttribute('data-mes');
+                eliminarRegistro(caps, mes);
+            });
+        });
+    }
+
+    function eliminarRegistro(caps, mes) {
+        if (confirm(`¿Eliminar de la nube el registro de ${caps} para el Mes ${mes}?`)) {
+            const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
+            const registroId = `${idCapLimpio}_Mes_${mes}`;
+
+            remove(ref(db, 'caps_registros/' + registroId))
+                .catch(error => alert("Error al eliminar: " + error.message));
+        }
+    }
+
+    document.getElementById('filtroMes').addEventListener('change', renderizarHistorial);
+
+    document.getElementById('btnExportar').addEventListener('click', () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(baseDeDatos));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "respaldo_caps_datos.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    });
+
+    inicializarFormulario();
+</script>
+
+</body>
+</html>
