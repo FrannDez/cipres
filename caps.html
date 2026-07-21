@@ -9,7 +9,6 @@
     
     <style>
         :root {
-            --bg-radial: radial-gradient(circle, #3a7bd5 0%, #002244 100%);
             --card-bg: #ffffff;
             --text-dark: #1e293b;
             --text-muted: #64748b;
@@ -29,7 +28,6 @@
         }
 
         body {
-            background: #002244;
             background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
             color: var(--text-dark);
             min-height: 100vh;
@@ -43,13 +41,15 @@
 
         /* HEADER & LOGO */
         header {
-            margin: 40px 0 30px;
+            margin: 25px 15px 20px;
             text-align: center;
             z-index: 10;
+            width: 100%;
         }
 
         .logo-container {
-            width: 240px;
+            width: 180px;
+            max-width: 80%;
             margin: 0 auto 15px;
         }
 
@@ -62,52 +62,59 @@
 
         header h1 {
             color: #ffffff;
-            font-size: 1.6rem;
+            font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            padding: 0 10px;
         }
 
         header p {
             color: rgba(255, 255, 255, 0.85);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             margin-top: 4px;
         }
 
         /* CONTENEDOR PRINCIPAL */
         .container {
-            width: 90%;
-            max-width: 1100px;
+            width: 95%;
+            max-width: 1000px;
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         .card {
             background-color: var(--card-bg);
             border-radius: 16px;
-            padding: 24px;
+            padding: 16px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.35);
+        @media (min-width: 768px) {
+            .card {
+                padding: 24px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .logo-container {
+                width: 230px;
+            }
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 12px;
+            padding-bottom: 10px;
         }
 
         .card-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--brand-blue);
             text-transform: uppercase;
@@ -117,55 +124,75 @@
         /* FORMULARIOS Y SELECCIONADORES */
         .form-group-inline {
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 20px;
+            align-items: stretch;
+        }
+
+        @media (min-width: 600px) {
+            .form-group-inline {
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 20px;
+            }
+        }
+
+        .select-wrapper {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        @media (min-width: 600px) {
+            .select-wrapper {
+                width: auto;
+                justify-content: flex-start;
+            }
         }
 
         label {
             font-weight: 600;
             color: var(--text-dark);
             margin-right: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         select, input[type="number"] {
-            padding: 10px 14px;
+            padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             background-color: var(--btn-bg);
             color: var(--text-dark);
             font-weight: 600;
             outline: none;
-            transition: border-color 0.2s ease;
+            width: 100%;
+            max-width: 220px;
         }
 
-        select:focus, input[type="number"]:focus {
-            border-color: var(--brand-blue);
-        }
-
-        /* TABLAS ESTILIZADAS */
+        /* VISTA CARDS RESPONSIVA PARA FORMULARIO Y TABLAS */
         .table-responsive {
+            width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 5px;
             background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
         }
 
         th, td {
             border: 1px solid var(--border-color);
-            padding: 10px 12px;
+            padding: 8px 6px;
             text-align: center;
-            font-size: 0.88rem;
+            font-size: 0.8rem;
         }
 
         th {
@@ -173,17 +200,87 @@
             color: white;
             text-transform: uppercase;
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
 
-        tr:nth-child(even) {
-            background-color: #f8fafc;
+        /* RESPONSIVE VISTA CELULAR (<650px) */
+        @media (max-width: 649px) {
+            .responsive-form-table table, 
+            .responsive-form-table thead, 
+            .responsive-form-table tbody, 
+            .responsive-form-table th, 
+            .responsive-form-table td, 
+            .responsive-form-table tr { 
+                display: block; 
+            }
+
+            .responsive-form-table thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            .responsive-form-table tr { 
+                border: 1px solid var(--border-color);
+                border-radius: 10px;
+                margin-bottom: 12px;
+                padding: 10px;
+                background-color: #f8fafc;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .responsive-form-table td { 
+                border: none;
+                position: relative;
+                padding: 6px 0 6px 45%;
+                text-align: right;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 0.85rem;
+            }
+
+            .responsive-form-table td:first-child {
+                background-color: var(--brand-blue);
+                color: white;
+                margin: -10px -10px 8px -10px;
+                padding: 8px 12px;
+                border-radius: 8px 8px 0 0;
+                justify-content: center;
+                font-size: 0.9rem;
+            }
+
+            .responsive-form-table td::before { 
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--text-dark);
+                text-align: left;
+            }
+
+            .responsive-form-table td:first-child::before {
+                display: none;
+            }
+
+            .responsive-form-table input[type="number"] {
+                width: 90px;
+                text-align: center;
+            }
+
+            .total-pacientes-cell {
+                display: block !important;
+                width: 100%;
+                text-align: center !important;
+                font-size: 1.5rem !important;
+                padding: 10px !important;
+                background-color: #e2e8f0 !important;
+            }
         }
 
         .calc-field {
             background-color: #e2e8f0;
             font-weight: 700;
             color: var(--brand-blue-hover);
+            padding: 6px 12px;
+            border-radius: 6px;
         }
 
         /* BOTONES */
@@ -194,18 +291,17 @@
             background-color: var(--brand-blue);
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 0.95rem;
+            padding: 10px 16px;
+            font-size: 0.9rem;
             font-weight: 700;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
         }
 
         .btn:hover {
             background-color: var(--brand-blue-hover);
-            transform: translateY(-2px);
         }
 
         .btn-block {
@@ -217,54 +313,38 @@
             background-color: var(--btn-bg);
             color: var(--text-dark);
             border: 1px solid var(--border-color);
-            padding: 8px 14px;
-            font-size: 0.85rem;
-            box-shadow: none;
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--brand-blue);
-            color: #ffffff;
-            border-color: var(--brand-blue);
+            padding: 8px 12px;
+            font-size: 0.8rem;
         }
 
         .btn-warning {
             background-color: var(--warning-orange);
             color: white;
-            padding: 6px 12px;
-            font-size: 0.8rem;
+            padding: 6px 10px;
+            font-size: 0.78rem;
             border-radius: 6px;
-        }
-
-        .btn-warning:hover {
-            background-color: var(--warning-hover);
         }
 
         .btn-danger {
             background-color: #ef4444;
             color: white;
-            padding: 6px 12px;
-            font-size: 0.8rem;
+            padding: 6px 10px;
+            font-size: 0.78rem;
             border-radius: 6px;
-        }
-
-        .btn-danger:hover {
-            background-color: #dc2626;
         }
 
         .actions-bar {
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             gap: 10px;
             margin-bottom: 15px;
-            flex-wrap: wrap;
         }
 
         .card-actions {
             display: flex;
             justify-content: flex-end;
             gap: 8px;
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
         /* HISTORIAL */
@@ -275,24 +355,24 @@
         .header-caps {
             background-color: var(--brand-blue);
             color: white;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             text-align: center;
-            padding: 10px;
+            padding: 8px;
         }
 
         .header-mes {
             background-color: #3b82f6;
             color: white;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 600;
             text-align: center;
-            padding: 6px;
+            padding: 5px;
         }
 
         .total-pacientes-cell {
             vertical-align: middle;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--brand-blue-hover);
             background-color: #ffffff;
@@ -304,7 +384,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 180px;
+            height: 120px;
             overflow: hidden;
             pointer-events: none;
             z-index: 1;
@@ -322,22 +402,12 @@
 
         .wave1 {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
-            animation: breathe 8s ease-in-out infinite alternate, waveMove 22s linear infinite;
+            animation: waveMove 22s linear infinite;
         }
 
         .wave2 {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
-            animation: breathe 6s ease-in-out infinite alternate-reverse, waveMove 16s linear infinite reverse;
-        }
-
-        .wave3 {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,50 C150,110 350,30 500,80 C650,130 900,40 1200,70 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.35)"></path></svg>');
-            animation: breathe 5s ease-in-out infinite alternate, waveMove 10s linear infinite;
-        }
-
-        @keyframes breathe {
-            0% { transform: scaleY(0.85) translateY(10px); }
-            100% { transform: scaleY(1.15) translateY(0px); }
+            animation: waveMove 16s linear infinite reverse;
         }
 
         @keyframes waveMove {
@@ -365,7 +435,7 @@
         </div>
         
         <div class="form-group-inline">
-            <div>
+            <div class="select-wrapper">
                 <label for="selectCaps">CAPS:</label>
                 <select id="selectCaps">
                     <option value="Eva Perón">Eva Perón</option>
@@ -380,7 +450,7 @@
                 </select>
             </div>
 
-            <div>
+            <div class="select-wrapper">
                 <label for="selectMes">Mes:</label>
                 <select id="selectMes">
                     <option value="1">Mes 01</option>
@@ -400,7 +470,7 @@
         </div>
 
         <form id="formCarga">
-            <div class="table-responsive">
+            <div class="table-responsive responsive-form-table">
                 <table>
                     <thead>
                         <tr>
@@ -416,9 +486,9 @@
                 </table>
             </div>
 
-            <div style="margin-top: 20px; text-align: right;">
-                <label for="totalPacientesInput" style="font-size: 1rem;">Total Pacientes Atendidos:</label>
-                <input type="number" id="totalPacientesInput" min="0" value="0" required style="font-size: 1rem; width: 120px;">
+            <div style="margin-top: 18px; display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+                <label for="totalPacientesInput" style="font-size: 0.9rem;">Total Pacientes Atendidos:</label>
+                <input type="number" id="totalPacientesInput" min="0" value="0" required style="font-size: 0.95rem; width: 100px; text-align: center;">
             </div>
 
             <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Registro en la Nube</button>
@@ -436,22 +506,24 @@
         </div>
 
         <div class="form-group-inline">
-            <label for="filtroMes">Filtrar por Mes:</label>
-            <select id="filtroMes">
-                <option value="todos">Todos los meses</option>
-                <option value="1">Mes 01</option>
-                <option value="2">Mes 02</option>
-                <option value="3">Mes 03</option>
-                <option value="4">Mes 04</option>
-                <option value="5">Mes 05</option>
-                <option value="6">Mes 06</option>
-                <option value="7">Mes 07</option>
-                <option value="8">Mes 08</option>
-                <option value="9">Mes 09</option>
-                <option value="10">Mes 10</option>
-                <option value="11">Mes 11</option>
-                <option value="12">Mes 12</option>
-            </select>
+            <div class="select-wrapper">
+                <label for="filtroMes">Filtrar por Mes:</label>
+                <select id="filtroMes">
+                    <option value="todos">Todos los meses</option>
+                    <option value="1">Mes 01</option>
+                    <option value="2">Mes 02</option>
+                    <option value="3">Mes 03</option>
+                    <option value="4">Mes 04</option>
+                    <option value="5">Mes 05</option>
+                    <option value="6">Mes 06</option>
+                    <option value="7">Mes 07</option>
+                    <option value="8">Mes 08</option>
+                    <option value="9">Mes 09</option>
+                    <option value="10">Mes 10</option>
+                    <option value="11">Mes 11</option>
+                    <option value="12">Mes 12</option>
+                </select>
+            </div>
         </div>
 
         <div id="contenedorHistorial">
@@ -464,7 +536,6 @@
 <div class="waves-container">
     <div class="wave wave1"></div>
     <div class="wave wave2"></div>
-    <div class="wave wave3"></div>
 </div>
 
 <!-- CÓDIGO JS CON FIREBASE v10 (MODULAR) -->
@@ -472,7 +543,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // CLAVE DE ACCESO PARA MODIFICAR / ELIMINAR (Cámbiala si lo deseas)
     const CLAVE_ADMIN = "Cristo25";
 
     const firebaseConfig = { 
@@ -497,10 +567,10 @@
         ESPECIALIDADES.forEach((esp, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><strong>${esp}</strong></td>
-                <td><input type="number" id="planillas_${index}" min="0" value="0"></td>
-                <td><input type="number" id="conDiag_${index}" min="0" value="0"></td>
-                <td id="sinDiag_${index}" class="calc-field">0</td>
+                <td data-label="Especialidad"><strong>${esp}</strong></td>
+                <td data-label="Cant. Planillas"><input type="number" id="planillas_${index}" min="0" value="0"></td>
+                <td data-label="Con Diagnóstico"><input type="number" id="conDiag_${index}" min="0" value="0"></td>
+                <td data-label="Sin Diagnóstico"><span id="sinDiag_${index}" class="calc-field">0</span></td>
             `;
             tbody.appendChild(tr);
 
@@ -518,7 +588,6 @@
         document.getElementById(`sinDiag_${index}`).innerText = sinDiag;
     }
 
-    // Escuchar cambios únicamente en el nodo 'caps_registros'
     const capsRef = ref(db, 'caps_registros');
     onValue(capsRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
@@ -590,8 +659,8 @@
         Object.keys(datosPorMes).sort((a,b) => parseInt(a) - parseInt(b)).forEach(mesKey => {
             const mesHeader = document.createElement('h3');
             mesHeader.style.color = 'var(--brand-blue)';
-            mesHeader.style.margin = '20px 0 10px';
-            mesHeader.style.fontSize = '1.1rem';
+            mesHeader.style.margin = '15px 0 10px';
+            mesHeader.style.fontSize = '1rem';
             mesHeader.innerText = `MES ${mesKey.padStart(2, '0')}`;
             contenedor.appendChild(mesHeader);
 
@@ -602,22 +671,22 @@
                 let filasEspecialidades = '';
                 registro.detalle.forEach((det, i) => {
                     const celdaTotalPacientes = (i === 0) 
-                        ? `<td rowspan="${registro.detalle.length}" class="total-pacientes-cell">${registro.totalPacientes}</td>` 
+                        ? `<td rowspan="${registro.detalle.length}" class="total-pacientes-cell" data-label="TOTAL PACIENTES">${registro.totalPacientes}</td>` 
                         : '';
 
                     filasEspecialidades += `
                         <tr>
-                            <td><strong>${det.especialidad}</strong></td>
-                            <td>${det.planillas}</td>
-                            <td>${det.conDiag}</td>
-                            <td>${det.sinDiag}</td>
+                            <td data-label="Especialidad"><strong>${det.especialidad}</strong></td>
+                            <td data-label="Cant. Planillas">${det.planillas}</td>
+                            <td data-label="Con Diagnóstico">${det.conDiag}</td>
+                            <td data-label="Sin Diagnóstico">${det.sinDiag}</td>
                             ${celdaTotalPacientes}
                         </tr>
                     `;
                 });
 
                 card.innerHTML = `
-                    <div class="table-responsive">
+                    <div class="table-responsive responsive-form-table">
                         <table>
                             <thead>
                                 <tr><th colspan="5" class="header-caps">${registro.caps.toUpperCase()}</th></tr>
@@ -644,7 +713,6 @@
             });
         });
 
-        // Eventos de botones Modificar
         document.querySelectorAll('.btn-modificar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const caps = e.target.getAttribute('data-caps');
@@ -653,7 +721,6 @@
             });
         });
 
-        // Eventos de botones Eliminar
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const caps = e.target.getAttribute('data-caps');
@@ -664,11 +731,11 @@
     }
 
     function modificarRegistro(caps, mes) {
-        const pass = prompt(`Introduce la contraseña autorizada para modificar los datos de ${caps} - Mes ${mes}:`);
-        if (pass === null) return; // Cancelado
+        const pass = prompt(`Introduce la contraseña autorizada para modificar ${caps} - Mes ${mes}:`);
+        if (pass === null) return;
 
         if (pass !== CLAVE_ADMIN) {
-            alert("❌ Contraseña incorrecta. No tienes permisos para editar.");
+            alert("❌ Contraseña incorrecta.");
             return;
         }
 
@@ -678,7 +745,6 @@
 
         if (!registro) return;
 
-        // Cargar datos en el formulario superior
         document.getElementById('selectCaps').value = registro.caps;
         document.getElementById('selectMes').value = registro.mes;
         document.getElementById('selectCaps').disabled = true;
@@ -696,26 +762,24 @@
         });
 
         document.getElementById('tituloFormulario').innerText = `✏️ Editando: ${registro.caps} (Mes ${registro.mes})`;
-        
-        // Desplazar suavemente hasta el formulario
         document.getElementById('seccionFormulario').scrollIntoView({ behavior: 'smooth' });
     }
 
     function eliminarRegistro(caps, mes) {
-        const pass = prompt(`Introduce la contraseña autorizada para ELIMINAR el registro de ${caps} - Mes ${mes}:`);
+        const pass = prompt(`Introduce la contraseña para ELIMINAR ${caps} - Mes ${mes}:`);
         if (pass === null) return;
 
         if (pass !== CLAVE_ADMIN) {
-            alert("❌ Contraseña incorrecta. No tienes permisos para borrar.");
+            alert("❌ Contraseña incorrecta.");
             return;
         }
 
-        if (confirm(`¿Estás completamente seguro de borrar definitivamente el registro de ${caps} para el Mes ${mes}?`)) {
+        if (confirm(`¿Eliminar definitivamente el registro de ${caps} para el Mes ${mes}?`)) {
             const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
             const registroId = `${idCapLimpio}_Mes_${mes}`;
 
             remove(ref(db, 'caps_registros/' + registroId))
-                .then(() => alert("Registro eliminado con éxito."))
+                .then(() => alert("Registro eliminado."))
                 .catch(error => alert("Error al eliminar: " + error.message));
         }
     }
