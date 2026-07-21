@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 CIPRES - Monitor Pro</title>
+    <!-- Librería Chart.js para el gráfico de ritmo -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 15px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        h1 { font-size: 18px; text-transform: uppercase; letter-spacing: 1px; color: #38bdf8; margin: 0; }
+        
+        .top-buttons { display: flex; gap: 8px; }
+        .btn-action { background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-action:hover { background: #475569; }
+
+        /* Controls */
+        .controls { background: #1e293b; padding: 10px 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border: 1px solid #334155; }
+        .date-picker { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 5px 8px; border-radius: 6px; font-size: 13px; outline: none; }
+        .status-badge { font-size: 12px; color: #94a3b8; display: flex; align-items: center; }
+        .status-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 6px; }
+
+        /* KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .kpi-card { background: #1e293b; border-radius: 10px; padding: 12px; border: 1px solid #334155; }
+        .kpi-title { font-size: 11px; color: #94a3b8; font-weight: bold; }
+        .kpi-val { font-size: 20px; font-weight: bold; margin-top: 4px; }
+
+        /* Sections */
+        h2 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 25px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Users Cards */
+        .user-card { background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #334155; border-left: 5px solid #38bdf8; }
+        .user-card.inactive { border-left-color: #ef4444 !important; background: #22151d; }
+        .user-name { font-weight: bold; font-size: 14px; color: #f1f5f9; display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .user-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #0f172a; padding: 8px; border-radius: 6px; text-align: center; font-size: 11px; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-num { font-weight: bold; font-size: 13px; margin-top: 2px; }
+        .time-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #0f172a; color: #94a3b8; }
+        .time-badge.alert { background: #7f1d1d; color: #fca5a5; font-weight: bold; }
+
+        /* Chart container */
+        .chart-box { background: #1e293b; border-radius: 10px; padding: 12px; border: 1px solid #334155; margin-bottom: 20px; }
+
+        /* Tables */
+        .custom-table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; font-size: 12px; border: 1px solid #334155; margin-bottom: 15px; }
+        .custom-table th { background: #0f172a; color: #94a3b8; text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; }
+        .custom-table td { padding: 8px 10px; border-top: 1px solid #334155; }
+
+        /* Danger Reset */
+        .btn-reset { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; width: 100%; margin-top: 25px; cursor: pointer; }
+
+        /* Kiosk / TV Mode */
+        body.kiosk-mode { font-size: 18px; padding: 30px; background: #020617; }
+        body.kiosk-mode h1 { font-size: 28px; }
+        body.kiosk-mode .kpi-val { font-size: 32px; }
+        body.kiosk-mode .user-card { padding: 20px; }
+
+        /* Print Mode */
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .btn-action, .controls, .btn-reset, .top-buttons { display: none !important; }
+            .kpi-card, .user-card, .custom-table { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
+            .stat-num, .user-name { color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📊 CIPRES Control Pro</h1>
+        <div class="top-buttons">
+            <button class="btn-action" onclick="toggleTV()">📺 Modo TV</button>
+            <button class="btn-action" onclick="exportarCSV()">📥 Excel / CSV</button>
+            <button class="btn-action" onclick="window.print()">🖨️ PDF / Imprimir</button>
+        </div>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls">
+        <input type="date" id="fechaSelector" class="date-picker">
+        <div class="status-badge">
+            <span class="status-dot" id="dotEstado"></span>
+            <span id="txtEstado">Conectando...</span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-title">TOTAL PROCESADOS</div>
+            <div class="kpi-val" id="totalGlobal" style="color: #38bdf8;">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">ÉXITOS TOTALES</div>
+            <div class="kpi-val" id="exitosGlobal" style="color: #4ade80;">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">OMITIDOS TOTALES</div>
+            <div class="kpi-val" id="omitidosGlobal" style="color: #facc15;">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">EFECTIVIDAD GLOBAL</div>
+            <div class="kpi-val" id="efectividadGlobal" style="color: #c084fc;">0%</div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Ritmo por Hora -->
+    <h2>📈 Ritmo de Trabajo por Hora</h2>
+    <div class="chart-box">
+        <canvas id="ritmoChart" height="90"></canvas>
+    </div>
+
+    <!-- Producción por Operador -->
+    <h2>👥 Producción por Operador / PC</h2>
+    <div id="contenedorUsuarios">Cargando métricas...</div>
+
+    <!-- Métricas por Obra Social -->
+    <h2>🏥 Métricas por Obra Social (OS)</h2>
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Obra Social / Especialidad</th>
+                <th style="text-align: center;">✅ Cargados</th>
+                <th style="text-align: center;">⚠️ Omitidos</th>
+            </tr>
+        </thead>
+        <tbody id="contenedorOS">
+            <tr><td colspan="3" style="text-align: center; color: #64748b;">Sin datos</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Auditoría de Omitidos -->
+    <h2>
+        <span>⚠️ Auditoría de Casos Omitidos</span>
+        <button class="btn-action" style="font-size: 10px;" onclick="copiarDniOmitidos()">📋 Copiar DNIs</button>
+    </h2>
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>PC</th>
+                <th>DNI</th>
+                <th>Motivo / Detalle</th>
+            </tr>
+        </thead>
+        <tbody id="contenedorOmitidos">
+            <tr><td colspan="4" style="text-align: center; color: #64748b;">No hay casos omitidos hoy</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Reset -->
+    <button class="btn-reset" onclick="confirmarLimpieza()">🗑️ LIMPIAR REGISTROS DE ESTE DÍA</button>
+
+    <!-- SDK Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 💡 Lotes iniciales por PC para calcular pendientes (Ajusta según las cargas asignadas)
+        const LOTES_POR_DEFECTO = {
+            "Frann": 996, // (597 procesados + 399 restantes)
+            "PC1": 500,
+            "PC2": 500
+        };
+
+        const ADMIN_PASSWORD = "1234"; 
+        let rawDataGlobal = null;
+        let dnisOmitidosList = [];
+        let ritmoChartInstance = null;
+
+        const selector = document.getElementById('fechaSelector');
+        const hoy = new Date();
+        const fechaHoyStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+        selector.value = fechaHoyStr;
+
+        let conexionActiva = null;
+
+        function escucharFecha(fechaKey) {
+            if (conexionActiva) conexionActiva();
+            const registrosRef = ref(db, `registros/${fechaKey}`);
+
+            conexionActiva = onValue(registrosRef, (snapshot) => {
+                document.getElementById('dotEstado').style.backgroundColor = '#22c55e';
+                document.getElementById('txtEstado').innerText = 'En vivo';
+                rawDataGlobal = snapshot.val();
+                procesarDatos(rawDataGlobal);
+            }, (error) => {
+                console.error(error);
+                document.getElementById('dotEstado').style.backgroundColor = '#ef4444';
+                document.getElementById('txtEstado').innerText = 'Error';
+            });
+        }
+
+        selector.addEventListener('change', (e) => escucharFecha(e.target.value));
+
+        function procesarDatos(data) {
+            dnisOmitidosList = [];
+            if (!data) {
+                document.getElementById('contenedorUsuarios').innerHTML = '<div style="color:#64748b; font-size:13px; text-align:center; padding:15px;">Sin registros para esta fecha.</div>';
+                document.getElementById('contenedorOS').innerHTML = '<tr><td colspan="3" style="text-align: center; color: #64748b;">Sin datos</td></tr>';
+                document.getElementById('contenedorOmitidos').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">No hay casos omitidos</td></tr>';
+                document.getElementById('totalGlobal').innerText = 0;
+                document.getElementById('exitosGlobal').innerText = 0;
+                document.getElementById('omitidosGlobal').innerText = 0;
+                document.getElementById('efectividadGlobal').innerText = '0%';
+                renderChart({});
+                return;
+            }
+
+            let totalExitos = 0, totalOmitidos = 0;
+            let usuarios = {}, obrasSociales = {}, horasMap = {}, omitidosTablaHtml = '';
+
+            Object.values(data).forEach(reg => {
+                if (!reg) return;
+
+                const usr = reg.usuario || 'Desconocido';
+                const os = reg.especialidad || reg.obra_social || 'SIN ESPECIFICAR';
+                const horaStr = reg.timestamp ? reg.timestamp.split(':')[0] + ':00' : '00:00';
+
+                // Ritmo por Hora
+                horasMap[horaStr] = (horasMap[horaStr] || 0) + 1;
+
+                // Usuarios
+                if (!usuarios[usr]) usuarios[usr] = { exitos: 0, omitidos: 0, ultimoEnvio: reg.timestamp };
+
+                if (reg.estado === 'EXITO') {
+                    totalExitos++;
+                    usuarios[usr].exitos++;
+                } else {
+                    totalOmitidos++;
+                    usuarios[usr].omitidos++;
+                    
+                    // Registro Omitido para Auditoría
+                    if (reg.dni) dnisOmitidosList.push(reg.dni);
+                    omitidosTablaHtml += `
+                        <tr>
+                            <td style="color:#94a3b8;">${reg.timestamp || '-'}</td>
+                            <td><strong>${usr}</strong></td>
+                            <td style="color:#38bdf8;">${reg.dni || 'S/N'}</td>
+                            <td style="color:#facc15;">${reg.detalle || 'Descartado'}</td>
+                        </tr>
+                    `;
+                }
+                usuarios[usr].ultimoEnvio = reg.timestamp;
+
+                // Obras Sociales
+                if (!obrasSociales[os]) obrasSociales[os] = { exitos: 0, omitidos: 0 };
+                if (reg.estado === 'EXITO') obrasSociales[os].exitos++;
+                else obrasSociales[os].omitidos++;
+            });
+
+            // KPIs
+            const totalProcesados = totalExitos + totalOmitidos;
+            document.getElementById('totalGlobal').innerText = totalProcesados;
+            document.getElementById('exitosGlobal').innerText = totalExitos;
+            document.getElementById('omitidosGlobal').innerText = totalOmitidos;
+            document.getElementById('efectividadGlobal').innerText = totalProcesados > 0 ? ((totalExitos / totalProcesados) * 100).toFixed(1) + '%' : '0%';
+
+            // Render Usuarios + Alerta de Inactividad (15 mins)
+            let htmlUsuarios = '';
+            const ahora = new Date();
+            Object.keys(usuarios).forEach(usr => {
+                const u = usuarios[usr];
+                const procesados = u.exitos + u.omitidos;
+                
+                // 🎯 FÓRMULA DE PENDIENTES
+                const loteTotal = LOTES_POR_DEFECTO[usr] || 1000;
+                const pendientes = Math.max(0, loteTotal - procesados);
+                
+                const efec = procesados > 0 ? ((u.exitos / procesados) * 100).toFixed(0) : 0;
+
+                // Detectar Inactividad
+                let esInactivo = false;
+                if (u.ultimoEnvio && selector.value === fechaHoyStr) {
+                    const partes = u.ultimoEnvio.split(':');
+                    if (partes.length >= 2) {
+                        const ultEnvioDate = new Date();
+                        ultEnvioDate.setHours(parseInt(partes[0]), parseInt(partes[1]), parseInt(partes[2] || 0));
+                        const diffMinutos = (ahora - ultEnvioDate) / 1000 / 60;
+                        if (diffMinutos > 15) esInactivo = true;
+                    }
+                }
+
+                htmlUsuarios += `
+                    <div class="user-card ${esInactivo ? 'inactive' : ''}">
+                        <div class="user-name">
+                            <span>💻 ${usr}</span>
+                            <span class="time-badge ${esInactivo ? 'alert' : ''}">${esInactivo ? '⚠️ INACTIVO (>15m)' : 'Último: ' + (u.ultimoEnvio || '-')}</span>
+                        </div>
+                        <div class="user-stats-grid">
+                            <div class="stat-item"><span style="color:#4ade80;">Cargados</span><span class="stat-num" style="color:#4ade80;">${u.exitos}</span></div>
+                            <div class="stat-item"><span style="color:#38bdf8;">Pendientes</span><span class="stat-num" style="color:#38bdf8;">${pendientes}</span></div>
+                            <div class="stat-item"><span style="color:#facc15;">Omitidos</span><span class="stat-num" style="color:#facc15;">${u.omitidos}</span></div>
+                            <div class="stat-item"><span style="color:#c084fc;">Efectividad</span><span class="stat-num" style="color:#c084fc;">${efec}%</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('contenedorUsuarios').innerHTML = htmlUsuarios;
+
+            // Render OS
+            let htmlOS = '';
+            Object.keys(obrasSociales).forEach(os => {
+                htmlOS += `<tr><td><strong>${os}</strong></td><td style="text-align:center; color:#4ade80; font-weight:bold;">${obrasSociales[os].exitos}</td><td style="text-align:center; color:#facc15; font-weight:bold;">${obrasSociales[os].omitidos}</td></tr>`;
+            });
+            document.getElementById('contenedorOS').innerHTML = htmlOS || '<tr><td colspan="3" style="text-align:center;">Sin datos</td></tr>';
+
+            // Render Omitidos
+            document.getElementById('contenedorOmitidos').innerHTML = omitidosTablaHtml || '<tr><td colspan="4" style="text-align:center; color:#64748b;">No hay casos omitidos hoy</td></tr>';
+
+            // Chart
+            renderChart(horasMap);
+        }
+
+        function renderChart(horasMap) {
+            const ctx = document.getElementById('ritmoChart').getContext('2d');
+            const labels = Object.keys(horasMap).sort();
+            const values = labels.map(h => horasMap[h]);
+
+            if (ritmoChartInstance) ritmoChartInstance.destroy();
+
+            ritmoChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['08:00', '09:00', '10:00', '11:00'],
+                    datasets: [{
+                        label: 'Pacientes Procesados',
+                        data: values.length ? values : [0, 0, 0, 0],
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Exportador CSV
+        window.exportarCSV = function() {
+            if (!rawDataGlobal) return alert("No hay datos para exportar.");
+            let csv = "Hora,Usuario,DNI,Especialidad,Estado,Detalle\n";
+            Object.values(rawDataGlobal).forEach(r => {
+                if (r) csv += `"${r.timestamp || ''}","${r.usuario || ''}","${r.dni || ''}","${r.especialidad || ''}","${r.estado || ''}","${r.detalle || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Reporte_CIPRES_${selector.value}.csv`;
+            link.click();
+        };
+
+        // Copiar DNIs Omitidos
+        window.copiarDniOmitidos = function() {
+            if (!dnisOmitidosList.length) return alert("No hay DNIs omitidos para copiar.");
+            navigator.clipboard.writeText(dnisOmitidosList.join("\n"));
+            alert(`✅ ${dnisOmitidosList.length} DNIs copiados al portapapeles.`);
+        };
+
+        // Modo TV
+        window.toggleTV = function() {
+            document.body.classList.toggle('kiosk-mode');
+        };
+
+        // Reset día
+        window.confirmarLimpieza = function() {
+            const fechaSeleccionada = selector.value;
+            const pass = prompt(`⚠️ ATENCIÓN: Se borrarán los registros del día ${fechaSeleccionada}.\nIngresa la contraseña:`);
+            if (pass === ADMIN_PASSWORD) {
+                remove(ref(db, `registros/${fechaSeleccionada}`))
+                    .then(() => alert("✅ Registros eliminados."))
+                    .catch((err) => alert("❌ Error: " + err.message));
+            } else if (pass !== null) alert("❌ Contraseña incorrecta.");
+        };
+
+        escucharFecha(fechaHoyStr);
+    </script>
+</body>
+</html>
