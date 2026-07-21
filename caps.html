@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Registros CAPS - La Costa</title>
-    <!-- Fuente Montserrat -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -17,6 +17,8 @@
             --brand-blue-hover: #003d82;
             --btn-bg: #f8fafc;
             --border-color: #e2e8f0;
+            --warning-orange: #d97706;
+            --warning-hover: #b45309;
         }
 
         * {
@@ -226,11 +228,24 @@
             border-color: var(--brand-blue);
         }
 
+        .btn-warning {
+            background-color: var(--warning-orange);
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        .btn-warning:hover {
+            background-color: var(--warning-hover);
+        }
+
         .btn-danger {
             background-color: #ef4444;
             color: white;
             padding: 6px 12px;
             font-size: 0.8rem;
+            border-radius: 6px;
         }
 
         .btn-danger:hover {
@@ -243,6 +258,13 @@
             gap: 10px;
             margin-bottom: 15px;
             flex-wrap: wrap;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         /* HISTORIAL */
@@ -337,9 +359,9 @@
 <div class="container">
 
     <!-- FORMULARIO DE CARGA -->
-    <div class="card">
+    <div class="card" id="seccionFormulario">
         <div class="card-header">
-            <h2>Cargar Datos Mensuales</h2>
+            <h2 id="tituloFormulario">Cargar Datos Mensuales</h2>
         </div>
         
         <div class="form-group-inline">
@@ -450,6 +472,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+    // CLAVE DE ACCESO PARA MODIFICAR / ELIMINAR (Cámbiala si lo deseas)
+    const CLAVE_ADMIN = "Cristo25";
+
     const firebaseConfig = { 
         databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
     };
@@ -493,7 +518,7 @@
         document.getElementById(`sinDiag_${index}`).innerText = sinDiag;
     }
 
-    // Guardado exclusivo en el nodo 'caps_registros'
+    // Escuchar cambios únicamente en el nodo 'caps_registros'
     const capsRef = ref(db, 'caps_registros');
     onValue(capsRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
@@ -518,7 +543,7 @@
         const registroId = `${idCapLimpio}_Mes_${mes}`;
 
         if (baseDeDatos[registroId]) {
-            if (!confirm(`Ya existen datos cargados para ${caps} en el Mes ${mes}. ¿Deseas reemplazar este registro?`)) {
+            if (!confirm(`Ya existen datos para ${caps} en el Mes ${mes}. ¿Deseas guardar los cambios?`)) {
                 return;
             }
         }
@@ -527,12 +552,15 @@
 
         set(ref(db, 'caps_registros/' + registroId), nuevoRegistro)
             .then(() => {
-                alert('¡El registro se guardó correctamente en la nube!');
+                alert('¡El registro se guardó correctamente!');
                 document.getElementById('formCarga').reset();
+                document.getElementById('selectCaps').disabled = false;
+                document.getElementById('selectMes').disabled = false;
+                document.getElementById('tituloFormulario').innerText = "Cargar Datos Mensuales";
                 ESPECIALIDADES.forEach((_, i) => calcularSinDiagnostico(i));
             })
             .catch((error) => {
-                alert('Error al guardar en la nube: ' + error.message);
+                alert('Error al guardar: ' + error.message);
             });
     });
 
@@ -607,14 +635,25 @@
                             </tbody>
                         </table>
                     </div>
-                    <div style="text-align: right; margin-top: 8px;">
-                        <button class="btn btn-danger btn-eliminar" data-caps="${registro.caps}" data-mes="${registro.mes}">Eliminar registro</button>
+                    <div class="card-actions">
+                        <button class="btn btn-warning btn-modificar" data-caps="${registro.caps}" data-mes="${registro.mes}">✏️ Modificar</button>
+                        <button class="btn btn-danger btn-eliminar" data-caps="${registro.caps}" data-mes="${registro.mes}">🗑️ Eliminar</button>
                     </div>
                 `;
                 contenedor.appendChild(card);
             });
         });
 
+        // Eventos de botones Modificar
+        document.querySelectorAll('.btn-modificar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const caps = e.target.getAttribute('data-caps');
+                const mes = e.target.getAttribute('data-mes');
+                modificarRegistro(caps, mes);
+            });
+        });
+
+        // Eventos de botones Eliminar
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const caps = e.target.getAttribute('data-caps');
@@ -624,12 +663,59 @@
         });
     }
 
+    function modificarRegistro(caps, mes) {
+        const pass = prompt(`Introduce la contraseña autorizada para modificar los datos de ${caps} - Mes ${mes}:`);
+        if (pass === null) return; // Cancelado
+
+        if (pass !== CLAVE_ADMIN) {
+            alert("❌ Contraseña incorrecta. No tienes permisos para editar.");
+            return;
+        }
+
+        const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
+        const registroId = `${idCapLimpio}_Mes_${mes}`;
+        const registro = baseDeDatos[registroId];
+
+        if (!registro) return;
+
+        // Cargar datos en el formulario superior
+        document.getElementById('selectCaps').value = registro.caps;
+        document.getElementById('selectMes').value = registro.mes;
+        document.getElementById('selectCaps').disabled = true;
+        document.getElementById('selectMes').disabled = true;
+
+        document.getElementById('totalPacientesInput').value = registro.totalPacientes;
+
+        registro.detalle.forEach((det, index) => {
+            const inputPlanillas = document.getElementById(`planillas_${index}`);
+            const inputConDiag = document.getElementById(`conDiag_${index}`);
+            
+            if (inputPlanillas) inputPlanillas.value = det.planillas;
+            if (inputConDiag) inputConDiag.value = det.conDiag;
+            calcularSinDiagnostico(index);
+        });
+
+        document.getElementById('tituloFormulario').innerText = `✏️ Editando: ${registro.caps} (Mes ${registro.mes})`;
+        
+        // Desplazar suavemente hasta el formulario
+        document.getElementById('seccionFormulario').scrollIntoView({ behavior: 'smooth' });
+    }
+
     function eliminarRegistro(caps, mes) {
-        if (confirm(`¿Eliminar de la nube el registro de ${caps} para el Mes ${mes}?`)) {
+        const pass = prompt(`Introduce la contraseña autorizada para ELIMINAR el registro de ${caps} - Mes ${mes}:`);
+        if (pass === null) return;
+
+        if (pass !== CLAVE_ADMIN) {
+            alert("❌ Contraseña incorrecta. No tienes permisos para borrar.");
+            return;
+        }
+
+        if (confirm(`¿Estás completamente seguro de borrar definitivamente el registro de ${caps} para el Mes ${mes}?`)) {
             const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
             const registroId = `${idCapLimpio}_Mes_${mes}`;
 
             remove(ref(db, 'caps_registros/' + registroId))
+                .then(() => alert("Registro eliminado con éxito."))
                 .catch(error => alert("Error al eliminar: " + error.message));
         }
     }
