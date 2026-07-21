@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Registros CAPS - La Costa</title>
-    <link rel="icon" type="image/jpeg" href="icono.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Fuente Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -450,16 +450,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // Configuración usando tu base de datos existente
     const firebaseConfig = { 
         databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Especialidades fijas
     const ESPECIALIDADES = [
         "MEDICO CLINICO", "PSICOLOGIA", "NUTRICIONISTA", "PEDIATRA", 
         "OBSTETRICIA", "GINECOLOGIA", "DIABETOLOGIA", "FONOAUDIOLOGIA", 
@@ -482,7 +479,6 @@
             `;
             tbody.appendChild(tr);
 
-            // Escuchar eventos de cálculo dinámico
             tr.querySelectorAll('input').forEach(input => {
                 input.addEventListener('input', () => calcularSinDiagnostico(index));
             });
@@ -497,14 +493,13 @@
         document.getElementById(`sinDiag_${index}`).innerText = sinDiag;
     }
 
-    // Leer los datos en tiempo real desde la ruta '/caps_registros'
+    // Guardado exclusivo en el nodo 'caps_registros'
     const capsRef = ref(db, 'caps_registros');
     onValue(capsRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
         renderizarHistorial();
     });
 
-    // Guardar registro en Firebase
     document.getElementById('formCarga').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -519,7 +514,6 @@
             return { especialidad: esp, planillas, conDiag, sinDiag };
         });
 
-        // Limpiar el ID para evitar símbolos no permitidos en rutas de Firebase
         const idCapLimpio = caps.replace(/[\.\#\$\[\]\/]/g, "_");
         const registroId = `${idCapLimpio}_Mes_${mes}`;
 
@@ -531,7 +525,6 @@
 
         const nuevoRegistro = { caps, mes, totalPacientes, detalle };
 
-        // Escribir en Firebase Realtime Database
         set(ref(db, 'caps_registros/' + registroId), nuevoRegistro)
             .then(() => {
                 alert('¡El registro se guardó correctamente en la nube!');
@@ -622,7 +615,6 @@
             });
         });
 
-        // Event listener para eliminar
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const caps = e.target.getAttribute('data-caps');
