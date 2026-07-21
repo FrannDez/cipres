@@ -38,7 +38,7 @@
         .user-card { background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #334155; border-left: 5px solid #38bdf8; }
         .user-card.inactive { border-left-color: #ef4444 !important; background: #22151d; }
         .user-name { font-weight: bold; font-size: 14px; color: #f1f5f9; display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .user-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #0f172a; padding: 8px; border-radius: 6px; text-align: center; font-size: 11px; }
+        .user-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; background: #0f172a; padding: 8px; border-radius: 6px; text-align: center; font-size: 11px; }
         .stat-item { display: flex; flex-direction: column; }
         .stat-num { font-weight: bold; font-size: 13px; margin-top: 2px; }
         .time-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #0f172a; color: #94a3b8; }
@@ -166,13 +166,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 💡 Lotes iniciales por PC para calcular pendientes (Ajusta según las cargas asignadas)
-        const LOTES_POR_DEFECTO = {
-            "Frann": 996, // (597 procesados + 399 restantes)
-            "PC1": 500,
-            "PC2": 500
-        };
-
         const ADMIN_PASSWORD = "1234"; 
         let rawDataGlobal = null;
         let dnisOmitidosList = [];
@@ -272,11 +265,6 @@
             Object.keys(usuarios).forEach(usr => {
                 const u = usuarios[usr];
                 const procesados = u.exitos + u.omitidos;
-                
-                // 🎯 FÓRMULA DE PENDIENTES
-                const loteTotal = LOTES_POR_DEFECTO[usr] || 1000;
-                const pendientes = Math.max(0, loteTotal - procesados);
-                
                 const efec = procesados > 0 ? ((u.exitos / procesados) * 100).toFixed(0) : 0;
 
                 // Detectar Inactividad
@@ -299,7 +287,6 @@
                         </div>
                         <div class="user-stats-grid">
                             <div class="stat-item"><span style="color:#4ade80;">Cargados</span><span class="stat-num" style="color:#4ade80;">${u.exitos}</span></div>
-                            <div class="stat-item"><span style="color:#38bdf8;">Pendientes</span><span class="stat-num" style="color:#38bdf8;">${pendientes}</span></div>
                             <div class="stat-item"><span style="color:#facc15;">Omitidos</span><span class="stat-num" style="color:#facc15;">${u.omitidos}</span></div>
                             <div class="stat-item"><span style="color:#c084fc;">Efectividad</span><span class="stat-num" style="color:#c084fc;">${efec}%</span></div>
                         </div>
