@@ -97,7 +97,7 @@
         const DIAG_DEFECTO = { cod: "A97", txt: "A97 - SIN ENFERMEDAD" };
         let listaJSONResultado = [];
 
-        // Carga automática del JSON de 1.466 diagnósticos
+// Carga automática del JSON de 1.466 diagnósticos (SE MANTIENE IGUAL)
         async function cargarCatalogo() {
             const elEstado = document.getElementById("estadoCatalogo");
             try {
@@ -115,26 +115,62 @@
             }
         }
 
-        // Algoritmo Fuzzy Match por coincidencia de tokens/palabras
+        // =========================================================
+        // REEMPLAZAR DESDE AQUÍ HACIA ABAJO CON EL NUEVO CÓDIGO
+        // =========================================================
+
+        // Palabras vacías a ignorar
+        const STOPWORDS = new Set(["de", "del", "la", "el", "los", "las", "un", "una", "para", "por", "con", "en", "a", "o", "y", "realizada", "situacion", "toma", "muestra"]);
+
+        // Algoritmo con filtro de conectores y normalización
         function calcularSimilitud(textoInput, textoObjetivo) {
             if (!textoInput || !textoObjetivo) return 0;
-            const str1 = textoInput.toLowerCase().trim();
-            const str2 = textoObjetivo.toLowerCase().trim();
+
+            const normalizar = (str) => str.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s]/g, "");
+
+            const str1 = normalizar(textoInput);
+            const str2 = normalizar(textoObjetivo);
 
             if (str1 === str2) return 1;
-            if (str2.includes(str1) || str1.includes(str2)) return 0.85;
 
-            const tokens1 = str1.split(/\s+/);
-            const tokens2 = str2.split(/\s+/);
+            const tokens1 = str1.split(/\s+/).filter(t => t.length > 2 && !STOPWORDS.has(t));
+            const tokens2 = str2.split(/\s+/).filter(t => t.length > 2 && !STOPWORDS.has(t));
+
+            if (tokens1.length === 0 || tokens2.length === 0) return 0;
+
             let coincidencias = 0;
-
             tokens1.forEach(t1 => {
-                if (t1.length > 2 && tokens2.some(t2 => t2.includes(t1) || t1.includes(t2))) {
+                if (tokens2.some(t2 => t2 === t1 || (t1.length > 4 && (t2.includes(t1) || t1.includes(t2))))) {
                     coincidencias++;
                 }
             });
 
             return coincidencias / Math.max(tokens1.length, tokens2.length);
+        }
+
+        // Motor Inteligente Ajustado
+        function inferirDiagnostico(diagCrudo) {
+            if (!diagCrudo || diagCrudo.trim() === "" || diagCrudo.toLowerCase().includes("diagnostico")) {
+                return DIAG_DEFECTO;
+            }
+
+            let mejorCandidato = DIAG_DEFECTO;
+            let mejorPuntaje = 0;
+
+            for (let i = 0; i < CAT_CIPRES.length; i++) {
+                const item = CAT_CIPRES[i];
+                const puntaje = calcularSimilitud(diagCrudo, item.txt);
+                
+                if (puntaje > mejorPuntaje) {
+                    mejorPuntaje = puntaje;
+                    mejorCandidato = item;
+                    if (puntaje > 0.85) break;
+                }
+            }
+
+            return mejorPuntaje >= 0.5 ? mejorCandidato : DIAG_DEFECTO;
         }
 
         // Motor IA: Evalúa el diagnóstico crudo sobre los 1.466 registros
