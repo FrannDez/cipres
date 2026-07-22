@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor Hospital -> CIPRES (CIE-10 AI)</title>
+    <!-- Tailwind CSS para interfaz estética -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- ENCABEZADO Y ESTADO DEL CATÁLOGO -->
+        <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-sky-600 flex items-center gap-2">
+                    🏥 Conversor CIPRES <span class="text-xs bg-sky-100 text-sky-700 font-bold px-2.5 py-1 rounded-md">v2.0 Standalone</span>
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">
+                    Municipalidad de La Costa • Mapeador Inteligente CIE-10 para Tampermonkey
+                </p>
+            </div>
+            
+            <div id="estadoCatalogo" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-200 flex items-center gap-2">
+                <span class="animate-ping inline-flex h-2 w-2 rounded-full bg-amber-400 opacity-75"></span>
+                Cargando 1.466 diagnósticos...
+            </div>
+        </header>
+
+        <!-- SECCIÓN 1: ENTRADA DE DATOS (HOJA HOSPITAL) -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <label for="txtEntrada" class="block text-sm font-bold text-slate-700">
+                    1. Pegar Filas Copiadas de la Hoja 1 (Excel del Hospital)
+                </label>
+                <span class="text-xs text-slate-400 font-mono">Formato tabular (\t)</span>
+            </div>
+
+            <textarea id="txtEntrada" class="w-full h-40 bg-slate-50 border-2 border-sky-200 rounded-lg p-3 text-xs font-mono focus:border-sky-500 focus:outline-none transition" placeholder="Pega aquí las filas (Fecha | Apellido y Nombre | Documento | Sexo | Edad | Especialidad | Diagnostico)..."></textarea>
+            
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <button onclick="procesarEntrada()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 px-6 rounded-lg text-sm transition shadow-sm flex items-center gap-2">
+                    ⚡ Interpretar Diagnósticos y Procesar
+                </button>
+                <button onclick="limpiarTodo()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-lg text-xs transition">
+                    🗑️ Limpiar Todo
+                </button>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: VISTA PREVIA Y EXPORTACIÓN -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                <div>
+                    <h2 class="text-lg font-bold text-purple-700">2. Vista Previa Hoja CIPRES Mapeada</h2>
+                    <span id="cantRegistros" class="text-xs text-slate-500 font-semibold">0 registros listos</span>
+                </div>
+                <button onclick="copiarJSON()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-5 rounded-lg text-xs transition shadow-sm flex items-center gap-2">
+                    📋 Copiar JSON para Tampermonkey
+                </button>
+            </div>
+
+            <div class="overflow-x-auto max-h-[450px] border border-slate-100 rounded-lg">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-50 text-slate-600 sticky top-0 border-b border-slate-200 shadow-sm">
+                        <tr>
+                            <th class="p-2.5 border-b">Fecha</th>
+                            <th class="p-2.5 border-b">Paciente</th>
+                            <th class="p-2.5 border-b">DNI</th>
+                            <th class="p-2.5 border-b">Sexo</th>
+                            <th class="p-2.5 border-b">Especialidad</th>
+                            <th class="p-2.5 border-b">Diag. Crudo</th>
+                            <th class="p-2.5 border-b">Cod CIPRES</th>
+                            <th class="p-2.5 border-b">Interpretación IA CIPRES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbResultados" class="divide-y divide-slate-100 font-mono">
+                        <tr>
+                            <td colspan="8" class="text-center py-12 text-slate-400 font-sans">
+                                Pegá las filas arriba y hacé clic en <strong>"Interpretar Diagnósticos y Procesar"</strong>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- LÓGICA DE PROCESAMIENTO E INTELIGENCIA DE BÚSQUEDA -->
+    <script>
+        // 🔗 Reemplaza este link por la URL real donde tengas tu cie10_cipres.json (o usa la ruta relativa "./cie10_cipres.json")
+        const URL_CATALOGO_JSON = "https://raw.githubusercontent.com/tu-usuario/tu-repo/main/cie10_cipres.json";
+
+        let CAT_CIPRES = [];
+        const DIAG_DEFECTO = { cod: "A97", txt: "A97 - SIN ENFERMEDAD" };
+        let listaJSONResultado = [];
+
+        // Carga automática del JSON de 1.466 diagnósticos
+        async function cargarCatalogo() {
+            const elEstado = document.getElementById("estadoCatalogo");
+            try {
+                const resp = await fetch(URL_CATALOGO_JSON);
+                if (!resp.ok) throw new Error("HTTP " + resp.status);
+                CAT_CIPRES = await resp.json();
+                
+                elEstado.className = "bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-200";
+                elEstado.innerHTML = `✅ Catálogo Base: ${CAT_CIPRES.length} Diagnósticos`;
+            } catch (err) {
+                console.warn("No se pudo cargar el catálogo externo. Revisa la URL.", err);
+                CAT_CIPRES = [DIAG_DEFECTO];
+                elEstado.className = "bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1.5 rounded-full border border-rose-200";
+                elEstado.innerHTML = "⚠️ Error al cargar cie10_cipres.json";
+            }
+        }
+
+        // Algoritmo Fuzzy Match por coincidencia de tokens/palabras
+        function calcularSimilitud(textoInput, textoObjetivo) {
+            if (!textoInput || !textoObjetivo) return 0;
+            const str1 = textoInput.toLowerCase().trim();
+            const str2 = textoObjetivo.toLowerCase().trim();
+
+            if (str1 === str2) return 1;
+            if (str2.includes(str1) || str1.includes(str2)) return 0.85;
+
+            const tokens1 = str1.split(/\s+/);
+            const tokens2 = str2.split(/\s+/);
+            let coincidencias = 0;
+
+            tokens1.forEach(t1 => {
+                if (t1.length > 2 && tokens2.some(t2 => t2.includes(t1) || t1.includes(t2))) {
+                    coincidencias++;
+                }
+            });
+
+            return coincidencias / Math.max(tokens1.length, tokens2.length);
+        }
+
+        // Motor IA: Evalúa el diagnóstico crudo sobre los 1.466 registros
+        function inferirDiagnostico(diagCrudo) {
+            if (!diagCrudo || diagCrudo.trim() === "" || diagCrudo.toLowerCase().includes("diagnostico")) {
+                return DIAG_DEFECTO;
+            }
+
+            let mejorCandidato = DIAG_DEFECTO;
+            let mejorPuntaje = 0;
+
+            for (let i = 0; i < CAT_CIPRES.length; i++) {
+                const item = CAT_CIPRES[i];
+                const puntaje = calcularSimilitud(diagCrudo, item.txt);
+                
+                if (puntaje > mejorPuntaje) {
+                    mejorPuntaje = puntaje;
+                    mejorCandidato = item;
+                    if (puntaje === 1) break; // Coincidencia 100% exacta
+                }
+            }
+
+            return mejorPuntaje >= 0.25 ? mejorCandidato : DIAG_DEFECTO;
+        }
+
+        function procesarEntrada() {
+            const rawText = document.getElementById("txtEntrada").value.trim();
+            if (!rawText) return alert("Por favor, pegá primero las filas del Excel.");
+
+            const lineas = rawText.split('\n');
+            const tb = document.getElementById("tbResultados");
+            tb.innerHTML = "";
+            listaJSONResultado = [];
+
+            lineas.forEach(linea => {
+                const cols = linea.split('\t').map(c => c.trim());
+                if (cols.length < 3) return;
+
+                let fecha = cols[0] || "";
+                let nombre = cols[1] || "";
+                let dni = cols[2] ? cols[2].replace(/DNI\s*/i, '').replace(/\./g, '').trim() : "";
+                let sexo = cols[5] || cols[4] || "";
+                let especialidad = cols[7] || cols[6] || "";
+                let diagCrudo = cols[cols.length - 1] || "";
+
+                // Mapeo inteligente con la base de datos
+                const diagInferred = inferirDiagnostico(diagCrudo);
+
+                const objJSON = {
+                    fecha: fecha,
+                    dni: dni,
+                    sexo: sexo.toUpperCase(),
+                    especialidad: especialidad.toUpperCase(),
+                    diag_cod: diagInferred.cod,
+                    diag_txt: diagInferred.txt
+                };
+
+                listaJSONResultado.push(objJSON);
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-2.5 border-b">${fecha}</td>
+                    <td class="p-2.5 border-b font-sans">${nombre}</td>
+                    <td class="p-2.5 border-b font-bold text-sky-600">${dni}</td>
+                    <td class="p-2.5 border-b">${sexo}</td>
+                    <td class="p-2.5 border-b font-sans">${especialidad}</td>
+                    <td class="p-2.5 border-b italic text-slate-500">${diagCrudo || '<span class="text-slate-300">(vacío)</span>'}</td>
+                    <td class="p-2.5 border-b font-bold text-purple-700">${diagInferred.cod}</td>
+                    <td class="p-2.5 border-b text-emerald-700 font-sans">${diagInferred.txt}</td>
+                `;
+                tb.appendChild(tr);
+            });
+
+            document.getElementById("cantRegistros").innerText = `${listaJSONResultado.length} registros listos`;
+        }
+
+        function copiarJSON() {
+            if (!listaJSONResultado.length) return alert("No hay datos cargados para copiar.");
+            navigator.clipboard.writeText(JSON.stringify(listaJSONResultado, null, 2));
+            alert("✅ JSON copiado al portapapeles. ¡Listo para pegar en Tampermonkey!");
+        }
+
+        function limpiarTodo() {
+            document.getElementById("txtEntrada").value = "";
+            document.getElementById("tbResultados").innerHTML = '<tr><td colspan="8" class="text-center py-12 text-slate-400 font-sans">Pegá las filas arriba y hacé clic en <strong>"Interpretar Diagnósticos y Procesar"</strong>.</td></tr>';
+            document.getElementById("cantRegistros").innerText = "0 registros listos";
+            listaJSONResultado = [];
+        }
+
+        // Carga inicial al abrir el archivo
+        cargarCatalogo();
+    </script>
+</body>
+</html>
