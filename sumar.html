@@ -6,267 +6,12 @@
     <title>SUMAR Expedientes - La Costa</title>
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --card-bg: #ffffff;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --brand-blue: #0056b3;
-            --brand-blue-hover: #003d82;
-            --btn-bg: #f8fafc;
-            --border-color: #e2e8f0;
-            --warning-orange: #d97706;
-            --warning-hover: #b45309;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        body {
-            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
-            color: var(--text-dark);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            overflow-x: hidden;
-            padding-bottom: 140px;
-        }
-
-        header {
-            margin: 25px 15px 20px;
-            text-align: center;
-            z-index: 10;
-            width: 100%;
-        }
-
-        .logo-container {
-            width: 180px;
-            max-width: 80%;
-            margin: 0 auto 15px;
-        }
-
-        .logo-img {
-            width: 100%;
-            height: auto;
-            display: block;
-            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
-        }
-
-        header h1 {
-            color: #ffffff;
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            padding: 0 10px;
-        }
-
-        header p {
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        .container {
-            width: 95%;
-            max-width: 1000px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
-        }
-
-        @media (min-width: 768px) {
-            .card { padding: 24px; }
-            header h1 { font-size: 1.6rem; }
-            .logo-container { width: 230px; }
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 10px;
-        }
-
-        .card-header h2 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--brand-blue);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 600px) {
-            .form-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        label {
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.85rem;
-        }
-
-        input, select {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.85rem;
-            background-color: var(--btn-bg);
-            color: var(--text-dark);
-            font-weight: 600;
-            outline: none;
-            width: 100%;
-        }
-
-        .input-prefix-suffix {
-            display: flex;
-            align-items: center;
-            background: var(--btn-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .input-prefix-suffix span {
-            background-color: #e2e8f0;
-            padding: 10px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--brand-blue-hover);
-            white-space: nowrap;
-        }
-
-        .input-prefix-suffix input {
-            border: none;
-            border-radius: 0;
-            background: transparent;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--brand-blue);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn:hover { background-color: var(--brand-blue-hover); }
-        .btn-block { width: 100%; margin-top: 15px; }
-
-        .btn-warning {
-            background-color: var(--warning-orange);
-            color: white;
-            padding: 6px 10px;
-            font-size: 0.78rem;
-            border-radius: 6px;
-        }
-
-        .btn-danger {
-            background-color: #ef4444;
-            color: white;
-            padding: 6px 10px;
-            font-size: 0.78rem;
-            border-radius: 6px;
-        }
-
-        /* TABLA DE REGISTROS */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            margin-top: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #ffffff;
-        }
-
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 10px 8px;
-            text-align: center;
-            font-size: 0.8rem;
-        }
-
-        th {
-            background-color: var(--brand-blue);
-            color: white;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        /* Olas Animadas */
-        .waves-container {
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100%; height: 120px;
-            overflow: hidden; pointer-events: none;
-            z-index: 1;
-        }
-
-        .wave {
-            position: absolute;
-            bottom: 0; left: 0;
-            width: 200%; height: 100%;
-            background-repeat: repeat-x;
-        }
-
-        .wave1 {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
-            animation: waveMove 22s linear infinite;
-        }
-
-        .wave2 {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
-            animation: waveMove 16s linear infinite reverse;
-        }
-
-        @keyframes waveMove {
-            0% { translate: 0 0; }
-            100% { translate: -50% 0; }
-        }
-    </style>
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
+
+<!-- NOTIFICACIÓN TOAST PERSONALIZADA -->
+<div id="toast" class="toast">¡Expediente guardado exitosamente!</div>
 
 <header>
     <div class="logo-container">
@@ -301,7 +46,7 @@
                     </select>
                 </div>
 
-                <div class="input-group" style="grid-column: span 1;">
+                <div class="input-group full-width">
                     <label for="numExpediente">N° Expediente (Solo número):</label>
                     <div class="input-prefix-suffix">
                         <span id="prefixExp">EX-2026-</span>
@@ -310,30 +55,30 @@
                     </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group full-width">
                     <label for="fechaPase">Fecha de Pase:</label>
                     <input type="text" id="fechaPase" placeholder="Ej: 18/12/25 o Pase 3/3/26">
                 </div>
 
-                <div class="input-group">
-                    <label for="numIF">Informe (IF):</label>
+                <div class="input-group full-width">
+                    <label for="numIF">Informe Gráfico (IFGRA):</label>
                     <div class="input-prefix-suffix">
                         <span>GDEBA-IF-</span>
                         <span id="anioIF">2026</span>
                         <span>-</span>
                         <input type="text" id="numIF" placeholder="17080773">
-                        <span>-GDEBA</span>
+                        <span>-GDEBA-DPFSSMSALGP</span>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label for="numPV">Pase/Prov (PV):</label>
+                <div class="input-group full-width">
+                    <label for="numPV">Providencia (PV):</label>
                     <div class="input-prefix-suffix">
                         <span>PV-</span>
                         <span id="anioPV">2026</span>
                         <span>-</span>
                         <input type="text" id="numPV" placeholder="17085875">
-                        <span>-GDEBA</span>
+                        <span>-GDEBA-DPFSSMSALGP</span>
                     </div>
                 </div>
 
@@ -349,20 +94,20 @@
             <h2>Expedientes Registrados</h2>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive responsive-form-table">
             <table>
                 <thead>
                     <tr>
                         <th>Período</th>
                         <th>N° Expediente</th>
                         <th>Fecha Pase</th>
-                        <th>IF</th>
-                        <th>PV</th>
+                        <th>IFGRA (Informe)</th>
+                        <th>PV (Providencia)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tablaExpedientesBody">
-                    <tr><td colspan="6">Cargando expediente desde la nube...</td></tr>
+                    <tr><td colspan="6">Cargando expedientes desde la nube...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -389,7 +134,7 @@
 
     let baseDeDatos = {};
 
-    // Dinamismo para los Años del Expediente
+    // Elementos del DOM
     const selectAnio = document.getElementById('anioExp');
     const prefixExp = document.getElementById('prefixExp');
     const anioIF = document.getElementById('anioIF');
@@ -402,14 +147,33 @@
         anioPV.innerText = anio;
     });
 
-    // Leer Datos de Firebase Realtime
+    // Función para mostrar notificaciones estéticas (Toast)
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Copiar al portapapeles
+    window.copiarTexto = function(texto, etiqueta) {
+        if (!texto || texto === '-') return;
+        navigator.clipboard.writeText(texto).then(() => {
+            mostrarToast(`¡${etiqueta} copiado al portapapeles!`);
+        }).catch(() => {
+            mostrarToast("Error al copiar", true);
+        });
+    };
+
+    // Firebase: Leer Datos
     const expRef = ref(db, 'sumar_expedientes');
     onValue(expRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
         renderizarTabla();
     });
 
-    // Guardar / Actualizar
+    // Guardar o Actualizar
     document.getElementById('formExpediente').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -423,10 +187,10 @@
         const rawIF = document.getElementById('numIF').value.trim();
         const rawPV = document.getElementById('numPV').value.trim();
 
-        // Formateos completos
+        // Formateos con sufijos unificados
         const fullExp = `EX-${anio}-${numExp}-GDEBA-DPFSSMSALGP`;
-        const fullIF = rawIF ? `GDEBA-IF-${anio}-${rawIF}-GDEBA` : '-';
-        const fullPV = rawPV ? `PV-${anio}-${rawPV}-GDEBA` : '-';
+        const fullIF = rawIF ? `GDEBA-IF-${anio}-${rawIF}-GDEBA-DPFSSMSALGP` : '-';
+        const fullPV = rawPV ? `PV-${anio}-${rawPV}-GDEBA-DPFSSMSALGP` : '-';
 
         const nuevoRegistro = {
             id, periodo, anio, numExp, fechaPase, rawIF, rawPV,
@@ -435,10 +199,10 @@
 
         set(ref(db, 'sumar_expedientes/' + id), nuevoRegistro)
             .then(() => {
-                alert('¡Expediente guardado exitosamente!');
+                mostrarToast('¡Expediente guardado exitosamente!');
                 limpiarFormulario();
             })
-            .catch(err => alert('Error al guardar: ' + err.message));
+            .catch(err => mostrarToast('Error al guardar: ' + err.message, true));
     });
 
     function renderizarTabla() {
@@ -453,15 +217,34 @@
 
         lista.forEach(item => {
             const tr = document.createElement('tr');
+            
+            const btnCopyExp = `<button class="btn-copy" onclick="copiarTexto('${item.fullExp}', 'N° Expediente')" title="Copiar N° Expediente">📋</button>`;
+            const btnCopyIF = item.fullIF !== '-' ? `<button class="btn-copy" onclick="copiarTexto('${item.fullIF}', 'IFGRA')" title="Copiar IFGRA">📋</button>` : '';
+            const btnCopyPV = item.fullPV !== '-' ? `<button class="btn-copy" onclick="copiarTexto('${item.fullPV}', 'PV')" title="Copiar PV">📋</button>` : '';
+
             tr.innerHTML = `
-                <td><strong>${item.periodo}</strong></td>
-                <td>${item.fullExp}</td>
-                <td>${item.fechaPase || '-'}</td>
-                <td>${item.fullIF}</td>
-                <td>${item.fullPV}</td>
-                <td>
-                    <button class="btn btn-warning btn-editar" data-id="${item.id}">✏️ Edit</button>
-                    <button class="btn btn-danger btn-eliminar" data-id="${item.id}">🗑️</button>
+                <td data-label="Período"><strong>${item.periodo}</strong></td>
+                <td data-label="N° Expediente">
+                    <div class="cell-copy-container">
+                        <span>${item.fullExp}</span> ${btnCopyExp}
+                    </div>
+                </td>
+                <td data-label="Fecha Pase">${item.fechaPase || '-'}</td>
+                <td data-label="IFGRA (Informe)">
+                    <div class="cell-copy-container">
+                        <span>${item.fullIF}</span> ${btnCopyIF}
+                    </div>
+                </td>
+                <td data-label="PV (Providencia)">
+                    <div class="cell-copy-container">
+                        <span>${item.fullPV}</span> ${btnCopyPV}
+                    </div>
+                </td>
+                <td data-label="Acciones">
+                    <div class="card-actions">
+                        <button class="btn btn-warning btn-editar" data-id="${item.id}">✏️ Edit</button>
+                        <button class="btn btn-danger btn-eliminar" data-id="${item.id}">🗑️</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -491,7 +274,6 @@
         document.getElementById('numIF').value = data.rawIF || '';
         document.getElementById('numPV').value = data.rawPV || '';
 
-        // Disparar evento para actualizar prefijos visuales del año
         selectAnio.dispatchEvent(new Event('change'));
 
         document.getElementById('tituloFormulario').innerText = "✏️ Modificando Expediente";
@@ -504,8 +286,8 @@
 
         if (confirm("¿Seguro que deseas eliminar este expediente?")) {
             remove(ref(db, 'sumar_expedientes/' + id))
-                .then(() => alert("Expediente eliminado."))
-                .catch(err => alert("Error: " + err.message));
+                .then(() => mostrarToast("Expediente eliminado con éxito"))
+                .catch(err => mostrarToast("Error: " + err.message, true));
         }
     }
 

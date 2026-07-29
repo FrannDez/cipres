@@ -29,6 +29,30 @@ body {
     padding-bottom: 140px;
 }
 
+/* NOTIFICACIÓN TOAST */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* HEADER & LOGO */
 header {
     margin: 25px 15px 20px;
@@ -105,7 +129,25 @@ header p {
     letter-spacing: 0.5px;
 }
 
-/* FORMULARIOS E INPUTS */
+/* FORMULARIOS GRID */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+@media (min-width: 600px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .full-width { grid-column: span 2; }
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
 label {
     font-weight: 600;
     color: var(--text-dark);
@@ -130,13 +172,13 @@ input, select {
     background: var(--btn-bg);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .input-prefix-suffix span {
     background-color: #e2e8f0;
     padding: 10px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: var(--brand-blue-hover);
     white-space: nowrap;
@@ -146,6 +188,7 @@ input, select {
     border: none;
     border-radius: 0;
     background: transparent;
+    min-width: 80px;
 }
 
 /* BOTONES */
@@ -168,14 +211,6 @@ input, select {
 .btn:hover { background-color: var(--brand-blue-hover); }
 .btn-block { width: 100%; margin-top: 15px; }
 
-.btn-secondary {
-    background-color: var(--btn-bg);
-    color: var(--text-dark);
-    border: 1px solid var(--border-color);
-    padding: 8px 12px;
-    font-size: 0.8rem;
-}
-
 .btn-warning {
     background-color: var(--warning-orange);
     color: white;
@@ -192,17 +227,36 @@ input, select {
     border-radius: 6px;
 }
 
-/* TABLAS RESPONSIVAS */
+.btn-copy {
+    background: #e2e8f0;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    margin-left: 5px;
+}
+
+.btn-copy:hover { background: #cbd5e1; }
+
+.cell-copy-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    word-break: break-all;
+}
+
+/* TABLAS Y RESPONSIVE EN CELULARES */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 5px;
     background-color: #ffffff;
 }
 
@@ -220,7 +274,69 @@ th {
     font-weight: 700;
 }
 
-/* OLAS ANIMADAS DE FONDO */
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* VISTA CELULAR (Cards verticales para tablas) */
+@media (max-width: 768px) {
+    .responsive-form-table table, 
+    .responsive-form-table thead, 
+    .responsive-form-table tbody, 
+    .responsive-form-table th, 
+    .responsive-form-table td, 
+    .responsive-form-table tr { 
+        display: block; 
+    }
+
+    .responsive-form-table thead tr { 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .responsive-form-table tr { 
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 15px;
+        padding: 12px;
+        background-color: #f8fafc;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .responsive-form-table td { 
+        border: none;
+        border-bottom: 1px dashed var(--border-color);
+        position: relative;
+        padding: 8px 0;
+        text-align: right;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.85rem;
+    }
+
+    .responsive-form-table td:last-child {
+        border-bottom: none;
+        padding-top: 10px;
+    }
+
+    .responsive-form-table td::before { 
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--brand-blue);
+        text-align: left;
+        margin-right: 10px;
+    }
+
+    .cell-copy-container {
+        justify-content: flex-end;
+    }
+}
+
+/* OLAS ANIMADAS */
 .waves-container {
     position: fixed;
     bottom: 0; left: 0;
