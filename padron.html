@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padrón de Pacientes - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<!-- NOTIFICACIÓN TOAST PERSONALIZADA -->
+<div id="toast" class="toast">¡Paciente guardado exitosamente!</div>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Carga y Gestión del Padrón de Pacientes</h1>
+    <p>Secretaría de Salud - Municipalidad de La Costa</p>
+</header>
+
+<div class="container">
+
+    <!-- FORMULARIO DE CARGA / EDICIÓN -->
+    <div class="card" id="seccionFormulario">
+        <div class="card-header">
+            <h2 id="tituloFormulario">Cargar / Editar Paciente</h2>
+        </div>
+
+        <form id="formPaciente">
+            <input type="hidden" id="pacienteId">
+            <div class="form-grid">
+                
+                <div class="input-group full-width">
+                    <label for="nroBeneficio">N° Beneficiario:</label>
+                    <input type="text" id="nroBeneficio" placeholder="Ej: 140228525104" required>
+                </div>
+
+                <div class="input-group full-width">
+                    <label for="nroDoc">N° Documento:</label>
+                    <input type="text" id="nroDoc" placeholder="Ej: 12939119" required>
+                </div>
+
+                <div class="input-group full-width">
+                    <label for="nombreApellido">Nombre y Apellido:</label>
+                    <input type="text" id="nombreApellido" placeholder="Ej: ABACA CARLOS ALBERTO" required style="text-transform: uppercase;">
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Paciente en Padrón</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btnCancelar" style="display: none; margin-top: 10px;">Cancelar Edición</button>
+        </form>
+    </div>
+
+    <!-- LISTADO DE PACIENTES -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Padrón de Beneficiarios Registrados</h2>
+        </div>
+
+        <div class="table-responsive responsive-form-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Beneficio</th>
+                        <th>N° Doc</th>
+                        <th>Nombre y Apellido</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaPacientesBody">
+                    <tr><td colspan="4">Cargando padrón desde la nube...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Clave requerida para modificar o eliminar
+    const CLAVE_ADMIN = "muni";
+
+    const firebaseConfig = { 
+        databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let baseDeDatos = {};
+
+    // Notificaciones Toast
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Firebase: Leer Datos de la carpeta 'padron'
+    const padronRef = ref(db, 'padron');
+    onValue(padronRef, (snapshot) => {
+        baseDeDatos = snapshot.val() || {};
+        renderizarTabla();
+    });
+
+    // Guardar o Actualizar en la carpeta 'padron'
+    document.getElementById('formPaciente').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const idExistente = document.getElementById('pacienteId').value;
+        
+        // Si estamos editando, solicitamos la clave 'muni'
+        if (idExistente) {
+            const pass = prompt("Ingrese la clave para ACTUALIZAR:");
+            if (pass !== CLAVE_ADMIN) {
+                return alert("❌ Clave incorrecta. No tiene permisos para actualizar.");
+            }
+        }
+
+        const id = idExistente || 'pac_' + Date.now();
+        const nroBeneficio = document.getElementById('nroBeneficio').value.trim();
+        const nroDoc = document.getElementById('nroDoc').value.trim();
+        const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
+
+        const nuevoRegistro = {
+            id,
+            nroBeneficio,
+            nroDoc,
+            nombreApellido
+        };
+
+        set(ref(db, 'padron/' + id), nuevoRegistro)
+            .then(() => {
+                mostrarToast(idExistente ? '¡Paciente actualizado en Padrón!' : '¡Paciente cargado en Padrón!');
+                limpiarFormulario();
+            })
+            .catch(err => mostrarToast('Error al guardar: ' + err.message, true));
+    });
+
+    // Renderizar la lista
+    function renderizarTabla() {
+        const tbody = document.getElementById('tablaPacientesBody');
+        tbody.innerHTML = '';
+
+        const lista = Object.values(baseDeDatos);
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">No hay pacientes registrados en el padrón.</td></tr>';
+            return;
+        }
+
+        // Ordenar alfabéticamente por Nombre y Apellido
+        lista.sort((a, b) => a.nombreApellido.localeCompare(b.nombreApellido));
+
+        lista.forEach(item => {
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td data-label="N° Beneficio"><strong>${item.nroBeneficio}</strong></td>
+                <td data-label="N° Doc">${item.nroDoc}</td>
+                <td data-label="Nombre y Apellido"><strong>${item.nombreApellido}</strong></td>
+                <td data-label="Acciones">
+                    <div class="card-actions">
+                        <button class="btn btn-warning btn-editar" data-id="${item.id}">✏️ Editar</button>
+                        <button class="btn btn-danger btn-eliminar" data-id="${item.id}">🗑️</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.btn-editar').forEach(b => {
+            b.addEventListener('click', (e) => cargarParaEditar(e.target.getAttribute('data-id')));
+        });
+
+        document.querySelectorAll('.btn-eliminar').forEach(b => {
+            b.addEventListener('click', (e) => eliminarPaciente(e.target.getAttribute('data-id')));
+        });
+    }
+
+    function cargarParaEditar(id) {
+        const data = baseDeDatos[id];
+        if (!data) return;
+
+        document.getElementById('pacienteId').value = data.id;
+        document.getElementById('nroBeneficio').value = data.nroBeneficio;
+        document.getElementById('nroDoc').value = data.nroDoc;
+        document.getElementById('nombreApellido').value = data.nombreApellido;
+
+        document.getElementById('tituloFormulario').innerText = "✏️ Modificando Paciente en Padrón";
+        document.getElementById('btnGuardar').innerText = "Actualizar Paciente";
+        document.getElementById('btnCancelar').style.display = 'block';
+        document.getElementById('seccionFormulario').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function eliminarPaciente(id) {
+        const pass = prompt("Clave para ELIMINAR:");
+        if (pass !== CLAVE_ADMIN) return alert("❌ Clave incorrecta");
+
+        if (confirm("¿Seguro que deseas eliminar este paciente del padrón?")) {
+            remove(ref(db, 'padron/' + id))
+                .then(() => mostrarToast("Paciente eliminado con éxito"))
+                .catch(err => mostrarToast("Error: " + err.message, true));
+        }
+    }
+
+    document.getElementById('btnCancelar').addEventListener('click', limpiarFormulario);
+
+    function limpiarFormulario() {
+        document.getElementById('formPaciente').reset();
+        document.getElementById('pacienteId').value = '';
+        document.getElementById('tituloFormulario').innerText = "Cargar / Editar Paciente";
+        document.getElementById('btnGuardar').innerText = "Guardar Paciente en Padrón";
+        document.getElementById('btnCancelar').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
