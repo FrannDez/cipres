@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso al Sistema - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .auth-container {
+            max-width: 420px;
+            margin: 40px auto;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6b7280;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            color: #0056b3;
+            border-bottom-color: #0056b3;
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast">Mensaje de notificación</div>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Acceso al Sistema de Salud</h1>
+    <p>Secretaría de Salud - Municipalidad de La Costa</p>
+</header>
+
+<div class="container auth-container">
+    <div class="card">
+        <!-- Solapas para alternar entre Iniciar Sesión y Registro -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tabLogin">Iniciar Sesión</button>
+            <button class="tab-btn" id="tabRegister">Registrarse</button>
+        </div>
+
+        <!-- FORMULARIO DE LOGIN -->
+        <form id="formLogin" class="auth-form active">
+            <div class="input-group full-width">
+                <label for="loginUsuario">Nombre de Usuario:</label>
+                <input type="text" id="loginUsuario" placeholder="Ingrese su usuario" required autocomplete="username">
+            </div>
+
+            <div class="input-group full-width">
+                <label for="loginClave">Contraseña:</label>
+                <input type="password" id="loginClave" placeholder="Ingrese su contraseña" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-block" style="margin-top: 15px;">Ingresar al Sistema</button>
+        </form>
+
+        <!-- FORMULARIO DE REGISTRO -->
+        <form id="formRegister" class="auth-form">
+            <div class="input-group full-width">
+                <label for="regUsuario">Nombre de Usuario:</label>
+                <input type="text" id="regUsuario" placeholder="Elija un usuario" required autocomplete="username">
+            </div>
+
+            <div class="input-group full-width">
+                <label for="regClave">Contraseña:</label>
+                <input type="password" id="regClave" placeholder="Elija una contraseña" required autocomplete="new-password">
+            </div>
+
+            <div class="input-group full-width">
+                <label for="regClaveConfirm">Confirmar Contraseña:</label>
+                <input type="password" id="regClaveConfirm" placeholder="Repita la contraseña" required autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-block" style="background-color: #10b981; margin-top: 15px;">Crear Cuenta</button>
+        </form>
+    </div>
+</div>
+
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<script src="global.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = { 
+        databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Notificación Toast
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Función para encriptar la clave antes de enviarla o verificarla (SHA-256)
+    async function encriptarClave(clave) {
+        const msgBuffer = new TextEncoder().encode(clave);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // --- MANEJO DE PESTAÑAS (TABS) ---
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const formLogin = document.getElementById('formLogin');
+    const formRegister = document.getElementById('formRegister');
+
+    tabLogin.addEventListener('click', () => {
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        formLogin.classList.add('active');
+        formRegister.classList.remove('active');
+    });
+
+    tabRegister.addEventListener('click', () => {
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        formRegister.classList.add('active');
+        formLogin.classList.remove('active');
+    });
+
+    // --- LOGICA DE REGISTRO ---
+    formRegister.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const usuarioRaw = document.getElementById('regUsuario').value.trim();
+        const usuarioClean = usuarioRaw.toLowerCase(); // Normalizar a minúsculas para ID único
+        const clave = document.getElementById('regClave').value;
+        const claveConfirm = document.getElementById('regClaveConfirm').value;
+
+        if (clave !== claveConfirm) {
+            return mostrarToast("❌ Las contraseñas no coinciden", true);
+        }
+
+        if (clave.length < 4) {
+            return mostrarToast("⚠️ La contraseña debe tener al menos 4 caracteres", true);
+        }
+
+        try {
+            // Verificar si el usuario ya existe en el nodo 'usuarios'
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, `usuarios/${usuarioClean}`));
+
+            if (snapshot.exists()) {
+                return mostrarToast("⚠️ El nombre de usuario ya está registrado", true);
+            }
+
+            // Encriptar clave y crear el usuario
+            const claveHash = await encriptarClave(clave);
+            const nuevoUsuario = {
+                usuario: usuarioRaw,
+                claveHash: claveHash,
+                fechaCreacion: new Date().toISOString()
+            };
+
+            await set(ref(db, `usuarios/${usuarioClean}`), nuevoUsuario);
+            mostrarToast("¡Usuario registrado con éxito! Iniciando sesión...");
+
+            // Guardar sesión y redirigir
+            sessionStorage.setItem('usuarioLogueado', usuarioRaw);
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+
+        } catch (err) {
+            mostrarToast("Error al registrar usuario: " + err.message, true);
+        }
+    });
+
+    // --- LOGICA DE INICIO DE SESIÓN ---
+    formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const usuarioClean = document.getElementById('loginUsuario').value.trim().toLowerCase();
+        const clave = document.getElementById('loginClave').value;
+
+        try {
+            const dbRef = ref(db);
+            const snapshot = await get(child(dbRef, `usuarios/${usuarioClean}`));
+
+            if (!snapshot.exists()) {
+                return mostrarToast("❌ El usuario no existe", true);
+            }
+
+            const userData = snapshot.val();
+            const claveHash = await encriptarClave(clave);
+
+            if (userData.claveHash === claveHash) {
+                mostrarToast("¡Bienvenido/a " + userData.usuario + "!");
+                sessionStorage.setItem('usuarioLogueado', userData.usuario);
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1200);
+            } else {
+                mostrarToast("❌ Contraseña incorrecta", true);
+            }
+
+        } catch (err) {
+            mostrarToast("Error al iniciar sesión: " + err.message, true);
+        }
+    });
+</script>
+
+</body>
+</html>

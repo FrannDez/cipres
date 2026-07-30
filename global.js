@@ -1,16 +1,22 @@
-// Esperar a que el DOM esté completamente cargado
+// --- 1. PROTECCIÓN DE RUTAS (CONTROL DE SESIÓN) ---
+(function verificarSesion() {
+    const usuario = sessionStorage.getItem('usuarioLogueado');
+    const esPaginaLogin = window.location.pathname.endsWith('login.html');
+
+    // Si NO está logueado y NO está en la página de login, lo mandamos a loguearse
+    if (!usuario && !esPaginaLogin) {
+        window.location.href = 'login.html';
+    }
+})();
+
+// --- 2. COMPORTAMIENTO DEL LOGO GLOBAL ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Buscar la imagen del logo por su clase o etiqueta
     const logo = document.querySelector('.logo-img');
 
     if (logo) {
-        // Cambiar el cursor a 'puntero' para indicar que es clickeable
         logo.style.cursor = 'pointer';
-        
-        // Agregar un título hover para mejorar la experiencia de usuario
         logo.title = 'Volver al Inicio';
 
-        // Evento de clic para redirigir al index.html
         logo.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
