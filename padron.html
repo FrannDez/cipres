@@ -61,6 +61,12 @@
             <h2>Padrón de Beneficiarios Registrados</h2>
         </div>
 
+        <!-- BARRA DE BÚSQUEDA -->
+        <div class="input-group full-width" style="margin-bottom: 20px;">
+            <label for="inputBuscar">🔍 Buscar por DNI o Nombre y Apellido:</label>
+            <input type="text" id="inputBuscar" placeholder="Escriba DNI o nombre para filtrar...">
+        </div>
+
         <div class="table-responsive responsive-form-table">
             <table>
                 <thead>
@@ -88,7 +94,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-    // Clave requerida para modificar o eliminar
     const CLAVE_ADMIN = "muni";
 
     const firebaseConfig = { 
@@ -100,7 +105,6 @@
 
     let baseDeDatos = {};
 
-    // Notificaciones Toast
     function mostrarToast(mensaje, esError = false) {
         const toast = document.getElementById('toast');
         toast.innerText = mensaje;
@@ -109,20 +113,22 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Firebase: Leer Datos de la carpeta 'padron'
+    // Firebase: Leer Datos
     const padronRef = ref(db, 'padron');
     onValue(padronRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
         renderizarTabla();
     });
 
-    // Guardar o Actualizar en la carpeta 'padron'
+    // Escuchar el evento de escritura en el buscador
+    document.getElementById('inputBuscar').addEventListener('input', renderizarTabla);
+
+    // Guardar o Actualizar
     document.getElementById('formPaciente').addEventListener('submit', function(e) {
         e.preventDefault();
 
         const idExistente = document.getElementById('pacienteId').value;
         
-        // Si estamos editando, solicitamos la clave 'muni'
         if (idExistente) {
             const pass = prompt("Ingrese la clave para ACTUALIZAR:");
             if (pass !== CLAVE_ADMIN) {
@@ -135,12 +141,7 @@
         const nroDoc = document.getElementById('nroDoc').value.trim();
         const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
 
-        const nuevoRegistro = {
-            id,
-            nroBeneficio,
-            nroDoc,
-            nombreApellido
-        };
+        const nuevoRegistro = { id, nroBeneficio, nroDoc, nombreApellido };
 
         set(ref(db, 'padron/' + id), nuevoRegistro)
             .then(() => {
@@ -150,23 +151,37 @@
             .catch(err => mostrarToast('Error al guardar: ' + err.message, true));
     });
 
-    // Renderizar la lista
     function renderizarTabla() {
         const tbody = document.getElementById('tablaPacientesBody');
+        const filtro = document.getElementById('inputBuscar').value.toLowerCase().trim();
         tbody.innerHTML = '';
 
-        const lista = Object.values(baseDeDatos);
+        let lista = Object.values(baseDeDatos);
+
         if (lista.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4">No hay pacientes registrados en el padrón.</td></tr>';
             return;
         }
 
-        // Ordenar alfabéticamente por Nombre y Apellido
+        // Aplicar Filtro de Búsqueda
+        if (filtro) {
+            lista = lista.filter(item => 
+                item.nroDoc.toLowerCase().includes(filtro) || 
+                item.nombreApellido.toLowerCase().includes(filtro) ||
+                item.nroBeneficio.toLowerCase().includes(filtro)
+            );
+        }
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">No se encontraron resultados que coincidan.</td></tr>';
+            return;
+        }
+
+        // Ordenar alfabéticamente
         lista.sort((a, b) => a.nombreApellido.localeCompare(b.nombreApellido));
 
         lista.forEach(item => {
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
                 <td data-label="N° Beneficio"><strong>${item.nroBeneficio}</strong></td>
                 <td data-label="N° Doc">${item.nroDoc}</td>
