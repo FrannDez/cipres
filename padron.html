@@ -7,8 +7,6 @@
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilos.css">
-    <!-- Librería para procesar CSVs gigantes de forma ultrarrápida -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
@@ -88,9 +86,11 @@
     <div class="wave wave2"></div>
 </div>
 
+<script src="global.js"></script>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const CLAVE_ADMIN = "muni";
     const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
@@ -101,13 +101,15 @@
 
     function mostrarToast(mensaje, esError = false) {
         const toast = document.getElementById('toast');
-        toast.innerText = mensaje;
-        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        if (toast) {
+            toast.innerText = mensaje;
+            toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
     }
 
-    // Leer datos
+    // Escuchar cambios de Firebase en tiempo real
     const padronRef = ref(db, 'padron');
     onValue(padronRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
@@ -117,98 +119,45 @@
     // Buscador
     document.getElementById('inputBuscar').addEventListener('input', renderizarTabla);
 
-    // --- IMPORTACIÓN MASIVA (16.000 REGISTROS) ---
-    document.getElementById('btnImportarMasivo').addEventListener('click', () => {
-        const fileInput = document.getElementById('archivoCSV');
-        const file = fileInput.files[0];
-        const divProgreso = document.getElementById('progresoCarga');
+    // --- GUARDAR O ACTUALIZAR PACIENTE ---
+    document.getElementById('formPaciente').addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-        if (!file) return alert("Por favor, seleccione el archivo CSV exportado desde Excel.");
-
-        divProgreso.innerText = "Procesando archivo... Aguarde unos segundos.";
-
-        Papa.parse(file, {
-            skipEmptyLines: true,
-            complete: async function(results) {
-                const filas = results.data;
-                const lotePacientes = {};
-                let contador = 0;
-
-                filas.forEach((cols, index) => {
-                    // Si la primera fila es encabezado
-                    if (index === 0 && cols[0].toString().toLowerCase().includes("beneficio")) return;
-
-                    if (cols.length >= 3) {
-                        const nroBeneficio = cols[0].toString().trim();
-                        const nroDoc = cols[1].toString().trim();
-                        const nombreApellido = cols[2].toString().trim().toUpperCase();
-
-                        if (nroBeneficio && nroDoc && nombreApellido) {
-                            const id = 'pac_' + (Date.now() + index);
-                            lotePacientes[id] = { id, nroBeneficio, nroDoc, nombreApellido };
-                            contador++;
-                        }
-                    }
-                });
-
-                divProgreso.innerText = `Subiendo ${contador} pacientes a Firebase...`;
-
-                // Subida en un solo bloque ultra eficiente
-                try {
-                    await update(ref(db, 'padron'), lotePacientes);
-                    mostrarToast(`¡Éxito! Se subieron ${contador} pacientes.`);
-                    divProgreso.innerText = "¡Carga masiva completada exitosamente!";
-                    fileInput.value = '';
-                } catch (err) {
-                    mostrarToast("Error al subir los datos: " + err.message, true);
-                    divProgreso.innerText = "";
-                }
-            }
-        });
-    });
-
-    // --- GUARDAR O ACTUALIZAR PACIENTE INDIVIDUAL ---
-document.getElementById('formPaciente').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const idExistente = document.getElementById('pacienteId').value;
-    
-    // Si estamos editando un paciente existente, pedimos clave "muni"
-    if (idExistente) {
-        const pass = prompt("Ingrese la clave para ACTUALIZAR:");
-        if (pass !== CLAVE_ADMIN) {
-            return alert("❌ Clave incorrecta. No se realizaron cambios.");
-        }
-    }
-
-    // Generar ID único o usar el existente
-    const id = idExistente || 'pac_' + Date.now();
-    const nroBeneficio = document.getElementById('nroBeneficio').value.trim();
-    const nroDoc = document.getElementById('nroDoc').value.trim();
-    const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
-
-    if (!nroBeneficio || !nroDoc || !nombreApellido) {
-        return alert("Por favor complete todos los campos.");
-    }
-
-    const pacienteData = {
-        id: id,
-        nroBeneficio: nroBeneficio,
-        nroDoc: nroDoc,
-        nombreApellido: nombreApellido
-    };
-
-    try {
-        // Guardar en la rama 'padron' de Firebase
-        await set(ref(db, 'padron/' + id), pacienteData);
+        const idExistente = document.getElementById('pacienteId').value;
         
-        mostrarToast(idExistente ? '¡Paciente actualizado exitosamente!' : '¡Paciente guardado exitosamente!');
-        limpiarFormulario();
-    } catch (error) {
-        console.error("Error al guardar en Firebase:", error);
-        mostrarToast('Error al guardar: ' + error.message, true);
-    }
-});
+        // Exigir clave si se intenta editar un paciente
+        if (idExistente) {
+            const pass = prompt("Ingrese la clave para ACTUALIZAR:");
+            if (pass !== CLAVE_ADMIN) {
+                return alert("❌ Clave incorrecta. No se realizaron cambios.");
+            }
+        }
+
+        const id = idExistente || 'pac_' + Date.now();
+        const nroBeneficio = document.getElementById('nroBeneficio').value.trim();
+        const nroDoc = document.getElementById('nroDoc').value.trim();
+        const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
+
+        if (!nroBeneficio || !nroDoc || !nombreApellido) {
+            return alert("Por favor complete todos los campos.");
+        }
+
+        const pacienteData = {
+            id: id,
+            nroBeneficio: nroBeneficio,
+            nroDoc: nroDoc,
+            nombreApellido: nombreApellido
+        };
+
+        try {
+            await set(ref(db, 'padron/' + id), pacienteData);
+            mostrarToast(idExistente ? '¡Paciente actualizado exitosamente!' : '¡Paciente guardado exitosamente!');
+            limpiarFormulario();
+        } catch (error) {
+            console.error("Error al guardar en Firebase:", error);
+            mostrarToast('Error al guardar: ' + error.message, true);
+        }
+    });
 
     function renderizarTabla() {
         const tbody = document.getElementById('tablaPacientesBody');
@@ -218,7 +167,7 @@ document.getElementById('formPaciente').addEventListener('submit', async functio
         let lista = Object.values(baseDeDatos);
 
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4">No hay pacientes en el padrón.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4">No hay pacientes registrados en el padrón.</td></tr>';
             return;
         }
 
@@ -230,7 +179,7 @@ document.getElementById('formPaciente').addEventListener('submit', async functio
             );
         }
 
-        // Limitamos a mostrar máximo 100 resultados en pantalla para no ralentizar el navegador al buscar
+        // Mostrar un máximo de 100 resultados a la vez para mantener el rendimiento
         const listaAMostrar = lista.slice(0, 100);
 
         listaAMostrar.forEach(item => {
