@@ -29,6 +29,13 @@
         .badge-subio { color: #10b981; font-weight: bold; }
         .badge-bajo { color: #ef4444; font-weight: bold; }
         .badge-igual { color: #3b82f6; font-weight: bold; }
+        
+        /* Ajuste de ancho de columnas para evitar desbordes */
+        .tabla-admin th, .tabla-admin td { padding: 10px; text-align: left; }
+        .tabla-admin th:nth-child(1) { width: 10%; text-align: center; }
+        .tabla-admin th:nth-child(2) { width: 30%; }
+        .tabla-admin th:nth-child(3) { width: 20%; }
+        .tabla-admin th:nth-child(4) { width: 40%; }
     </style>
 </head>
 <body>
@@ -194,17 +201,17 @@
             </div>
 
             <div class="table-responsive responsive-form-table" style="margin-top: 15px;">
-                <table>
+                <table class="tabla-admin">
                     <thead>
                         <tr>
-                            <th>Cargado</th>
-                            <th>Nombre y Apellido</th>
-                            <th>Documento</th>
-                            <th>Motivo Obra Social</th>
+                            <th style="text-align: center;">CARGADO</th>
+                            <th>NOMBRE Y APELLIDO</th>
+                            <th>DOCUMENTO</th>
+                            <th>MOTIVO OBRA SOCIAL</th>
                         </tr>
                     </thead>
                     <tbody id="tablaAdminBody">
-                        <tr><td colspan="4">Seleccione un efector para visualizar la lista.</td></tr>
+                        <tr><td colspan="4" style="text-align:center;">Seleccione un efector para visualizar la lista.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -359,7 +366,7 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL ULTRA FLEXIBLE
+    // 2. PROCESAMIENTO DE EXCEL CORREGIDO
     async function procesarExcelLocal(index, efector) {
         const fileInput = document.getElementById(`excel-${index}`);
         if (!fileInput.files[0]) return;
@@ -373,60 +380,51 @@
             const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
             const pacientesRechazados = [];
 
-            let colNombre = -1, colDoc = -1, colMotivo = -1;
-
-            for (let i = 0; i < filas.length; i++) {
-                const filaClean = filas[i].map(c => String(c).toUpperCase().trim());
-                
-                const idxNombre = filaClean.findIndex(c => c === 'NOMBRE' || c.includes('PACIENTE'));
-                const idxDoc = filaClean.findIndex(c => c === 'DOCUMENTO' || c === 'DNI' || c.includes('DOC'));
-                const idxMotivo = filaClean.findIndex(c => c === 'MOTIVO' || c.includes('MOTIVO'));
-
-                if (idxNombre !== -1 && idxDoc !== -1 && idxMotivo !== -1) {
-                    colNombre = idxNombre;
-                    colDoc = idxDoc;
-                    colMotivo = idxMotivo;
-                    break;
-                }
-            }
-
             filas.forEach((fila, idx) => {
                 if (!fila || fila.length === 0) return;
 
                 const lineaTexto = fila.map(c => String(c)).join(" ").replace(/\s+/g, " ").toUpperCase();
 
+                // Filtrar las filas que realmente contengan rechazo por Obra Social
                 if (lineaTexto.includes("REGISTRA") || lineaTexto.includes("OBRA SOCIAL") || lineaTexto.includes("PUCO")) {
                     
                     let nombre = "";
                     let documento = "";
                     let motivo = "";
 
-                    if (colNombre !== -1 && fila[colNombre]) nombre = String(fila[colNombre]);
-                    if (colDoc !== -1 && fila[colDoc]) documento = String(fila[colDoc]);
-                    if (colMotivo !== -1 && fila[colMotivo]) motivo = String(fila[colMotivo]);
-
                     fila.forEach(celda => {
-                        const str = String(celda).replace(/\s+/g, " ").trim();
+                        const str = String(celda).replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ").trim();
                         const strUpper = str.toUpperCase();
 
+                        // Detectar DNI (numérico entre 7 y 8 dígitos)
                         if (!documento && /^\d{7,8}$/.test(str)) {
                             documento = str;
                         }
-                        if (!motivo && (strUpper.includes("REGISTRA") || strUpper.includes("OBRA SOCIAL"))) {
+                        // Detectar Motivo de la Obra Social
+                        else if (!motivo && (strUpper.includes("EL PACIENTE REGISTRA") || strUpper.includes("REGISTRA:"))) {
                             motivo = str;
                         }
-                        if (!nombre && str.length > 5 && !/\d/.test(str) && !strUpper.includes("REGISTRA") && !strUpper.includes("MOTIVO")) {
+                        // Detectar Nombre (cadena larga sin números ni frases de rechazo)
+                        else if (!nombre && str.length > 5 && !/\d/.test(str) && !strUpper.includes("REGISTRA") && !strUpper.includes("MOTIVO") && !strUpper.includes("REPORTE")) {
                             nombre = str;
                         }
                     });
 
-                    pacientesRechazados.push({
-                        id: `p_${Date.now()}_${idx}`,
-                        nombre: nombre.trim() || "Paciente sin nombre",
-                        documento: documento.trim() || "Sin DNI",
-                        motivo: motivo.trim() || "Registra cobertura social",
-                        cargado: false
-                    });
+                    // Si no encontró motivo en celda individual pero la fila lo tiene, lo asigna
+                    if (!motivo) {
+                        const celdaMotivo = fila.find(c => String(c).toUpperCase().includes("REGISTRA"));
+                        if (celdaMotivo) motivo = String(celdaMotivo).trim();
+                    }
+
+                    if (nombre || documento) {
+                        pacientesRechazados.push({
+                            id: `p_${Date.now()}_${idx}`,
+                            nombre: nombre || "Paciente sin nombre",
+                            documento: documento || "Sin DNI",
+                            motivo: motivo || "Registra cobertura social",
+                            cargado: false
+                        });
+                    }
                 }
             });
 
@@ -538,7 +536,7 @@
         });
     };
 
-    // 5. PANEL ADMINISTRATIVOS
+    // 5. PANEL ADMINISTRATIVOS (ESTRUCTURA DE 4 COLUMNAS RIGUROSA)
     window.cargarRechazosAdmin = async function() {
         const efector = document.getElementById('filtroEfectorAdmin').value;
         const claveMes = document.getElementById('adminPeriodo').value;
@@ -551,7 +549,7 @@
         const lista = snapshot.val() || [];
 
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4">No existen rechazos guardados para este efector en el período seleccionado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No existen rechazos guardados para este efector en el período seleccionado.</td></tr>';
             return;
         }
 
@@ -560,10 +558,10 @@
             tr.className = p.cargado ? 'paciente-cargado' : '';
 
             tr.innerHTML = `
-                <td>
+                <td style="text-align: center;">
                     <input type="checkbox" ${p.cargado ? 'checked' : ''} onchange="marcarPacienteCargado('${claveMes}', '${efector}', ${idx}, this.checked)">
                 </td>
-                <td>${p.nombre}</td>
+                <td><strong>${p.nombre}</strong></td>
                 <td>${p.documento}</td>
                 <td><span style="color:#d97706; font-weight:600;">${p.motivo}</span></td>
             `;
