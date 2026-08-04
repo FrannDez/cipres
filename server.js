@@ -23,46 +23,53 @@ app.use(express.static('public'));
 // 1. ENDPOINT: Procesar PDF de Cuasifactura
 // -------------------------------------------------------------------
 app.post('/api/parse-pdf', upload.single('pdf'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ success: false, message: 'No se subió ningún archivo PDF.' });
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No se recibió archivo PDF' });
+        }
 
-    const dataBuffer = fs.readFileSync(req.file.path);
-    const pdfData = await pdfParse(dataBuffer);
-    const text = pdfData.text;
+        const dataBuffer = req.file.buffer;
+        const pdfData = await pdfParse(dataBuffer);
+        const texto = pdfData.text;
 
-    // Extraer Monto Total Cuasifactura
-    const totalMatch = text.match(/Total Cuasifactura\s*\$\s*([\d\.\,]+)/i) || 
-                       text.match(/Monto Total\s*\$\s*([\d\.\,]+)/i);
-    const totalCuasifactura = totalMatch ? parseFloat(totalMatch[1].replace(/\./g, '').replace(',', '.')) : 0;
+        // 1. EXTRACCIÓN DEL MONTO TOTAL CUASIFACTURA
+        let total = 0;
+        // Busca "Total Cuasifactura" seguido de saltos de línea/espacios y captura el valor con signo $ o sin él
+        const matchMonto = texto.match(/Total\s+Cuasifactura[\s\S]*?\$?\s*([\d\.,]+)/i);
+        if (matchMonto) {
+            // Convierte formato "104.000" o "104.000,00" a número entero/flotante
+            total = parseFloat(matchMonto[1].replace(/\./g, '').replace(',', '.'));
+        }
 
-    // Extraer y agrupar Códigos de Prestación (Ej: CT C001 A97)
-    const codeRegex = /([A-Z]{2}\s+[A-Z0-9]+\s+[A-Z0-9]+)\s+(\d+)\s+\$\s*([\d\.\,]+)\s+-\s+\$\s*([\d\.\,]+)/g;
-    let match;
-    const codigosAgrupados = {};
+        // 2. EXTRACCIÓN DE CÓDIGOS Y SUMA REAL DE PRESTACIONES
+        // Formato objetivo: "CT C001 A97", "CT C008 A97", etc.
+        const codigosAgrupados = {};
+        
+        // Regex que busca el código de prestación y captura el primer número que le sigue en la misma línea (las prestaciones)
+        const regexFilaPrestacion = /([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})\s+(\d+)/g;
+        let match;
 
-    while ((match = codeRegex.exec(text)) !== null) {
-      const codigo = match[1].trim();
-      const cantidad = parseInt(match[2], 10);
-      const montoTotalLinea = parseFloat(match[4].replace(/\./g, '').replace(',', '.'));
+        while ((match = regexFilaPrestacion.exec(texto)) !== null) {
+            const codigo = match[1].trim();
+            const cantidadPrestaciones = parseInt(match[2], 10);
 
-      if (!codigosAgrupados[codigo]) {
-        codigosAgrupados[codigo] = { cantidadTotal: 0, montoTotal: 0 };
-      }
-      codigosAgrupados[codigo].cantidadTotal += cantidad;
-      codigosAgrupados[codigo].montoTotal += montoTotalLinea;
+            if (!codigosAgrupados[codigo]) {
+                codigosAgrupados[codigo] = { cantidadTotal: 0 };
+            }
+            // Suma la cantidad real de la columna "Prestaciones"
+            codigosAgrupados[codigo].cantidadTotal += cantidadPrestaciones;
+        }
+
+        return res.json({
+            success: true,
+            totalCuasifactura: total,
+            codigosAgrupados: codigosAgrupados
+        });
+
+    } catch (error) {
+        console.error("Error al procesar PDF SUMAR:", error);
+        return res.status(500).json({ success: false, message: 'Error interno al procesar el archivo' });
     }
-
-    fs.unlinkSync(req.file.path);
-
-    res.json({
-      success: true,
-      totalCuasifactura,
-      codigosAgrupados
-    });
-  } catch (error) {
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    res.status(500).json({ success: false, error: error.message });
-  }
 });
 
 // -------------------------------------------------------------------
