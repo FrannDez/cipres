@@ -7,6 +7,16 @@
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilos.css">
+    
+    <!-- Librería PDF.js para procesar PDFs en el navegador sin backend -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- Librería SheetJS para procesar Excels en el navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 20px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 6px; font-weight: 600; font-family: 'Montserrat', sans-serif; }
@@ -57,10 +67,10 @@
                         <option value="02">Febrero</option>
                         <option value="03">Marzo</option>
                         <option value="04">Abril</option>
-                        <option value="05">Mayo</option>
+                        <option value="05" selected>Mayo</option>
                         <option value="06">Junio</option>
                         <option value="07">Julio</option>
-                        <option value="08" selected>Agosto</option>
+                        <option value="08">Agosto</option>
                         <option value="09">Septiembre</option>
                         <option value="10">Octubre</option>
                         <option value="11">Noviembre</option>
@@ -79,16 +89,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h2>1. Documento Consolidado (Escaneado)</h2>
-            </div>
-            <div class="input-group full-width">
-                <input type="file" id="file-consolidado" accept=".pdf">
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h2>2. Carga de Cuasifacturas y Rechazos por Efector</h2>
+                <h2>Carga de Cuasifacturas y Rechazos por Efector</h2>
             </div>
             <div class="table-responsive responsive-form-table">
                 <table>
@@ -107,7 +108,7 @@
         </div>
 
         <div class="card">
-            <button class="btn btn-block" onclick="exportarYGuardar()">📄 Guardar Período en Firebase y Exportar PDF</button>
+            <button class="btn btn-block" onclick="exportarYGuardar()">📄 Guardar Período en Firebase</button>
         </div>
 
     </div>
@@ -189,6 +190,7 @@
                         <option value="Hospital Municipal Santa Teresita">Hospital Municipal Santa Teresita</option>
                         <option value="Centro Comunitario Barrio Parque Golf">Centro Comunitario Barrio Parque Golf</option>
                         <option value="CAPS Villa Clelia">CAPS Villa Clelia</option>
+                        <option value="CAPS Barrio Chino">CAPS Barrio Chino</option>
                     </select>
                 </div>
             </div>
@@ -237,7 +239,7 @@
 
     const efectoresConRechazos = [
         "Hospital Local General de Agudos", "Hospital Municipal Carlos Federico Macias",
-        "Hospital Municipal Santa Teresita", "Centro Comunitario Barrio Parque Golf", "CAPS Villa Clelia"
+        "Hospital Municipal Santa Teresita", "Centro Comunitario Barrio Parque Golf", "CAPS Villa Clelia", "CAPS Barrio Chino"
     ];
 
     const datosCuasifacturas = {};
@@ -286,55 +288,121 @@
             `;
             tbody.appendChild(tr);
 
-            document.getElementById(`pdf-${index}`).addEventListener('change', () => procesarPDF(index, efector));
+            document.getElementById(`pdf-${index}`).addEventListener('change', () => procesarPDFLocal(index, efector));
             if (tieneRechazo) {
-                document.getElementById(`excel-${index}`).addEventListener('change', () => procesarExcel(index, efector));
+                document.getElementById(`excel-${index}`).addEventListener('change', () => procesarExcelLocal(index, efector));
             }
         });
     }
 
-    async function procesarPDF(index, efector) {
+    // 1. PROCESAMIENTO DE PDF DIRECTO EN EL NAVEGADOR (CLIENT-SIDE)
+    async function procesarPDFLocal(index, efector) {
         const fileInput = document.getElementById(`pdf-${index}`);
         const statusSpan = document.getElementById(`status-${index}`);
         if (!fileInput.files[0]) return;
 
-        const formData = new FormData();
-        formData.append('pdf', fileInput.files[0]);
-        statusSpan.innerText = "Cargando...";
+        statusSpan.innerText = "Procesando...";
 
         try {
-            const res = await fetch('/api/parse-pdf', { method: 'POST', body: formData });
-            const data = await res.json();
+            const file = fileInput.files[0];
+            const arrayBuffer = await file.arrayBuffer();
+            
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let textoCompleto = "";
 
-            if (data.success) {
-                datosCuasifacturas[efector] = data;
-                statusSpan.innerHTML = `<span style="color:#10b981;">Procesado ($${data.totalCuasifactura.toLocaleString('es-AR')})</span>`;
-                mostrarToast(`PDF de ${efector} procesado.`);
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(" ");
+                textoCompleto += pageText + "\n";
             }
+
+            // Extraer Monto Total Cuasifactura
+            let total = 0;
+            const matchMonto = textoCompleto.match(/Total\s+Cuasifactura[\s\S]*?\$?\s*([\d\.,]+)/i) || 
+                               textoCompleto.match(/Total[\s\S]*?\$?\s*([\d\.,]+)/i);
+
+            if (matchMonto && matchMonto[1]) {
+                const rawMonto = matchMonto[1].replace(/\./g, '').replace(',', '.');
+                total = parseFloat(rawMonto) || 0;
+            }
+
+            // Extraer Códigos y Cantidades de Prestaciones
+            const codigosAgrupados = {};
+            const lineas = textoCompleto.split('\n');
+
+            lineas.forEach(linea => {
+                const matchCod = linea.match(/([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})/);
+                if (matchCod) {
+                    const codigo = matchCod[1].trim();
+                    const numeros = linea.match(/\b\d+\b/g);
+                    let cantidad = 1;
+                    if (numeros && numeros.length > 0) {
+                        cantidad = parseInt(numeros[0], 10) || 1;
+                    }
+
+                    if (!codigosAgrupados[codigo]) {
+                        codigosAgrupados[codigo] = { cantidadTotal: 0 };
+                    }
+                    codigosAgrupados[codigo].cantidadTotal += cantidad;
+                }
+            });
+
+            datosCuasifacturas[efector] = {
+                totalCuasifactura: total,
+                codigosAgrupados: codigosAgrupados
+            };
+
+            statusSpan.innerHTML = `<span style="color:#10b981;">Procesado ($${total.toLocaleString('es-AR')})</span>`;
+            mostrarToast(`PDF de ${efector} procesado.`);
+
         } catch (err) {
-            statusSpan.innerText = "Error";
+            console.error("Error al leer PDF:", err);
+            statusSpan.innerHTML = `<span style="color:#ef4444;">Error al leer PDF</span>`;
+            mostrarToast(`Error al leer el PDF de ${efector}`, true);
         }
     }
 
-    async function procesarExcel(index, efector) {
+    // 2. PROCESAMIENTO DE EXCEL DIRECTO EN EL NAVEGADOR
+    async function procesarExcelLocal(index, efector) {
         const fileInput = document.getElementById(`excel-${index}`);
         if (!fileInput.files[0]) return;
 
-        const formData = new FormData();
-        formData.append('excel', fileInput.files[0]);
+        try {
+            const file = fileInput.files[0];
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-        const res = await fetch('/api/parse-excel', { method: 'POST', body: formData });
-        const data = await res.json();
+            const pacientesRechazados = [];
 
-        if (data.success) {
-            rechazosPorEfector[efector] = data.pacientes.map((p, idx) => ({
-                ...p, id: `p_${Date.now()}_${idx}`, cargado: false
-            }));
-            mostrarToast(`${data.pacientes.length} rechazos procesados para ${efector}`);
+            rawData.forEach((row, idx) => {
+                const motivo = String(row['MOTIVO'] || row['Motivo'] || row['motivo'] || "");
+                if (motivo.toUpperCase().includes("EL PACIENTE REGISTRA:")) {
+                    const nombre = row['NOMBRE'] || row['Nombre'] || row['PACIENTE'] || row['Paciente'] || "Sin Nombre";
+                    const documento = row['DOCUMENTO'] || row['DNI'] || row['Documento'] || "Sin DNI";
+
+                    pacientesRechazados.push({
+                        id: `p_${Date.now()}_${idx}`,
+                        nombre: String(nombre).trim(),
+                        documento: String(documento).trim(),
+                        motivo: motivo.trim(),
+                        cargado: false
+                    });
+                }
+            });
+
+            rechazosPorEfector[efector] = pacientesRechazados;
+            mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
+
+        } catch (err) {
+            console.error("Error al leer Excel:", err);
+            mostrarToast(`Error al leer el Excel de ${efector}`, true);
         }
     }
 
-    // CARGA DE DESPLEGABLES DESDE EL NODO MASTER 'comparativas'
+    // 3. CARGA DE DESPLEGABLES DESDE EL NODO MASTER 'comparativas'
     async function poblarDesplegablesPeriodos() {
         const snapshot = await get(child(ref(db), 'comparativas'));
         const datos = snapshot.val() || {};
@@ -369,7 +437,7 @@
         cargarEstadisticas();
     }
 
-    // ESTADÍSTICAS Y RENDIMIENTO (LECTURA DESDE 'comparativas')
+    // 4. CONSULTA Y COMPARATIVAS (LECTURA DE 'comparativas')
     window.cargarEstadisticas = async function() {
         const pBaseKey = document.getElementById('statPeriodoBase').value;
         const pCompKey = document.getElementById('statPeriodoComparar').value;
@@ -383,7 +451,6 @@
         const dBase = snapBase.val() || { totalCuasifactura: 0, codigosAgrupados: {} };
         const dComp = snapComp.val() || { totalCuasifactura: 0, codigosAgrupados: {} };
 
-        // Resumen de Montos
         const mBase = dBase.totalCuasifactura || 0;
         const mComp = dComp.totalCuasifactura || 0;
         const difMonto = mBase - mComp;
@@ -400,7 +467,6 @@
             <p>Resultado: ${difHtml}</p>
         `;
 
-        // Tabla Comparativa de Códigos
         const tbodyCod = document.getElementById('tablaStatsCodigosBody');
         tbodyCod.innerHTML = '';
 
@@ -435,7 +501,7 @@
         });
     };
 
-    // PANEL ADMINISTRATIVOS (LECTURA Y ACTUALIZACIÓN EN 'comparativas')
+    // 5. PANEL ADMINISTRATIVOS
     window.cargarRechazosAdmin = async function() {
         const efector = document.getElementById('filtroEfectorAdmin').value;
         const claveMes = document.getElementById('adminPeriodo').value;
@@ -471,46 +537,27 @@
     window.marcarPacienteCargado = function(claveMes, efector, indexArray, estado) {
         update(ref(db, `comparativas/${claveMes}/rechazos/${efector}/${indexArray}`), { cargado: estado })
             .then(() => mostrarToast("Registro actualizado."))
-            .catch(err => mostrarToast("Error al actualizar", true));
+            .catch(() => mostrarToast("Error al actualizar", true));
     };
 
+    // 6. GUARDADO DIRECTO A FIREBASE
     window.exportarYGuardar = async function() {
         const mesSel = document.getElementById('selectMes').value;
         const anioSel = document.getElementById('selectAnio').value;
         const claveMes = `${anioSel}-${mesSel}`;
 
         try {
-            await fetch('/api/guardar-base', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    mesAno: claveMes,
-                    datosEfectores: datosCuasifacturas,
-                    rechazos: rechazosPorEfector
-                })
+            await set(ref(db, `comparativas/${claveMes}`), {
+                datosEfectores: datosCuasifacturas,
+                rechazos: rechazosPorEfector,
+                fechaActualizacion: new Date().toISOString()
             });
 
-            mostrarToast("Período guardado en Firebase bajo /comparativas.");
-
-            const formData = new FormData();
-            const consolidadoInput = document.getElementById('file-consolidado');
-            if (consolidadoInput.files[0]) formData.append('consolidado', consolidadoInput.files[0]);
-
-            todosLosEfectores.forEach((_, index) => {
-                const pdfInput = document.getElementById(`pdf-${index}`);
-                if (pdfInput.files[0]) formData.append('efectores', pdfInput.files[0]);
-            });
-
-            const res = await fetch('/api/export-consolidated', { method: 'POST', body: formData });
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Consolidado_SUMAR_${claveMes}.pdf`;
-            a.click();
+            mostrarToast(`Período ${claveMes} guardado con éxito en Firebase bajo /comparativas.`);
 
         } catch (err) {
-            mostrarToast("Error durante la operación", true);
+            console.error("Error al guardar en Firebase:", err);
+            mostrarToast("Error al guardar en la base de datos", true);
         }
     };
 
