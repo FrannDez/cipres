@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Sponsors - Racing</title>
+    <style>
+        :root {
+            --blanco: #ffffff;
+            --negro: #111111;
+            --celeste: #00a8e8;
+            --rojo: #e63946;
+            --gris-claro: #f4f6f8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+        }
+
+        body {
+            background-color: var(--blanco);
+            color: var(--negro);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Franja deportiva superior */
+        .header-bar {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, var(--celeste) 0% 50%, var(--rojo) 50% 100%);
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Logo y Encabezado */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo-container img {
+            max-width: 250px;
+            height: auto;
+            filter: drop-shadow(2px 2px 0px var(--negro));
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            font-style: italic;
+            text-shadow: 2px 2px 0px var(--celeste);
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Formularios y Cajas */
+        .racing-card {
+            background: var(--gris-claro);
+            border: 3px solid var(--negro);
+            border-left: 10px solid var(--rojo);
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 5px 5px 0px var(--negro);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--negro);
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--celeste);
+        }
+
+        /* Botones */
+        .btn {
+            background-color: var(--celeste);
+            color: var(--blanco);
+            border: 2px solid var(--negro);
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            font-style: italic;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 3px 3px 0px var(--negro);
+            transition: transform 0.1s;
+        }
+
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px var(--negro);
+        }
+
+        .btn:active {
+            transform: translate(0, 0);
+            box-shadow: 1px 1px 0px var(--negro);
+        }
+
+        /* Tabla de Sponsors */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 2px solid var(--negro);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--negro);
+            color: var(--blanco);
+            text-transform: uppercase;
+            font-family: 'Impact', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--gris-claro);
+        }
+
+        /* Total acumulado */
+        .total-box {
+            background-color: var(--negro);
+            color: var(--blanco);
+            padding: 20px;
+            text-align: right;
+            border-right: 10px solid var(--celeste);
+            box-shadow: 5px 5px 0px var(--rojo);
+        }
+
+        .total-box h2 {
+            font-size: 1.5rem;
+            color: var(--celeste);
+            text-transform: uppercase;
+        }
+
+        .total-box .monto-total {
+            font-size: 2.5rem;
+            color: var(--blanco);
+        }
+
+        .actions {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .btn-limpiar {
+            background: none;
+            border: none;
+            color: var(--rojo);
+            font-family: Arial, sans-serif;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar"></div>
+
+    <div class="container">
+        <!-- Logo principal -->
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo Principal" onerror="this.style.display='none'; document.getElementById('alt-logo').style.display='block';">
+            <h2 id="alt-logo" style="display:none; color: var(--rojo);">[ LOGO.PNG ]</h2>
+        </div>
+
+        <h1>Panel de Control de Sponsors</h1>
+
+        <!-- Formulario para agregar sponsor -->
+        <div class="racing-card">
+            <form id="sponsorForm">
+                <div class="form-group">
+                    <label for="nombre">Nombre / Firma del Sponsor:</label>
+                    <input type="text" id="nombre" placeholder="Ej. Taller Mecánico Rayo" required>
+                </div>
+                <div class="form-group">
+                    <label for="telefono">Teléfono de Contacto:</label>
+                    <input type="tel" id="telefono" placeholder="Ej. +54 9 11 1234-5678" required>
+                </div>
+                <div class="form-group">
+                    <label for="monto">Monto Entregado en Físico ($):</label>
+                    <input type="number" step="0.01" id="monto" placeholder="Ej. 50000" required>
+                </div>
+                <button type="submit" class="btn">Registrar Sponsor</button>
+            </form>
+        </div>
+
+        <!-- Tabla de Registros -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Sponsor</th>
+                    <th>Teléfono</th>
+                    <th>Monto Físico</th>
+                </tr>
+            </thead>
+            <tbody id="tablaSponsors">
+                <!-- Se llena dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+
+        <!-- Caja del Total -->
+        <div class="total-box">
+            <h2>Total Recaudado</h2>
+            <div class="monto-total" id="montoTotal">$0,00</div>
+        </div>
+
+        <div class="actions">
+            <button id="btnLimpiar" class="btn-limpiar" style="display: none;">Reiniciar lista de sponsors</button>
+        </div>
+    </div>
+
+    <script>
+        // Cargar sponsors desde localStorage o iniciar vacíos
+        let sponsors = JSON.parse(localStorage.getItem('sponsors_racing')) || [];
+
+        const form = document.getElementById('sponsorForm');
+        const tabla = document.getElementById('tablaSponsors');
+        const totalElemento = document.getElementById('montoTotal');
+        const btnLimpiar = document.getElementById('btnLimpiar');
+
+        // Función para renderizar la tabla y el total
+        function renderizar() {
+            tabla.innerHTML = '';
+            let total = 0;
+
+            if (sponsors.length === 0) {
+                tabla.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #666;">No hay sponsors registrados aún.</td>
+                    </tr>
+                `;
+                btnLimpiar.style.display = 'none';
+            } else {
+                sponsors.forEach((sponsor) => {
+                    total += parseFloat(sponsor.monto);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${sponsor.nombre}</strong></td>
+                        <td>${sponsor.telefono}</td>
+                        <td style="color: green; font-weight: bold;">$${formatearMoneda(sponsor.monto)}</td>
+                    `;
+                    tabla.appendChild(row);
+                });
+                btnLimpiar.style.display = 'inline-block';
+            }
+
+            totalElemento.textContent = `$${formatearMoneda(total)}`;
+        }
+
+        // Formatear números a moneda ($ 50.000,00)
+        function formatearMoneda(valor) {
+            return Number(valor).toLocaleString('es-AR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Agregar nuevo sponsor
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const monto = parseFloat(document.getElementById('monto').value);
+
+            if (nombre && telefono && !isNaN(monto) && monto > 0) {
+                sponsors.push({ nombre, telefono, monto });
+                localStorage.setItem('sponsors_racing', JSON.stringify(sponsors));
+                
+                form.reset();
+                renderizar();
+            }
+        });
+
+        // Limpiar lista completa
+        btnLimpiar.addEventListener('click', () => {
+            if (confirm('¿Seguro que deseas borrar toda la lista de sponsors?')) {
+                sponsors = [];
+                localStorage.removeItem('sponsors_racing');
+                renderizar();
+            }
+        });
+
+        // Cargar datos al abrir la página
+        renderizar();
+    </script>
+</body>
+</html>
