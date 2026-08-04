@@ -366,8 +366,8 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL POR POSICIÓN EXACTA (COLUMNA E Y F)
-async function procesarExcelLocal(index, efector) {
+// 2. PROCESAMIENTO DE EXCEL POR POSICIÓN Y RESPALDO DE COLUMNAS
+    async function procesarExcelLocal(index, efector) {
     const fileInput = document.getElementById(`excel-${index}`);
     if (!fileInput.files[0]) return;
 
@@ -377,19 +377,40 @@ async function procesarExcelLocal(index, efector) {
         const workbook = XLSX.read(data, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        // Convertir hoja a matriz bidimensional respetando índices de columnas vacías
+        // Convertir hoja a matriz bidimensional respetando celdas vacías
         const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
         const pacientesRechazados = [];
 
         filas.forEach((fila, idx) => {
-            if (!fila || fila.length < 6) return;
+            if (!fila || fila.length === 0) return;
 
-            // Extraer directamente Columna E (índice 4) y Columna F (índice 5)
-            const nombreRaw = String(fila[4] || "").trim();
-            const dniRaw = String(fila[5] || "").replace(/\D/g, "").trim(); // Limpia y deja solo números
+            // Columna E (índice 4) para Nombre y Columna F (índice 5) para DNI
+            let nombreRaw = String(fila[4] || "").trim();
+            let dniRaw = String(fila[5] || "").replace(/\D/g, "").trim();
 
-            // Si hay un DNI válido (entre 7 y 8 dígitos), es una fila de paciente
+            // Si la Columna F no tenía el DNI, escanear toda la fila buscando un número de 7 u 8 dígitos
+            if (dniRaw.length < 7 || dniRaw.length > 8) {
+                for (let c = 0; c < fila.length; c++) {
+                    const posibleDni = String(fila[c] || "").replace(/\D/g, "").trim();
+                    if (posibleDni.length >= 7 && posibleDni.length <= 8) {
+                        dniRaw = posibleDni;
+                        // Si la columna E estaba vacía, intentar tomar el nombre de la celda previa al DNI
+                        if (!nombreRaw && c > 0) {
+                            nombreRaw = String(fila[c - 1] || "").trim();
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Validar si encontramos un DNI válido y agregar el paciente
             if (dniRaw.length >= 7 && dniRaw.length <= 8) {
+                // Si el nombre detectado es un texto reservado o un número, limpiarlo
+                const nombreUpper = nombreRaw.toUpperCase();
+                if (nombreUpper.includes("REGISTRA") || nombreUpper.includes("DNI") || /^\d+$/.test(nombreRaw)) {
+                    nombreRaw = "Paciente sin nombre";
+                }
+
                 pacientesRechazados.push({
                     id: `p_${Date.now()}_${idx}`,
                     nombre: nombreRaw || "Paciente sin nombre",
