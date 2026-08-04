@@ -8,13 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilos.css">
     
-    <!-- Librería PDF.js para procesar PDFs en el navegador sin backend -->
+    <!-- Librería PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
 
-    <!-- Librería SheetJS para procesar Excels en el navegador -->
+    <!-- Librería SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -113,7 +113,7 @@
 
     </div>
 
-    <!-- SOLAPA 2: ESTADÍSTICAS Y RENDIMIENTO -->
+    <!-- SOLAPA 2: ESTADÍSTICAS -->
     <div id="solapaStats" class="tab-content">
         <div class="card">
             <div class="card-header">
@@ -136,7 +136,6 @@
         </div>
 
         <div class="grid-stats">
-            <!-- MÓDULO 1: TOTAL FACTURADO -->
             <div class="card">
                 <div class="card-header">
                     <h2>Total Facturado</h2>
@@ -146,7 +145,6 @@
                 </div>
             </div>
 
-            <!-- MÓDULO 2: VARIACIÓN DE CÓDIGOS DE PRESTACIÓN -->
             <div class="card">
                 <div class="card-header">
                     <h2>Rendimiento por Código de Prestación</h2>
@@ -295,7 +293,7 @@
         });
     }
 
-    // 1. PROCESAMIENTO DE PDF DIRECTO EN EL NAVEGADOR
+    // 1. PROCESAMIENTO DE PDF
     async function procesarPDFLocal(index, efector) {
         const fileInput = document.getElementById(`pdf-${index}`);
         const statusSpan = document.getElementById(`status-${index}`);
@@ -361,7 +359,7 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL POR COORDENADAS DE COLUMNA (INMUNIZADO A SALTOS DE LÍNEA)
+    // 2. PROCESAMIENTO DE EXCEL ULTRA FLEXIBLE
     async function procesarExcelLocal(index, efector) {
         const fileInput = document.getElementById(`excel-${index}`);
         if (!fileInput.files[0]) return;
@@ -372,28 +370,61 @@
             const workbook = XLSX.read(data, { type: 'array' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            // Convertir la hoja a matriz bidimensional (filas y columnas puras)
             const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
             const pacientesRechazados = [];
+
+            let colNombre = -1, colDoc = -1, colMotivo = -1;
+
+            for (let i = 0; i < filas.length; i++) {
+                const filaClean = filas[i].map(c => String(c).toUpperCase().trim());
+                
+                const idxNombre = filaClean.findIndex(c => c === 'NOMBRE' || c.includes('PACIENTE'));
+                const idxDoc = filaClean.findIndex(c => c === 'DOCUMENTO' || c === 'DNI' || c.includes('DOC'));
+                const idxMotivo = filaClean.findIndex(c => c === 'MOTIVO' || c.includes('MOTIVO'));
+
+                if (idxNombre !== -1 && idxDoc !== -1 && idxMotivo !== -1) {
+                    colNombre = idxNombre;
+                    colDoc = idxDoc;
+                    colMotivo = idxMotivo;
+                    break;
+                }
+            }
 
             filas.forEach((fila, idx) => {
                 if (!fila || fila.length === 0) return;
 
-                // Columna E (Índice 4) = NOMBRE
-                // Columna F (Índice 5) = DOCUMENTO
-                // Columna H (Índice 7) = MOTIVO
-                const nombreRaw = String(fila[4] || "").replace(/\r?\n|\r/g, " ").trim();
-                const documentoRaw = String(fila[5] || "").replace(/\r?\n|\r/g, " ").trim();
-                const motivoRaw = String(fila[7] || "").replace(/\r?\n|\r/g, " ").trim();
+                const lineaTexto = fila.map(c => String(c)).join(" ").replace(/\s+/g, " ").toUpperCase();
 
-                const motivoUpper = motivoRaw.toUpperCase();
+                if (lineaTexto.includes("REGISTRA") || lineaTexto.includes("OBRA SOCIAL") || lineaTexto.includes("PUCO")) {
+                    
+                    let nombre = "";
+                    let documento = "";
+                    let motivo = "";
 
-                if (motivoUpper.includes("EL PACIENTE REGISTRA") || motivoUpper.includes("REGISTRA:")) {
+                    if (colNombre !== -1 && fila[colNombre]) nombre = String(fila[colNombre]);
+                    if (colDoc !== -1 && fila[colDoc]) documento = String(fila[colDoc]);
+                    if (colMotivo !== -1 && fila[colMotivo]) motivo = String(fila[colMotivo]);
+
+                    fila.forEach(celda => {
+                        const str = String(celda).replace(/\s+/g, " ").trim();
+                        const strUpper = str.toUpperCase();
+
+                        if (!documento && /^\d{7,8}$/.test(str)) {
+                            documento = str;
+                        }
+                        if (!motivo && (strUpper.includes("REGISTRA") || strUpper.includes("OBRA SOCIAL"))) {
+                            motivo = str;
+                        }
+                        if (!nombre && str.length > 5 && !/\d/.test(str) && !strUpper.includes("REGISTRA") && !strUpper.includes("MOTIVO")) {
+                            nombre = str;
+                        }
+                    });
+
                     pacientesRechazados.push({
                         id: `p_${Date.now()}_${idx}`,
-                        nombre: nombreRaw || "Paciente sin nombre",
-                        documento: documentoRaw || "Sin DNI",
-                        motivo: motivoRaw,
+                        nombre: nombre.trim() || "Paciente sin nombre",
+                        documento: documento.trim() || "Sin DNI",
+                        motivo: motivo.trim() || "Registra cobertura social",
                         cargado: false
                     });
                 }
