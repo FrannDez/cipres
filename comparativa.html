@@ -295,7 +295,7 @@
         });
     }
 
-    // 1. PROCESAMIENTO DE PDF DIRECTO EN EL NAVEGADOR (CLIENT-SIDE)
+    // 1. PROCESAMIENTO DE PDF DIRECTO EN EL NAVEGADOR
     async function procesarPDFLocal(index, efector) {
         const fileInput = document.getElementById(`pdf-${index}`);
         const statusSpan = document.getElementById(`status-${index}`);
@@ -317,7 +317,6 @@
                 textoCompleto += pageText + "\n";
             }
 
-            // Extraer Monto Total Cuasifactura
             let total = 0;
             const matchMonto = textoCompleto.match(/Total\s+Cuasifactura[\s\S]*?\$?\s*([\d\.,]+)/i) || 
                                textoCompleto.match(/Total[\s\S]*?\$?\s*([\d\.,]+)/i);
@@ -327,7 +326,6 @@
                 total = parseFloat(rawMonto) || 0;
             }
 
-            // Extraer Códigos y Cantidades de Prestaciones
             const codigosAgrupados = {};
             const lineas = textoCompleto.split('\n');
 
@@ -363,7 +361,7 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL DIRECTO EN EL NAVEGADOR
+    // 2. PROCESAMIENTO DE EXCEL FLEXIBLE
     async function procesarExcelLocal(index, efector) {
         const fileInput = document.getElementById(`excel-${index}`);
         if (!fileInput.files[0]) return;
@@ -378,16 +376,27 @@
             const pacientesRechazados = [];
 
             rawData.forEach((row, idx) => {
-                const motivo = String(row['MOTIVO'] || row['Motivo'] || row['motivo'] || "");
-                if (motivo.toUpperCase().includes("EL PACIENTE REGISTRA:")) {
-                    const nombre = row['NOMBRE'] || row['Nombre'] || row['PACIENTE'] || row['Paciente'] || "Sin Nombre";
-                    const documento = row['DOCUMENTO'] || row['DNI'] || row['Documento'] || "Sin DNI";
+                const filaTexto = Object.values(row).join(" ").toUpperCase();
+                
+                if (filaTexto.includes("REGISTRA") || filaTexto.includes("OBRA SOCIAL") || filaTexto.includes("PUCO")) {
+                    
+                    let nombre = row['NOMBRE'] || row['Nombre'] || row['PACIENTE'] || row['Paciente'] || row['APELLIDO Y NOMBRE'] || "";
+                    let documento = row['DOCUMENTO'] || row['DNI'] || row['Documento'] || row['NUM_DOC'] || "";
+                    let motivo = row['MOTIVO'] || row['Motivo'] || row['MOTIVO RECHAZO'] || row['DESCRIPCION'] || "";
+
+                    if (!nombre || !documento) {
+                        Object.keys(row).forEach(key => {
+                            const valStr = String(row[key]).trim();
+                            if (!documento && /^\d{7,8}$/.test(valStr)) documento = valStr;
+                            if (!motivo && valStr.toUpperCase().includes("REGISTRA")) motivo = valStr;
+                        });
+                    }
 
                     pacientesRechazados.push({
                         id: `p_${Date.now()}_${idx}`,
-                        nombre: String(nombre).trim(),
-                        documento: String(documento).trim(),
-                        motivo: motivo.trim(),
+                        nombre: String(nombre).trim() || "Paciente sin nombre",
+                        documento: String(documento).trim() || "Sin DNI",
+                        motivo: String(motivo).trim() || "Registra cobertura social",
                         cargado: false
                     });
                 }
@@ -402,7 +411,7 @@
         }
     }
 
-    // 3. CARGA DE DESPLEGABLES DESDE EL NODO MASTER 'comparativas'
+    // 3. DESPLEGABLES DESDE FIREBASE
     async function poblarDesplegablesPeriodos() {
         const snapshot = await get(child(ref(db), 'comparativas'));
         const datos = snapshot.val() || {};
@@ -437,7 +446,7 @@
         cargarEstadisticas();
     }
 
-    // 4. CONSULTA Y COMPARATIVAS (LECTURA DE 'comparativas')
+    // 4. CONSULTA Y COMPARATIVAS
     window.cargarEstadisticas = async function() {
         const pBaseKey = document.getElementById('statPeriodoBase').value;
         const pCompKey = document.getElementById('statPeriodoComparar').value;
@@ -540,16 +549,19 @@
             .catch(() => mostrarToast("Error al actualizar", true));
     };
 
-    // 6. GUARDADO DIRECTO A FIREBASE
+    // 6. GUARDADO SEGURO A FIREBASE
     window.exportarYGuardar = async function() {
         const mesSel = document.getElementById('selectMes').value;
         const anioSel = document.getElementById('selectAnio').value;
         const claveMes = `${anioSel}-${mesSel}`;
 
         try {
+            const datosEfectoresClean = JSON.parse(JSON.stringify(datosCuasifacturas || {}));
+            const rechazosClean = JSON.parse(JSON.stringify(rechazosPorEfector || {}));
+
             await set(ref(db, `comparativas/${claveMes}`), {
-                datosEfectores: datosCuasifacturas,
-                rechazos: rechazosPorEfector,
+                datosEfectores: datosEfectoresClean,
+                rechazos: rechazosClean,
                 fechaActualizacion: new Date().toISOString()
             });
 
@@ -557,7 +569,7 @@
 
         } catch (err) {
             console.error("Error al guardar en Firebase:", err);
-            mostrarToast("Error al guardar en la base de datos", true);
+            mostrarToast(`Error al guardar: ${err.message}`, true);
         }
     };
 
