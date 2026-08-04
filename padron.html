@@ -7,10 +7,8 @@
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilos.css">
-    
     <!-- Librería para procesar CSVs gigantes de forma ultrarrápida -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="global.js"></script>
 </head>
 <body>
 
@@ -169,28 +167,48 @@
         });
     });
 
-    // --- FORMULARIO INDIVIDUAL ---
-    document.getElementById('formPaciente').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const idExistente = document.getElementById('pacienteId').value;
-        
-        if (idExistente) {
-            const pass = prompt("Ingrese la clave para ACTUALIZAR:");
-            if (pass !== CLAVE_ADMIN) return alert("❌ Clave incorrecta.");
+    // --- GUARDAR O ACTUALIZAR PACIENTE INDIVIDUAL ---
+document.getElementById('formPaciente').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const idExistente = document.getElementById('pacienteId').value;
+    
+    // Si estamos editando un paciente existente, pedimos clave "muni"
+    if (idExistente) {
+        const pass = prompt("Ingrese la clave para ACTUALIZAR:");
+        if (pass !== CLAVE_ADMIN) {
+            return alert("❌ Clave incorrecta. No se realizaron cambios.");
         }
+    }
 
-        const id = idExistente || 'pac_' + Date.now();
-        const nroBeneficio = document.getElementById('nroBeneficio').value.trim();
-        const nroDoc = document.getElementById('nroDoc').value.trim();
-        const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
+    // Generar ID único o usar el existente
+    const id = idExistente || 'pac_' + Date.now();
+    const nroBeneficio = document.getElementById('nroBeneficio').value.trim();
+    const nroDoc = document.getElementById('nroDoc').value.trim();
+    const nombreApellido = document.getElementById('nombreApellido').value.trim().toUpperCase();
 
-        set(ref(db, 'padron/' + id), { id, nroBeneficio, nroDoc, nombreApellido })
-            .then(() => {
-                mostrarToast(idExistente ? '¡Paciente actualizado!' : '¡Paciente cargado!');
-                limpiarFormulario();
-            })
-            .catch(err => mostrarToast('Error: ' + err.message, true));
-    });
+    if (!nroBeneficio || !nroDoc || !nombreApellido) {
+        return alert("Por favor complete todos los campos.");
+    }
+
+    const pacienteData = {
+        id: id,
+        nroBeneficio: nroBeneficio,
+        nroDoc: nroDoc,
+        nombreApellido: nombreApellido
+    };
+
+    try {
+        // Guardar en la rama 'padron' de Firebase
+        await set(ref(db, 'padron/' + id), pacienteData);
+        
+        mostrarToast(idExistente ? '¡Paciente actualizado exitosamente!' : '¡Paciente guardado exitosamente!');
+        limpiarFormulario();
+    } catch (error) {
+        console.error("Error al guardar en Firebase:", error);
+        mostrarToast('Error al guardar: ' + error.message, true);
+    }
+});
 
     function renderizarTabla() {
         const tbody = document.getElementById('tablaPacientesBody');
