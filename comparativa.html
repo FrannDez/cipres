@@ -366,76 +366,48 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL CORREGIDO
-    async function procesarExcelLocal(index, efector) {
-        const fileInput = document.getElementById(`excel-${index}`);
-        if (!fileInput.files[0]) return;
+    // 2. PROCESAMIENTO DE EXCEL POR POSICIÓN EXACTA (COLUMNA E Y F)
+async function procesarExcelLocal(index, efector) {
+    const fileInput = document.getElementById(`excel-${index}`);
+    if (!fileInput.files[0]) return;
 
-        try {
-            const file = fileInput.files[0];
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: 'array' });
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    try {
+        const file = fileInput.files[0];
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-            const pacientesRechazados = [];
+        // Convertir hoja a matriz bidimensional respetando índices de columnas vacías
+        const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+        const pacientesRechazados = [];
 
-            filas.forEach((fila, idx) => {
-                if (!fila || fila.length === 0) return;
+        filas.forEach((fila, idx) => {
+            if (!fila || fila.length < 6) return;
 
-                const lineaTexto = fila.map(c => String(c)).join(" ").replace(/\s+/g, " ").toUpperCase();
+            // Extraer directamente Columna E (índice 4) y Columna F (índice 5)
+            const nombreRaw = String(fila[4] || "").trim();
+            const dniRaw = String(fila[5] || "").replace(/\D/g, "").trim(); // Limpia y deja solo números
 
-                // Filtrar las filas que realmente contengan rechazo por Obra Social
-                if (lineaTexto.includes("REGISTRA") || lineaTexto.includes("OBRA SOCIAL") || lineaTexto.includes("PUCO")) {
-                    
-                    let nombre = "";
-                    let documento = "";
-                    let motivo = "";
+            // Si hay un DNI válido (entre 7 y 8 dígitos), es una fila de paciente
+            if (dniRaw.length >= 7 && dniRaw.length <= 8) {
+                pacientesRechazados.push({
+                    id: `p_${Date.now()}_${idx}`,
+                    nombre: nombreRaw || "Paciente sin nombre",
+                    documento: dniRaw,
+                    motivo: "Registra cobertura social",
+                    cargado: false
+                });
+            }
+        });
 
-                    fila.forEach(celda => {
-                        const str = String(celda).replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ").trim();
-                        const strUpper = str.toUpperCase();
+        rechazosPorEfector[efector] = pacientesRechazados;
+        mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
 
-                        // Detectar DNI (numérico entre 7 y 8 dígitos)
-                        if (!documento && /^\d{7,8}$/.test(str)) {
-                            documento = str;
-                        }
-                        // Detectar Motivo de la Obra Social
-                        else if (!motivo && (strUpper.includes("EL PACIENTE REGISTRA") || strUpper.includes("REGISTRA:"))) {
-                            motivo = str;
-                        }
-                        // Detectar Nombre (cadena larga sin números ni frases de rechazo)
-                        else if (!nombre && str.length > 5 && !/\d/.test(str) && !strUpper.includes("REGISTRA") && !strUpper.includes("MOTIVO") && !strUpper.includes("REPORTE")) {
-                            nombre = str;
-                        }
-                    });
-
-                    // Si no encontró motivo en celda individual pero la fila lo tiene, lo asigna
-                    if (!motivo) {
-                        const celdaMotivo = fila.find(c => String(c).toUpperCase().includes("REGISTRA"));
-                        if (celdaMotivo) motivo = String(celdaMotivo).trim();
-                    }
-
-                    if (nombre || documento) {
-                        pacientesRechazados.push({
-                            id: `p_${Date.now()}_${idx}`,
-                            nombre: nombre || "Paciente sin nombre",
-                            documento: documento || "Sin DNI",
-                            motivo: motivo || "Registra cobertura social",
-                            cargado: false
-                        });
-                    }
-                }
-            });
-
-            rechazosPorEfector[efector] = pacientesRechazados;
-            mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
-
-        } catch (err) {
-            console.error("Error al leer Excel:", err);
-            mostrarToast(`Error al leer el Excel de ${efector}`, true);
-        }
+    } catch (err) {
+        console.error("Error al leer Excel:", err);
+        mostrarToast(`Error al leer el Excel de ${efector}`, true);
     }
+}
 
     // 3. DESPLEGABLES DESDE FIREBASE
     async function poblarDesplegablesPeriodos() {
