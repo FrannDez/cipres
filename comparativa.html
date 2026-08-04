@@ -361,55 +361,65 @@
         }
     }
 
-    // 2. PROCESAMIENTO DE EXCEL FLEXIBLE
-    async function procesarExcelLocal(index, efector) {
-        const fileInput = document.getElementById(`excel-${index}`);
-        if (!fileInput.files[0]) return;
+    // 2. PROCESAMIENTO DE EXCEL CORREGIDO (Saltando encabezados del reporte)
+async function procesarExcelLocal(index, efector) {
+    const fileInput = document.getElementById(`excel-${index}`);
+    if (!fileInput.files[0]) return;
 
-        try {
-            const file = fileInput.files[0];
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: 'array' });
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+    try {
+        const file = fileInput.files[0];
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            const pacientesRechazados = [];
-
-            rawData.forEach((row, idx) => {
-                const filaTexto = Object.values(row).join(" ").toUpperCase();
-                
-                if (filaTexto.includes("REGISTRA") || filaTexto.includes("OBRA SOCIAL") || filaTexto.includes("PUCO")) {
-                    
-                    let nombre = row['NOMBRE'] || row['Nombre'] || row['PACIENTE'] || row['Paciente'] || row['APELLIDO Y NOMBRE'] || "";
-                    let documento = row['DOCUMENTO'] || row['DNI'] || row['Documento'] || row['NUM_DOC'] || "";
-                    let motivo = row['MOTIVO'] || row['Motivo'] || row['MOTIVO RECHAZO'] || row['DESCRIPCION'] || "";
-
-                    if (!nombre || !documento) {
-                        Object.keys(row).forEach(key => {
-                            const valStr = String(row[key]).trim();
-                            if (!documento && /^\d{7,8}$/.test(valStr)) documento = valStr;
-                            if (!motivo && valStr.toUpperCase().includes("REGISTRA")) motivo = valStr;
-                        });
-                    }
-
-                    pacientesRechazados.push({
-                        id: `p_${Date.now()}_${idx}`,
-                        nombre: String(nombre).trim() || "Paciente sin nombre",
-                        documento: String(documento).trim() || "Sin DNI",
-                        motivo: String(motivo).trim() || "Registra cobertura social",
-                        cargado: false
-                    });
-                }
-            });
-
-            rechazosPorEfector[efector] = pacientesRechazados;
-            mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
-
-        } catch (err) {
-            console.error("Error al leer Excel:", err);
-            mostrarToast(`Error al leer el Excel de ${efector}`, true);
+        // Buscamos dinámicamente en qué fila empieza la tabla real leyendo las celdas
+        let filaInicio = 0;
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            let filaTexto = "";
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell = worksheet[XLSX.utils.encode_cell({r: R, c: C})];
+                if (cell && cell.v) filaTexto += cell.v + " ";
+            }
+            // Si la fila contiene las columnas del reporte reales
+            if (filaTexto.includes("NOMBRE") && filaTexto.includes("DOCUMENTO") && filaTexto.includes("MOTIVO")) {
+                filaInicio = R;
+                break;
+            }
         }
+
+        // Convertimos a JSON omitiendo las filas de títulos superiores
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { range: filaInicio, defval: "" });
+
+        const pacientesRechazados = [];
+
+        rawData.forEach((row, idx) => {
+            const motivo = String(row['MOTIVO'] || row['Motivo'] || "").trim();
+
+            // Filtramos estrictamente los rechazos por Obra Social (IOMA, prepagas, etc.)
+            if (motivo.toUpperCase().includes("EL PACIENTE REGISTRA:")) {
+                const nombre = String(row['NOMBRE'] || row['Nombre'] || "Sin Nombre").trim();
+                const documento = String(row['DOCUMENTO'] || row['Documento'] || "Sin DNI").trim();
+
+                pacientesRechazados.push({
+                    id: `p_${Date.now()}_${idx}`,
+                    nombre: nombre,
+                    documento: documento,
+                    motivo: motivo,
+                    cargado: false
+                });
+            }
+        });
+
+        rechazosPorEfector[efector] = pacientesRechazados;
+        mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
+
+    } catch (err) {
+        console.error("Error al leer Excel:", err);
+        mostrarToast(`Error al leer el Excel de ${efector}`, true);
     }
+}
 
     // 3. DESPLEGABLES DESDE FIREBASE
     async function poblarDesplegablesPeriodos() {
