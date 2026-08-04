@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUMAR Comparativa y Estadísticas - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 12px 20px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 6px; font-weight: 600; font-family: 'Montserrat', sans-serif; }
+        .tab-btn.active { background: #2563eb; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-stats { grid-template-columns: 1fr; } }
+        .paciente-cargado { text-decoration: line-through; opacity: 0.5; }
+        .badge-subio { color: #10b981; font-weight: bold; }
+        .badge-bajo { color: #ef4444; font-weight: bold; }
+        .badge-igual { color: #3b82f6; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast">¡Operación realizada con éxito!</div>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Gestión, Estadísticas y Consolidados - SUMAR</h1>
+    <p>Secretaría de Salud - Municipalidad de La Costa</p>
+</header>
+
+<div class="container">
+
+    <!-- SOLAPAS DE NAVEGACIÓN -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="cambiarSolapa('carga')">📂 Carga de Archivos</button>
+        <button class="tab-btn" onclick="cambiarSolapa('stats')">📈 Estadísticas de Rendimiento</button>
+        <button class="tab-btn" onclick="cambiarSolapa('admin')">🏥 Panel Administrativos (Rechazos)</button>
+    </div>
+
+    <!-- SOLAPA 1: CARGA -->
+    <div id="solapaCarga" class="tab-content active">
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Período a Cargar</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="selectMes">Mes:</label>
+                    <select id="selectMes">
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08" selected>Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="selectAnio">Año:</label>
+                    <select id="selectAnio">
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>1. Documento Consolidado (Escaneado)</h2>
+            </div>
+            <div class="input-group full-width">
+                <input type="file" id="file-consolidado" accept=".pdf">
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>2. Carga de Cuasifacturas y Rechazos por Efector</h2>
+            </div>
+            <div class="table-responsive responsive-form-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Efector</th>
+                            <th>Cuasifactura (PDF)</th>
+                            <th>Estado</th>
+                            <th>Rechazos (Excel)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEfectoresBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <button class="btn btn-block" onclick="exportarYGuardar()">📄 Guardar Período en Firebase y Exportar PDF</button>
+        </div>
+
+    </div>
+
+    <!-- SOLAPA 2: ESTADÍSTICAS Y RENDIMIENTO -->
+    <div id="solapaStats" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>Comparativa y Rendimiento de Facturación</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="statPeriodoBase">Período Principal:</label>
+                    <select id="statPeriodoBase" onchange="cargarEstadisticas()"></select>
+                </div>
+                <div class="input-group">
+                    <label for="statPeriodoComparar">Comparar contra:</label>
+                    <select id="statPeriodoComparar" onchange="cargarEstadisticas()"></select>
+                </div>
+                <div class="input-group full-width">
+                    <label for="statEfectorSel">Seleccionar Hospital / CAPS:</label>
+                    <select id="statEfectorSel" onchange="cargarEstadisticas()"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-stats">
+            <!-- MÓDULO 1: TOTAL FACTURADO -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Total Facturado</h2>
+                </div>
+                <div id="resumenMontoHospital" style="padding: 10px; font-size: 1.1rem;">
+                    Seleccione las opciones arriba para analizar la facturación.
+                </div>
+            </div>
+
+            <!-- MÓDULO 2: VARIACIÓN DE CÓDIGOS DE PRESTACIÓN -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Rendimiento por Código de Prestación</h2>
+                </div>
+                <div class="table-responsive responsive-form-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Cant. Base</th>
+                                <th>Cant. Comparada</th>
+                                <th>Diferencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaStatsCodigosBody">
+                            <tr><td colspan="4">Sin datos cargados para la selección.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOLAPA 3: PANEL ADMINISTRATIVOS -->
+    <div id="solapaAdmin" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>Gestión de Pacientes con Obra Social</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="adminPeriodo">Período:</label>
+                    <select id="adminPeriodo" onchange="cargarRechazosAdmin()"></select>
+                </div>
+                <div class="input-group">
+                    <label for="filtroEfectorAdmin">Efector:</label>
+                    <select id="filtroEfectorAdmin" onchange="cargarRechazosAdmin()">
+                        <option value="">-- Seleccionar Efector --</option>
+                        <option value="Hospital Local General de Agudos">Hospital Local General de Agudos</option>
+                        <option value="Hospital Municipal Carlos Federico Macias">Hospital Municipal Carlos Federico Macias</option>
+                        <option value="Hospital Municipal Santa Teresita">Hospital Municipal Santa Teresita</option>
+                        <option value="Centro Comunitario Barrio Parque Golf">Centro Comunitario Barrio Parque Golf</option>
+                        <option value="CAPS Villa Clelia">CAPS Villa Clelia</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive responsive-form-table" style="margin-top: 15px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cargado</th>
+                            <th>Nombre y Apellido</th>
+                            <th>Documento</th>
+                            <th>Motivo Obra Social</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAdminBody">
+                        <tr><td colspan="4">Seleccione un efector para visualizar la lista.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, child, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const todosLosEfectores = [
+        "Hospital Local General de Agudos", "Hospital Municipal Carlos Federico Macias",
+        "Unidad Sanitaria Mar del Tuyú", "Unidad Sanitaria Las Toninas", "Hospital Municipal Santa Teresita",
+        "Unidad Sanitaria Aguas Verdes", "Unidad Sanitaria La Lucila del Mar", "CAPS Costa Azul",
+        "CAPS Mar de Ajó Norte", "Centro Medico Barrio Juan XXIII", "CAPS Las Quintas",
+        "CAPS San Bernardo", "CAPS Barrio P. J. Rocco", "Centro Comunitario Barrio Parque Golf",
+        "CAPS Barrio San Martín", "CAPS Villa Clelia", "CAPS Barrio Chino"
+    ];
+
+    const efectoresConRechazos = [
+        "Hospital Local General de Agudos", "Hospital Municipal Carlos Federico Macias",
+        "Hospital Municipal Santa Teresita", "Centro Comunitario Barrio Parque Golf", "CAPS Villa Clelia"
+    ];
+
+    const datosCuasifacturas = {};
+    const rechazosPorEfector = {};
+
+    window.cambiarSolapa = function(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        if (tabName === 'carga') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('solapaCarga').classList.add('active');
+        } else if (tabName === 'stats') {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('solapaStats').classList.add('active');
+            poblarDesplegablesPeriodos();
+        } else {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('solapaAdmin').classList.add('active');
+            poblarDesplegablesPeriodos();
+        }
+    };
+
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function inicializarTablaCarga() {
+        const tbody = document.getElementById('tablaEfectoresBody');
+        tbody.innerHTML = '';
+
+        todosLosEfectores.forEach((efector, index) => {
+            const tieneRechazo = efectoresConRechazos.includes(efector);
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td><strong>${index + 1}</strong></td>
+                <td><strong>${efector}</strong></td>
+                <td><input type="file" id="pdf-${index}" accept=".pdf" class="input-file"></td>
+                <td><span id="status-${index}" style="font-weight:600;">Sin Cargar</span></td>
+                <td>${tieneRechazo ? `<input type="file" id="excel-${index}" accept=".xls,.xlsx" class="input-file">` : '<span style="color:#9ca3af;">N/A</span>'}</td>
+            `;
+            tbody.appendChild(tr);
+
+            document.getElementById(`pdf-${index}`).addEventListener('change', () => procesarPDF(index, efector));
+            if (tieneRechazo) {
+                document.getElementById(`excel-${index}`).addEventListener('change', () => procesarExcel(index, efector));
+            }
+        });
+    }
+
+    async function procesarPDF(index, efector) {
+        const fileInput = document.getElementById(`pdf-${index}`);
+        const statusSpan = document.getElementById(`status-${index}`);
+        if (!fileInput.files[0]) return;
+
+        const formData = new FormData();
+        formData.append('pdf', fileInput.files[0]);
+        statusSpan.innerText = "Cargando...";
+
+        try {
+            const res = await fetch('/api/parse-pdf', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.success) {
+                datosCuasifacturas[efector] = data;
+                statusSpan.innerHTML = `<span style="color:#10b981;">Procesado ($${data.totalCuasifactura.toLocaleString('es-AR')})</span>`;
+                mostrarToast(`PDF de ${efector} procesado.`);
+            }
+        } catch (err) {
+            statusSpan.innerText = "Error";
+        }
+    }
+
+    async function procesarExcel(index, efector) {
+        const fileInput = document.getElementById(`excel-${index}`);
+        if (!fileInput.files[0]) return;
+
+        const formData = new FormData();
+        formData.append('excel', fileInput.files[0]);
+
+        const res = await fetch('/api/parse-excel', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            rechazosPorEfector[efector] = data.pacientes.map((p, idx) => ({
+                ...p, id: `p_${Date.now()}_${idx}`, cargado: false
+            }));
+            mostrarToast(`${data.pacientes.length} rechazos procesados para ${efector}`);
+        }
+    }
+
+    // CARGA DE DESPLEGABLES DESDE EL NODO MASTER 'comparativas'
+    async function poblarDesplegablesPeriodos() {
+        const snapshot = await get(child(ref(db), 'comparativas'));
+        const datos = snapshot.val() || {};
+        const periodos = Object.keys(datos).sort().reverse();
+
+        const selBase = document.getElementById('statPeriodoBase');
+        const selComp = document.getElementById('statPeriodoComparar');
+        const selAdmin = document.getElementById('adminPeriodo');
+        const selEfector = document.getElementById('statEfectorSel');
+
+        selBase.innerHTML = ''; selComp.innerHTML = ''; selAdmin.innerHTML = ''; selEfector.innerHTML = '';
+
+        if (periodos.length === 0) {
+            selBase.innerHTML = '<option value="">Sin períodos cargados</option>';
+            selComp.innerHTML = '<option value="">Sin períodos cargados</option>';
+            selAdmin.innerHTML = '<option value="">Sin períodos cargados</option>';
+            return;
+        }
+
+        periodos.forEach(p => {
+            selBase.innerHTML += `<option value="${p}">${p}</option>`;
+            selComp.innerHTML += `<option value="${p}">${p}</option>`;
+            selAdmin.innerHTML += `<option value="${p}">${p}</option>`;
+        });
+
+        if (periodos.length > 1) selComp.selectedIndex = 1;
+
+        todosLosEfectores.forEach(e => {
+            selEfector.innerHTML += `<option value="${e}">${e}</option>`;
+        });
+
+        cargarEstadisticas();
+    }
+
+    // ESTADÍSTICAS Y RENDIMIENTO (LECTURA DESDE 'comparativas')
+    window.cargarEstadisticas = async function() {
+        const pBaseKey = document.getElementById('statPeriodoBase').value;
+        const pCompKey = document.getElementById('statPeriodoComparar').value;
+        const efector = document.getElementById('statEfectorSel').value;
+
+        if (!pBaseKey || !pCompKey || !efector) return;
+
+        const snapBase = await get(child(ref(db), `comparativas/${pBaseKey}/datosEfectores/${efector}`));
+        const snapComp = await get(child(ref(db), `comparativas/${pCompKey}/datosEfectores/${efector}`));
+
+        const dBase = snapBase.val() || { totalCuasifactura: 0, codigosAgrupados: {} };
+        const dComp = snapComp.val() || { totalCuasifactura: 0, codigosAgrupados: {} };
+
+        // Resumen de Montos
+        const mBase = dBase.totalCuasifactura || 0;
+        const mComp = dComp.totalCuasifactura || 0;
+        const difMonto = mBase - mComp;
+        
+        let difHtml = '';
+        if (difMonto > 0) difHtml = `<span class="badge-subio">▲ Incremento: +$${difMonto.toLocaleString('es-AR')}</span>`;
+        else if (difMonto < 0) difHtml = `<span class="badge-bajo">▼ Disminución: -$${Math.abs(difMonto).toLocaleString('es-AR')}</span>`;
+        else difHtml = `<span class="badge-igual">= Sin Variación</span>`;
+
+        document.getElementById('resumenMontoHospital').innerHTML = `
+            <p><strong>${efector}</strong></p>
+            <p>Monto en ${pBaseKey}: <b>$${mBase.toLocaleString('es-AR')}</b></p>
+            <p>Monto en ${pCompKey}: <b>$${mComp.toLocaleString('es-AR')}</b></p>
+            <p>Resultado: ${difHtml}</p>
+        `;
+
+        // Tabla Comparativa de Códigos
+        const tbodyCod = document.getElementById('tablaStatsCodigosBody');
+        tbodyCod.innerHTML = '';
+
+        const todosCodigos = Array.from(new Set([
+            ...Object.keys(dBase.codigosAgrupados || {}),
+            ...Object.keys(dComp.codigosAgrupados || {})
+        ]));
+
+        if (todosCodigos.length === 0) {
+            tbodyCod.innerHTML = '<tr><td colspan="4">Sin registros de prestaciones para las fechas seleccionadas.</td></tr>';
+            return;
+        }
+
+        todosCodigos.forEach(cod => {
+            const cantBase = dBase.codigosAgrupados?.[cod]?.cantidadTotal || 0;
+            const cantComp = dComp.codigosAgrupados?.[cod]?.cantidadTotal || 0;
+            const dif = cantBase - cantComp;
+
+            let badge = '';
+            if (dif > 0) badge = `<span class="badge-subio">(+${dif}) ▲</span>`;
+            else if (dif < 0) badge = `<span class="badge-bajo">(${dif}) ▼</span>`;
+            else badge = `<span class="badge-igual">(=)</span>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${cod}</strong></td>
+                <td>${cantBase}</td>
+                <td>${cantComp}</td>
+                <td>${badge}</td>
+            `;
+            tbodyCod.appendChild(tr);
+        });
+    };
+
+    // PANEL ADMINISTRATIVOS (LECTURA Y ACTUALIZACIÓN EN 'comparativas')
+    window.cargarRechazosAdmin = async function() {
+        const efector = document.getElementById('filtroEfectorAdmin').value;
+        const claveMes = document.getElementById('adminPeriodo').value;
+        const tbody = document.getElementById('tablaAdminBody');
+        tbody.innerHTML = '';
+
+        if (!efector || !claveMes) return;
+
+        const snapshot = await get(child(ref(db), `comparativas/${claveMes}/rechazos/${efector}`));
+        const lista = snapshot.val() || [];
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">No existen rechazos guardados para este efector en el período seleccionado.</td></tr>';
+            return;
+        }
+
+        lista.forEach((p, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = p.cargado ? 'paciente-cargado' : '';
+
+            tr.innerHTML = `
+                <td>
+                    <input type="checkbox" ${p.cargado ? 'checked' : ''} onchange="marcarPacienteCargado('${claveMes}', '${efector}', ${idx}, this.checked)">
+                </td>
+                <td>${p.nombre}</td>
+                <td>${p.documento}</td>
+                <td><span style="color:#d97706; font-weight:600;">${p.motivo}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    };
+
+    window.marcarPacienteCargado = function(claveMes, efector, indexArray, estado) {
+        update(ref(db, `comparativas/${claveMes}/rechazos/${efector}/${indexArray}`), { cargado: estado })
+            .then(() => mostrarToast("Registro actualizado."))
+            .catch(err => mostrarToast("Error al actualizar", true));
+    };
+
+    window.exportarYGuardar = async function() {
+        const mesSel = document.getElementById('selectMes').value;
+        const anioSel = document.getElementById('selectAnio').value;
+        const claveMes = `${anioSel}-${mesSel}`;
+
+        try {
+            await fetch('/api/guardar-base', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mesAno: claveMes,
+                    datosEfectores: datosCuasifacturas,
+                    rechazos: rechazosPorEfector
+                })
+            });
+
+            mostrarToast("Período guardado en Firebase bajo /comparativas.");
+
+            const formData = new FormData();
+            const consolidadoInput = document.getElementById('file-consolidado');
+            if (consolidadoInput.files[0]) formData.append('consolidado', consolidadoInput.files[0]);
+
+            todosLosEfectores.forEach((_, index) => {
+                const pdfInput = document.getElementById(`pdf-${index}`);
+                if (pdfInput.files[0]) formData.append('efectores', pdfInput.files[0]);
+            });
+
+            const res = await fetch('/api/export-consolidated', { method: 'POST', body: formData });
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Consolidado_SUMAR_${claveMes}.pdf`;
+            a.click();
+
+        } catch (err) {
+            mostrarToast("Error durante la operación", true);
+        }
+    };
+
+    inicializarTablaCarga();
+</script>
+
+</body>
+</html>
