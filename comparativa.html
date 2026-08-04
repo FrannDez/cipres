@@ -366,7 +366,7 @@
         }
     }
 
-// 2. PROCESAMIENTO DE EXCEL CON BÚSQUEDA INTELIGENTE DE NOMBRE Y DNI
+// 2. PROCESAMIENTO DE EXCEL CON DIAGNÓSTICO EN CONSOLA Y LECTURA FLEXIBLE DE NOMBRE
 async function procesarExcelLocal(index, efector) {
     const fileInput = document.getElementById(`excel-${index}`);
     if (!fileInput.files[0]) return;
@@ -380,41 +380,58 @@ async function procesarExcelLocal(index, efector) {
         const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
         const pacientesRechazados = [];
 
+        console.log(`--- LEYENDO EXCEL DE ${efector} ---`);
+
         filas.forEach((fila, idx) => {
             if (!fila || fila.length === 0) return;
 
+            // 1. Buscar DNI en la fila
             let dniEncontrado = "";
-            let nombreEncontrado = "";
+            let posDni = -1;
 
-            // 1. Primer paso: Buscar el DNI en cualquier celda de la fila
             for (let c = 0; c < fila.length; c++) {
                 const celdaLimpia = String(fila[c] || "").replace(/\D/g, "").trim();
                 if (celdaLimpia.length >= 7 && celdaLimpia.length <= 8) {
                     dniEncontrado = celdaLimpia;
+                    posDni = c;
                     break;
                 }
             }
 
-            // 2. Si hay un DNI válido, buscamos el Nombre en las celdas de la misma fila
+            // 2. Si hay DNI, mostramos la fila completa en la consola para depurar
             if (dniEncontrado) {
-                for (let c = 0; c < fila.length; c++) {
-                    const textoCelda = String(fila[c] || "").trim();
-                    const textoUpper = textoCelda.toUpperCase();
+                console.log(`Fila ${idx} con DNI ${dniEncontrado}:`, fila);
 
-                    // Ignoramos celdas cortas, que tengan números, o contengan palabras reservadas del sistema
-                    const esInvalido = textoCelda.length < 3 ||
-                                       /\d/.test(textoCelda) ||
-                                       textoUpper.includes("PACIENTE") ||
-                                       textoUpper.includes("REGISTRA") ||
-                                       textoUpper.includes("OBRA SOCIAL") ||
-                                       textoUpper.includes("DNI") ||
-                                       textoUpper.includes("DOCUMENTO") ||
-                                       textoUpper.includes("MOTIVO") ||
-                                       textoUpper.includes("REPORTE");
+                let nombreEncontrado = "";
 
-                    if (!esInvalido) {
-                        nombreEncontrado = textoCelda;
-                        break; // Toma el primer texto válido que corresponda al Nombre
+                // Prioridad A: Probar directo con la Columna E (índice 4) o D (índice 3)
+                const colE = String(fila[4] || "").trim();
+                const colD = String(fila[3] || "").trim();
+
+                if (colE && !/\d/.test(colE) && !colE.toUpperCase().includes("PACIENTE")) {
+                    nombreEncontrado = colE;
+                } else if (colD && !/\d/.test(colD) && !colD.toUpperCase().includes("PACIENTE")) {
+                    nombreEncontrado = colD;
+                }
+
+                // Prioridad B: Si no lo encontró en E/D, recorrer las celdas previas al DNI
+                if (!nombreEncontrado) {
+                    for (let c = 0; c < fila.length; c++) {
+                        const val = String(fila[c] || "").trim();
+                        const valUpper = val.toUpperCase();
+
+                        // Tomar cualquier celda que tenga texto sin números y no sean frases de cabecera
+                        if (val.length > 2 && 
+                            !/\d/.test(val) && 
+                            !valUpper.includes("PACIENTE") && 
+                            !valUpper.includes("REGISTRA") && 
+                            !valUpper.includes("OBRA SOCIAL") &&
+                            !valUpper.includes("DNI") &&
+                            !valUpper.includes("DOCUMENTO")) {
+                            
+                            nombreEncontrado = val;
+                            break;
+                        }
                     }
                 }
 
