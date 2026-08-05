@@ -30,7 +30,6 @@
         .badge-bajo { color: #ef4444; font-weight: bold; }
         .badge-igual { color: #3b82f6; font-weight: bold; }
         
-        /* Ajuste de ancho de columnas para evitar desbordes */
         .tabla-admin th, .tabla-admin td { padding: 10px; text-align: left; }
         .tabla-admin th:nth-child(1) { width: 10%; text-align: center; }
         .tabla-admin th:nth-child(2) { width: 30%; }
@@ -233,13 +232,25 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Lista de efectores sin puntos
     const todosLosEfectores = [
-        "Hospital Local General de Agudos", "Hospital Municipal Carlos Federico Macias",
-        "Unidad Sanitaria Mar del Tuyú", "Unidad Sanitaria Las Toninas", "Hospital Municipal Santa Teresita",
-        "Unidad Sanitaria Aguas Verdes", "Unidad Sanitaria La Lucila del Mar", "CAPS Costa Azul",
-        "CAPS Mar de Ajó Norte", "Centro Medico Barrio Juan XXIII", "CAPS Las Quintas",
-        "CAPS San Bernardo", "CAPS Barrio P J Rocco", "Centro Comunitario Barrio Parque Golf",
-        "CAPS Barrio San Martín", "CAPS Villa Clelia", "CAPS Barrio Chino"
+        "Hospital Local General de Agudos", 
+        "Hospital Municipal Carlos Federico Macias",
+        "Unidad Sanitaria Mar del Tuyú", 
+        "Unidad Sanitaria Las Toninas", 
+        "Hospital Municipal Santa Teresita",
+        "Unidad Sanitaria Aguas Verdes", 
+        "Unidad Sanitaria La Lucila del Mar", 
+        "CAPS Costa Azul",
+        "CAPS Mar de Ajó Norte", 
+        "Centro Medico Barrio Juan XXIII", 
+        "CAPS Las Quintas",
+        "CAPS San Bernardo", 
+        "CAPS Barrio P J Rocco", 
+        "Centro Comunitario Barrio Parque Golf",
+        "CAPS Barrio San Martín", 
+        "CAPS Villa Clelia", 
+        "CAPS Barrio Chino"
     ];
 
     const efectoresConRechazos = [
@@ -249,6 +260,11 @@
 
     const datosCuasifacturas = {};
     const rechazosPorEfector = {};
+
+    // Sanitizador para evitar errores en Firebase
+    function limpiarClaveFirebase(str) {
+        return String(str || "").replace(/[\.\#\$\/\[\]]/g, "").trim();
+    }
 
     window.cambiarSolapa = function(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -300,7 +316,7 @@
         });
     }
 
-    // 1. PROCESAMIENTO DE PDF
+    // 1. PROCESAMIENTO DE PDF (CONTEO PRECISO)
     async function procesarPDFLocal(index, efector) {
         const fileInput = document.getElementById(`pdf-${index}`);
         const statusSpan = document.getElementById(`status-${index}`);
@@ -337,21 +353,18 @@
             lineas.forEach(linea => {
                 const matchCod = linea.match(/([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})/);
                 if (matchCod) {
-                    const codigo = matchCod[1].trim();
-                    const numeros = linea.match(/\b\d+\b/g);
-                    let cantidad = 1;
-                    if (numeros && numeros.length > 0) {
-                        cantidad = parseInt(numeros[0], 10) || 1;
-                    }
+                    const codigo = limpiarClaveFirebase(matchCod[1].trim());
 
                     if (!codigosAgrupados[codigo]) {
                         codigosAgrupados[codigo] = { cantidadTotal: 0 };
                     }
-                    codigosAgrupados[codigo].cantidadTotal += cantidad;
+                    // Sumar exactamente 1 unidad por cada aparición del código
+                    codigosAgrupados[codigo].cantidadTotal += 1;
                 }
             });
 
-            datosCuasifacturas[efector] = {
+            const efectorLimpio = limpiarClaveFirebase(efector);
+            datosCuasifacturas[efectorLimpio] = {
                 totalCuasifactura: total,
                 codigosAgrupados: codigosAgrupados
             };
@@ -366,93 +379,82 @@
         }
     }
 
-// 2. PROCESAMIENTO DE EXCEL CON DIAGNÓSTICO EN CONSOLA Y LECTURA FLEXIBLE DE NOMBRE
-async function procesarExcelLocal(index, efector) {
-    const fileInput = document.getElementById(`excel-${index}`);
-    if (!fileInput.files[0]) return;
+    // 2. PROCESAMIENTO DE EXCEL
+    async function procesarExcelLocal(index, efector) {
+        const fileInput = document.getElementById(`excel-${index}`);
+        if (!fileInput.files[0]) return;
 
-    try {
-        const file = fileInput.files[0];
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data, { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        try {
+            const file = fileInput.files[0];
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
-        const pacientesRechazados = [];
+            const filas = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+            const pacientesRechazados = [];
 
-        console.log(`--- LEYENDO EXCEL DE ${efector} ---`);
+            filas.forEach((fila, idx) => {
+                if (!fila || fila.length === 0) return;
 
-        filas.forEach((fila, idx) => {
-            if (!fila || fila.length === 0) return;
-
-            // 1. Buscar DNI en la fila
-            let dniEncontrado = "";
-            let posDni = -1;
-
-            for (let c = 0; c < fila.length; c++) {
-                const celdaLimpia = String(fila[c] || "").replace(/\D/g, "").trim();
-                if (celdaLimpia.length >= 7 && celdaLimpia.length <= 8) {
-                    dniEncontrado = celdaLimpia;
-                    posDni = c;
-                    break;
-                }
-            }
-
-            // 2. Si hay DNI, mostramos la fila completa en la consola para depurar
-            if (dniEncontrado) {
-                console.log(`Fila ${idx} con DNI ${dniEncontrado}:`, fila);
-
+                let dniEncontrado = "";
                 let nombreEncontrado = "";
 
-                // Prioridad A: Probar directo con la Columna E (índice 4) o D (índice 3)
-                const colE = String(fila[4] || "").trim();
-                const colD = String(fila[3] || "").trim();
-
-                if (colE && !/\d/.test(colE) && !colE.toUpperCase().includes("PACIENTE")) {
-                    nombreEncontrado = colE;
-                } else if (colD && !/\d/.test(colD) && !colD.toUpperCase().includes("PACIENTE")) {
-                    nombreEncontrado = colD;
-                }
-
-                // Prioridad B: Si no lo encontró en E/D, recorrer las celdas previas al DNI
-                if (!nombreEncontrado) {
-                    for (let c = 0; c < fila.length; c++) {
-                        const val = String(fila[c] || "").trim();
-                        const valUpper = val.toUpperCase();
-
-                        // Tomar cualquier celda que tenga texto sin números y no sean frases de cabecera
-                        if (val.length > 2 && 
-                            !/\d/.test(val) && 
-                            !valUpper.includes("PACIENTE") && 
-                            !valUpper.includes("REGISTRA") && 
-                            !valUpper.includes("OBRA SOCIAL") &&
-                            !valUpper.includes("DNI") &&
-                            !valUpper.includes("DOCUMENTO")) {
-                            
-                            nombreEncontrado = val;
-                            break;
-                        }
+                for (let c = 0; c < fila.length; c++) {
+                    const celdaLimpia = String(fila[c] || "").replace(/\D/g, "").trim();
+                    if (celdaLimpia.length >= 7 && celdaLimpia.length <= 8) {
+                        dniEncontrado = celdaLimpia;
+                        break;
                     }
                 }
 
-                pacientesRechazados.push({
-                    id: `p_${Date.now()}_${idx}`,
-                    nombre: nombreEncontrado || "Paciente sin nombre",
-                    documento: dniEncontrado,
-                    motivo: "Registra cobertura social",
-                    cargado: false
-                });
-            }
-        });
+                if (dniEncontrado) {
+                    const colE = String(fila[4] || "").trim();
+                    const colD = String(fila[3] || "").trim();
 
-        rechazosPorEfector[efector] = pacientesRechazados;
-        mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
+                    if (colE && !/\d/.test(colE) && !colE.toUpperCase().includes("PACIENTE")) {
+                        nombreEncontrado = colE;
+                    } else if (colD && !/\d/.test(colD) && !colD.toUpperCase().includes("PACIENTE")) {
+                        nombreEncontrado = colD;
+                    }
 
-    } catch (err) {
-        console.error("Error al leer Excel:", err);
-        mostrarToast(`Error al leer el Excel de ${efector}`, true);
+                    if (!nombreEncontrado) {
+                        for (let c = 0; c < fila.length; c++) {
+                            const val = String(fila[c] || "").trim();
+                            const valUpper = val.toUpperCase();
+
+                            if (val.length > 2 && 
+                                !/\d/.test(val) && 
+                                !valUpper.includes("PACIENTE") && 
+                                !valUpper.includes("REGISTRA") && 
+                                !valUpper.includes("OBRA SOCIAL") &&
+                                !valUpper.includes("DNI") &&
+                                !valUpper.includes("DOCUMENTO")) {
+                                
+                                nombreEncontrado = val;
+                                break;
+                            }
+                        }
+                    }
+
+                    pacientesRechazados.push({
+                        id: `p_${Date.now()}_${idx}`,
+                        nombre: nombreEncontrado || "Paciente sin nombre",
+                        documento: dniEncontrado,
+                        motivo: "Registra cobertura social",
+                        cargado: false
+                    });
+                }
+            });
+
+            const efectorLimpio = limpiarClaveFirebase(efector);
+            rechazosPorEfector[efectorLimpio] = pacientesRechazados;
+            mostrarToast(`${pacientesRechazados.length} rechazos procesados para ${efector}`);
+
+        } catch (err) {
+            console.error("Error al leer Excel:", err);
+            mostrarToast(`Error al leer el Excel de ${efector}`, true);
+        }
     }
-}
 
     // 3. DESPLEGABLES DESDE FIREBASE
     async function poblarDesplegablesPeriodos() {
@@ -493,7 +495,7 @@ async function procesarExcelLocal(index, efector) {
     window.cargarEstadisticas = async function() {
         const pBaseKey = document.getElementById('statPeriodoBase').value;
         const pCompKey = document.getElementById('statPeriodoComparar').value;
-        const efector = document.getElementById('statEfectorSel').value;
+        const efector = limpiarClaveFirebase(document.getElementById('statEfectorSel').value);
 
         if (!pBaseKey || !pCompKey || !efector) return;
 
@@ -553,9 +555,9 @@ async function procesarExcelLocal(index, efector) {
         });
     };
 
-    // 5. PANEL ADMINISTRATIVOS (ESTRUCTURA DE 4 COLUMNAS RIGUROSA)
+    // 5. PANEL ADMINISTRATIVOS
     window.cargarRechazosAdmin = async function() {
-        const efector = document.getElementById('filtroEfectorAdmin').value;
+        const efector = limpiarClaveFirebase(document.getElementById('filtroEfectorAdmin').value);
         const claveMes = document.getElementById('adminPeriodo').value;
         const tbody = document.getElementById('tablaAdminBody');
         tbody.innerHTML = '';
@@ -592,15 +594,22 @@ async function procesarExcelLocal(index, efector) {
             .catch(() => mostrarToast("Error al actualizar", true));
     };
 
-    // 6. GUARDADO SEGURO A FIREBASE
+    // 6. GUARDADO A FIREBASE SANITIZADO
     window.exportarYGuardar = async function() {
         const mesSel = document.getElementById('selectMes').value;
         const anioSel = document.getElementById('selectAnio').value;
         const claveMes = `${anioSel}-${mesSel}`;
 
         try {
-            const datosEfectoresClean = JSON.parse(JSON.stringify(datosCuasifacturas || {}));
-            const rechazosClean = JSON.parse(JSON.stringify(rechazosPorEfector || {}));
+            const datosEfectoresClean = {};
+            Object.keys(datosCuasifacturas || {}).forEach(k => {
+                datosEfectoresClean[limpiarClaveFirebase(k)] = datosCuasifacturas[k];
+            });
+
+            const rechazosClean = {};
+            Object.keys(rechazosPorEfector || {}).forEach(k => {
+                rechazosClean[limpiarClaveFirebase(k)] = rechazosPorEfector[k];
+            });
 
             await set(ref(db, `comparativas/${claveMes}`), {
                 datosEfectores: datosEfectoresClean,
@@ -608,7 +617,7 @@ async function procesarExcelLocal(index, efector) {
                 fechaActualizacion: new Date().toISOString()
             });
 
-            mostrarToast(`Período ${claveMes} guardado con éxito en Firebase bajo /comparativas.`);
+            mostrarToast(`Período ${claveMes} guardado con éxito en Firebase.`);
 
         } catch (err) {
             console.error("Error al guardar en Firebase:", err);
