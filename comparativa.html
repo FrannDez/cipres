@@ -232,7 +232,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Lista de efectores sin puntos
     const todosLosEfectores = [
         "Hospital Local General de Agudos", 
         "Hospital Municipal Carlos Federico Macias",
@@ -261,7 +260,6 @@
     const datosCuasifacturas = {};
     const rechazosPorEfector = {};
 
-    // Sanitizador para evitar errores en Firebase
     function limpiarClaveFirebase(str) {
         return String(str || "").replace(/[\.\#\$\/\[\]]/g, "").trim();
     }
@@ -316,7 +314,7 @@
         });
     }
 
-    // 1. PROCESAMIENTO DE PDF (CONTEO PRECISO)
+    // 1. PROCESAMIENTO DE PDF EXTRAIENDO LA COLUMNA "PRESTACIONES"
     async function procesarPDFLocal(index, efector) {
         const fileInput = document.getElementById(`pdf-${index}`);
         const statusSpan = document.getElementById(`status-${index}`);
@@ -351,15 +349,17 @@
             const lineas = textoCompleto.split('\n');
 
             lineas.forEach(linea => {
-                const matchCod = linea.match(/([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})/);
+                // Busca el código y el número de la columna "Prestaciones" que le sigue
+                const matchCod = linea.match(/([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})\s+(\d+)/);
                 if (matchCod) {
                     const codigo = limpiarClaveFirebase(matchCod[1].trim());
+                    const cantidad = parseInt(matchCod[2], 10) || 1;
 
                     if (!codigosAgrupados[codigo]) {
                         codigosAgrupados[codigo] = { cantidadTotal: 0 };
                     }
-                    // Sumar exactamente 1 unidad por cada aparición del código
-                    codigosAgrupados[codigo].cantidadTotal += 1;
+                    // Suma el valor real extraído de la columna "Prestaciones"
+                    codigosAgrupados[codigo].cantidadTotal += cantidad;
                 }
             });
 
