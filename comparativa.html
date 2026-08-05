@@ -314,70 +314,69 @@
         });
     }
 
-    // 1. PROCESAMIENTO DE PDF EXTRAIENDO LA COLUMNA "PRESTACIONES"
-    async function procesarPDFLocal(index, efector) {
-        const fileInput = document.getElementById(`pdf-${index}`);
-        const statusSpan = document.getElementById(`status-${index}`);
-        if (!fileInput.files[0]) return;
+    // 1. PROCESAMIENTO DE PDF MEJORADO (CAPTUARA NÚMEROS DE CUALQUIER LONGITUD Y FORMATO DE LÍNEA)
+async function procesarPDFLocal(index, efector) {
+    const fileInput = document.getElementById(`pdf-${index}`);
+    const statusSpan = document.getElementById(`status-${index}`);
+    if (!fileInput.files[0]) return;
 
-        statusSpan.innerText = "Procesando...";
+    statusSpan.innerText = "Procesando...";
 
-        try {
-            const file = fileInput.files[0];
-            const arrayBuffer = await file.arrayBuffer();
-            
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            let textoCompleto = "";
+    try {
+        const file = fileInput.files[0];
+        const arrayBuffer = await file.arrayBuffer();
+        
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let textoCompleto = "";
 
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(" ");
-                textoCompleto += pageText + "\n";
-            }
-
-            let total = 0;
-            const matchMonto = textoCompleto.match(/Total\s+Cuasifactura[\s\S]*?\$?\s*([\d\.,]+)/i) || 
-                               textoCompleto.match(/Total[\s\S]*?\$?\s*([\d\.,]+)/i);
-
-            if (matchMonto && matchMonto[1]) {
-                const rawMonto = matchMonto[1].replace(/\./g, '').replace(',', '.');
-                total = parseFloat(rawMonto) || 0;
-            }
-
-            const codigosAgrupados = {};
-            const lineas = textoCompleto.split('\n');
-
-            lineas.forEach(linea => {
-                // Busca el código y el número de la columna "Prestaciones" que le sigue
-                const matchCod = linea.match(/([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})\s+(\d+)/);
-                if (matchCod) {
-                    const codigo = limpiarClaveFirebase(matchCod[1].trim());
-                    const cantidad = parseInt(matchCod[2], 10) || 1;
-
-                    if (!codigosAgrupados[codigo]) {
-                        codigosAgrupados[codigo] = { cantidadTotal: 0 };
-                    }
-                    // Suma el valor real extraído de la columna "Prestaciones"
-                    codigosAgrupados[codigo].cantidadTotal += cantidad;
-                }
-            });
-
-            const efectorLimpio = limpiarClaveFirebase(efector);
-            datosCuasifacturas[efectorLimpio] = {
-                totalCuasifactura: total,
-                codigosAgrupados: codigosAgrupados
-            };
-
-            statusSpan.innerHTML = `<span style="color:#10b981;">Procesado ($${total.toLocaleString('es-AR')})</span>`;
-            mostrarToast(`PDF de ${efector} procesado.`);
-
-        } catch (err) {
-            console.error("Error al leer PDF:", err);
-            statusSpan.innerHTML = `<span style="color:#ef4444;">Error al leer PDF</span>`;
-            mostrarToast(`Error al leer el PDF de ${efector}`, true);
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            // Mantiene espacios claros entre bloques de texto
+            const pageText = textContent.items.map(item => item.str.trim()).filter(Boolean).join("  ");
+            textoCompleto += pageText + "\n";
         }
+
+        let total = 0;
+        const matchMonto = textoCompleto.match(/Total\s+Cuasifactura[\s\S]*?\$?\s*([\d\.,]+)/i) || 
+                           textoCompleto.match(/Total[\s\S]*?\$?\s*([\d\.,]+)/i);
+
+        if (matchMonto && matchMonto[1]) {
+            const rawMonto = matchMonto[1].replace(/\./g, '').replace(',', '.');
+            total = parseFloat(rawMonto) || 0;
+        }
+
+        const codigosAgrupados = {};
+
+        // Regex mejorada: Busca el código (ej. CT C001 A97) seguido opcionalmente de espacios/caracteres y CAPTURA la cantidad entera
+        const regexCodigoCantidad = /([A-Z]{2}\s+[A-Z0-9]{4}\s+[A-Z0-9]{3})\s+([0-9]{1,7})/g;
+        let match;
+
+        while ((match = regexCodigoCantidad.exec(textoCompleto)) !== null) {
+            const codigo = limpiarClaveFirebase(match[1].trim());
+            const cantidad = parseInt(match[2], 10) || 0;
+
+            if (!codigosAgrupados[codigo]) {
+                codigosAgrupados[codigo] = { cantidadTotal: 0 };
+            }
+            codigosAgrupados[codigo].cantidadTotal += cantidad;
+        }
+
+        const efectorLimpio = limpiarClaveFirebase(efector);
+        datosCuasifacturas[efectorLimpio] = {
+            totalCuasifactura: total,
+            codigosAgrupados: codigosAgrupados
+        };
+
+        statusSpan.innerHTML = `<span style="color:#10b981;">Procesado ($${total.toLocaleString('es-AR')})</span>`;
+        mostrarToast(`PDF de ${efector} procesado.`);
+
+    } catch (err) {
+        console.error("Error al leer PDF:", err);
+        statusSpan.innerHTML = `<span style="color:#ef4444;">Error al leer PDF</span>`;
+        mostrarToast(`Error al leer el PDF de ${efector}`, true);
     }
+}
 
     // 2. PROCESAMIENTO DE EXCEL
     async function procesarExcelLocal(index, efector) {
