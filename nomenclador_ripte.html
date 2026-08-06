@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualización de Nomencladores por RIPTE - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+
+    <!-- Librería SheetJS para importar Excel inicial si fuera necesario -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid #2563eb;
+        }
+
+        .logo-img {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 12px 20px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 6px; font-weight: 600; font-family: 'Montserrat', sans-serif; }
+        .tab-btn.active { background: #2563eb; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            color: #1e3a8a;
+            font-size: 1.25rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+
+        .input-group input, .input-group select {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #1d4ed8; }
+        .btn-block { width: 100%; display: block; font-size: 1rem; }
+
+        .table-responsive {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #1e293b;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modulo-row {
+            background-color: #e0f2fe;
+            font-weight: bold;
+            color: #0369a1;
+            text-align: center;
+        }
+
+        .pre-wrap {
+            white-space: pre-wrap; /* Mantiene saltos de línea del Excel */
+        }
+
+        /* Notificación Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast">¡Operación realizada con éxito!</div>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Actualización de Nomencladores por RIPTE</h1>
+    <p>Secretaría de Salud - Municipalidad de La Costa</p>
+</header>
+
+<div class="container">
+
+    <!-- SOLAPAS -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="cambiarSolapa('actualizacion')">📊 Calculo y Actualización RIPTE</button>
+        <button class="tab-btn" onclick="cambiarSolapa('historico')">📁 Historial de Períodos Guardados</button>
+    </div>
+
+    <!-- SOLAPA 1: ACTUALIZACIÓN EN VIVO -->
+    <div id="solapaActualizacion" class="tab-content active">
+        
+        <!-- SECCIÓN IMPORTAR EXCEL -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Carga Masiva de Módulos (Excel)</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="excelFile">Seleccionar archivo .xls / .xlsx:</label>
+                    <input type="file" id="excelFile" accept=".xls,.xlsx">
+                </div>
+                <div class="input-group" style="justify-content: flex-end;">
+                    <button class="btn" onclick="procesarExcel()">📤 Cargar Excel a Base de Datos</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Parámetros del Ajuste por RIPTE</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="inputPorcentaje">Incremento RIPTE (%):</label>
+                    <input type="number" id="inputPorcentaje" step="0.01" placeholder="Ej: 4.5" oninput="calcularEnVivo()">
+                </div>
+                <div class="input-group">
+                    <label for="selectMes">Mes Afectado:</label>
+                    <select id="selectMes">
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08" selected>Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="selectAnio">Año:</label>
+                    <select id="selectAnio">
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="filtroModulo">Filtrar por Módulo:</label>
+                    <select id="filtroModulo" onchange="renderizarTabla()">
+                        <option value="TODOS">-- Todos los Módulos --</option>
+                    </select>
+                </div>
+                <!-- BÚSQUEDA POR CÓDIGO O NOMBRE -->
+                <div class="input-group">
+                    <label for="inputBusqueda">Buscar por Código o Nombre:</label>
+                    <input type="text" id="inputBusqueda" placeholder="Ej: CON.01 o Consulta..." oninput="renderizarTabla()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Vista Previa de Precios Nomenclados</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Código</th>
+                            <th style="width: 55%;">Descripción / Práctica</th>
+                            <th style="width: 15%;">Valor Base ($)</th>
+                            <th style="width: 15%;">Nuevo Valor RIPTE ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaNomencladorBody">
+                        <tr><td colspan="4" style="text-align:center;">Cargando catálogo base...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <button class="btn btn-block" onclick="guardarNuevoPeriodoRIPTE()">💾 Guardar Período Calculado en Firebase</button>
+        </div>
+
+    </div>
+
+    <!-- SOLAPA 2: HISTORIAL -->
+    <div id="solapaHistorico" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>Consultar Carpeta / Período Guardado</h2>
+            </div>
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="selectHistoricoPeriodo">Período Guardado:</label>
+                    <select id="selectHistoricoPeriodo" onchange="cargarConsultaHistorica()"></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 id="tituloHistorico">Detalle del Período</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Código</th>
+                            <th style="width: 55%;">Descripción</th>
+                            <th style="width: 30%;">Valor Registrado ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaHistoricoBody">
+                        <tr><td colspan="3" style="text-align:center;">Seleccione un período arriba.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // Conexión reutilizada a tu Firebase
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Estado local en memoria de los ítems
+    let catalogoBase = []; 
+
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    window.cambiarSolapa = function(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        if (tabName === 'actualizacion') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('solapaActualizacion').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('solapaHistorico').classList.add('active');
+            poblarDesplegableHistorico();
+        }
+    };
+
+    // 1. CARGA INICIAL DEL CATÁLOGO DESDE FIREBASE
+    async function cargarCatalogoBaseBD() {
+        try {
+            const snapshot = await get(child(ref(db), 'nomenclador_base'));
+            const datos = snapshot.val();
+
+            if (datos) {
+                catalogoBase = datos;
+            } else {
+                catalogoBase = [
+                    { tipo: 'modulo', nombre: 'PRESTACIONES AMBULATORIAS' },
+                    { tipo: 'item', codigo: 'CON.01', descripcion: 'Consulta médica o profesional', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
+                    { tipo: 'item', codigo: 'CON.02', descripcion: 'Teleconsulta', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
+                    { tipo: 'modulo', nombre: 'CIRUGÍA ODONTOLÓGICA' },
+                    { tipo: 'item', codigo: 'ODO.60', descripcion: 'Tomografía volumétrica ambos maxilares', valor: 37.28, modulo: 'CIRUGÍA ODONTOLÓGICA' },
+                    { tipo: 'item', codigo: 'ODO.64', descripcion: 'Drenaje de absceso intrabucal\nHemorragia\nExtracción de cuerpo extraño\nFrenectomía', valor: 33.40, modulo: 'CIRUGÍA ODONTOLÓGICA' }
+                ];
+            }
+
+            poblarSelectorModulos();
+            renderizarTabla();
+        } catch (err) {
+            mostrarToast("Error al cargar la base de nomencladores", true);
+        }
+    }
+
+    function poblarSelectorModulos() {
+        const select = document.getElementById('filtroModulo');
+        select.innerHTML = '<option value="TODOS">-- Todos los Módulos --</option>';
+        
+        const modulos = [...new Set(catalogoBase.filter(i => i.tipo === 'modulo').map(m => m.nombre))];
+        modulos.forEach(mod => {
+            select.innerHTML += `<option value="${mod}">${mod}</option>`;
+        });
+    }
+
+    // 2. RENDERIZADO, FILTRADO Y CÁLCULO RECEPTIVO EN VIVO
+    window.renderizarTabla = function() {
+        const tbody = document.getElementById('tablaNomencladorBody');
+        const moduloFiltro = document.getElementById('filtroModulo').value;
+        const busqueda = document.getElementById('inputBusqueda').value.toLowerCase().trim();
+        const pct = parseFloat(document.getElementById('inputPorcentaje').value) || 0;
+        const factor = 1 + (pct / 100);
+
+        tbody.innerHTML = '';
+
+        catalogoBase.forEach((registro) => {
+            if (registro.tipo === 'modulo') {
+                if (moduloFiltro === 'TODOS' || registro.nombre === moduloFiltro) {
+                    // Muestra la barra de módulo si no se está filtrando una búsqueda específica
+                    if (!busqueda) {
+                        const tr = document.createElement('tr');
+                        tr.className = 'modulo-row';
+                        tr.innerHTML = `<td colspan="4">${registro.nombre}</td>`;
+                        tbody.appendChild(tr);
+                    }
+                }
+            } else if (registro.tipo === 'item') {
+                const coincideModulo = (moduloFiltro === 'TODOS' || registro.modulo === moduloFiltro);
+                const coincideBusqueda = !busqueda || 
+                    (registro.codigo && registro.codigo.toLowerCase().includes(busqueda)) || 
+                    (registro.descripcion && registro.descripcion.toLowerCase().includes(busqueda));
+
+                if (coincideModulo && coincideBusqueda) {
+                    const nuevoValor = (parseFloat(registro.valor) * factor).toFixed(2);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${registro.codigo || ''}</strong></td>
+                        <td class="pre-wrap">${registro.descripcion}</td>
+                        <td class="val-base">${parseFloat(registro.valor).toFixed(2)}</td>
+                        <td><strong class="val-ripte" style="color: #2563eb;">${nuevoValor}</strong></td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+        });
+    };
+
+    window.calcularEnVivo = function() {
+        window.renderizarTabla();
+    };
+
+    // 3. LECTURA E IMPORTACIÓN MASIVA DESDE EXCEL
+    window.procesarExcel = function() {
+        const input = document.getElementById('excelFile');
+        if (!input.files || input.files.length === 0) {
+            mostrarToast("Por favor, selecciona un archivo Excel.", true);
+            return;
+        }
+
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheet];
+                
+                // Convertir a matriz
+                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                let nuevoCatalogo = [];
+                let moduloActual = "GENERAL";
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+
+                    const col0 = row[0] !== undefined ? String(row[0]).trim() : "";
+                    const col1 = row[1] !== undefined ? String(row[1]).trim() : "";
+                    const col2 = row[2] !== undefined ? row[2] : null;
+
+                    // Ignorar la fila del encabezado ("CÓDIGO", "DESCRIPCIÓN", "VALOR")
+                    if (col0.toUpperCase().includes("CÓDIGO") || col1.toUpperCase().includes("DESCRIPCIÓN")) {
+                        continue;
+                    }
+
+                    // Condición de cambio de Módulo/Especialidad:
+                    // Sin Código y sin Valor, pero con Texto en la Descripción
+                    if ((col0 === "" || col0 === "I") && col2 === null && col1 !== "") {
+                        moduloActual = col1;
+                        nuevoCatalogo.push({
+                            tipo: 'modulo',
+                            nombre: moduloActual
+                        });
+                    } else if (col1 !== "") {
+                        // Limpiar formato numérico/moneda si aplica
+                        let valorNum = 0;
+                        if (typeof col2 === 'number') {
+                            valorNum = col2;
+                        } else if (typeof col2 === 'string') {
+                            valorNum = parseFloat(col2.replace('$', '').replace('.', '').replace(',', '.').trim()) || 0;
+                        }
+
+                        nuevoCatalogo.push({
+                            tipo: 'item',
+                            codigo: col0 === "I" ? "" : col0,
+                            descripcion: col1,
+                            valor: valorNum,
+                            modulo: moduloActual
+                        });
+                    }
+                }
+
+                if (nuevoCatalogo.length > 0) {
+                    await set(ref(db, 'nomenclador_base'), nuevoCatalogo);
+                    catalogoBase = nuevoCatalogo;
+                    poblarSelectorModulos();
+                    renderizarTabla();
+                    mostrarToast("¡Catálogo actualizado desde Excel con éxito!");
+                } else {
+                    mostrarToast("No se encontraron registros válidos en el archivo.", true);
+                }
+
+            } catch (error) {
+                mostrarToast("Error al procesar el Excel: " + error.message, true);
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    };
+
+    // 4. GUARDAR EL NUEVO PERÍODO CALCULADO EN SU CARPETA CORRESPONDIENTE
+    window.guardarNuevoPeriodoRIPTE = async function() {
+        const pct = parseFloat(document.getElementById('inputPorcentaje').value);
+        const mes = document.getElementById('selectMes').value;
+        const anio = document.getElementById('selectAnio').value;
+
+        if (isNaN(pct)) {
+            mostrarToast("Por favor, ingrese un porcentaje RIPTE válido.", true);
+            return;
+        }
+
+        const nombreCarpetaPeriodo = `${anio}_${mes}_RIPTE`;
+        const factor = 1 + (pct / 100);
+
+        const datosAjustados = catalogoBase.map(item => {
+            if (item.tipo === 'item') {
+                return {
+                    codigo: item.codigo || '',
+                    descripcion: item.descripcion,
+                    modulo: item.modulo,
+                    valorBase: item.valor,
+                    valorActualizado: parseFloat((item.valor * factor).toFixed(2))
+                };
+            }
+            return item;
+        });
+
+        try {
+            await set(ref(db, `carpetas_ripte/${nombreCarpetaPeriodo}`), {
+                porcentajeAplicado: pct,
+                fechaRegistro: new Date().toISOString(),
+                items: datosAjustados
+            });
+
+            mostrarToast(`Período ${nombreCarpetaPeriodo} guardado exitosamente.`);
+        } catch (err) {
+            mostrarToast(`Error al guardar período: ${err.message}`, true);
+        }
+    };
+
+    // 5. CONSULTA HISTÓRICA DE PERÍODOS GUARDADOS
+    async function poblarDesplegableHistorico() {
+        const select = document.getElementById('selectHistoricoPeriodo');
+        select.innerHTML = '<option value="">Cargando períodos...</option>';
+
+        const snapshot = await get(child(ref(db), 'carpetas_ripte'));
+        const periodos = snapshot.val() || {};
+        const claves = Object.keys(periodos).sort().reverse();
+
+        if (claves.length === 0) {
+            select.innerHTML = '<option value="">Sin períodos guardados</option>';
+            return;
+        }
+
+        select.innerHTML = '';
+        claves.forEach(k => {
+            select.innerHTML += `<option value="${k}">${k} (+${periodos[k].porcentajeAplicado}%)</option>`;
+        });
+
+        cargarConsultaHistorica();
+    }
+
+    window.cargarConsultaHistorica = async function() {
+        const clave = document.getElementById('selectHistoricoPeriodo').value;
+        const tbody = document.getElementById('tablaHistoricoBody');
+        const titulo = document.getElementById('tituloHistorico');
+
+        if (!clave) return;
+
+        const snapshot = await get(child(ref(db), `carpetas_ripte/${clave}`));
+        const data = snapshot.val();
+
+        if (!data) return;
+
+        titulo.innerText = `Detalle Período: ${clave} (Aumento RIPTE: +${data.porcentajeAplicado}%)`;
+        tbody.innerHTML = '';
+
+        data.items.forEach(reg => {
+            if (reg.tipo === 'modulo') {
+                const tr = document.createElement('tr');
+                tr.className = 'modulo-row';
+                tr.innerHTML = `<td colspan="3">${reg.nombre}</td>`;
+                tbody.appendChild(tr);
+            } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${reg.codigo || ''}</strong></td>
+                    <td class="pre-wrap">${reg.descripcion}</td>
+                    <td><strong>$ ${parseFloat(reg.valorActualizado).toFixed(2)}</strong></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    };
+
+    cargarCatalogoBaseBD();
+</script>
+
+</body>
+</html>
