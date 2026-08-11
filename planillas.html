@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Planillas - La Costa</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --success-green: #16a34a;
+            --success-hover: #15803d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+
+        body {
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 140px;
+        }
+
+        header { margin: 25px 15px 20px; text-align: center; width: 100%; }
+        .logo-container { width: 180px; max-width: 80%; margin: 0 auto 15px; }
+        .logo-img { width: 100%; height: auto; display: block; filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3)); }
+
+        header h1 { color: #ffffff; font-size: 1.3rem; font-weight: 700; }
+        header p { color: rgba(255, 255, 255, 0.85); font-size: 0.85rem; margin-top: 4px; }
+
+        .container { width: 95%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background-color: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25); }
+
+        .card-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--brand-blue); text-transform: uppercase; margin-bottom: 15px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
+        @media (min-width: 600px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-weight: 600; font-size: 0.85rem; }
+
+        input[type="text"], input[type="file"] {
+            padding: 10px; border: 1px solid var(--border-color); border-radius: 8px;
+            font-size: 0.85rem; background-color: var(--btn-bg); font-weight: 600; width: 100%;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            background-color: var(--brand-blue); color: white; border: none; padding: 10px 16px;
+            font-size: 0.9rem; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; gap: 6px;
+        }
+
+        .btn-block { width: 100%; }
+        .btn-download { background-color: var(--success-green); padding: 6px 12px; font-size: 0.8rem; }
+        .btn-danger { background-color: #ef4444; padding: 6px 10px; font-size: 0.78rem; }
+
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background-color: #ffffff; }
+        th, td { border: 1px solid var(--border-color); padding: 10px 8px; text-align: center; font-size: 0.85rem; }
+        th { background-color: var(--brand-blue); color: white; font-weight: 700; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Gestión de Planillas PDF</h1>
+    <p>Carga y Descarga Directa</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header"><h2>Cargar Nueva Planilla PDF</h2></div>
+        <form id="formCargaPlanilla">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nombrePlanilla">Nombre / Descripción:</label>
+                    <input type="text" id="nombrePlanilla" placeholder="Ej: Planilla Mensual de Control" required>
+                </div>
+                <div class="form-group">
+                    <label for="archivoPdf">Seleccionar Archivo PDF:</label>
+                    <input type="file" id="archivoPdf" accept="application/pdf" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-block" id="btnSubir">📤 Guardar Planilla</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h2>Planillas Guardadas</h2></div>
+        <input type="text" id="inputBuscar" placeholder="🔍 Buscar planilla por nombre..." style="margin-bottom: 10px;">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre de la Planilla</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaPlanillasBody">
+                    <tr><td colspan="3">Conectando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const CLAVE_ADMIN = "Cristo25";
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbPlanillasRef = ref(db, 'planillas_pdf');
+
+    let baseDeDatosPlanillas = {};
+
+    onValue(dbPlanillasRef, (snapshot) => {
+        baseDeDatosPlanillas = snapshot.val() || {};
+        renderizarPlanillas();
+    });
+
+    // Convertir PDF a Base64
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    document.getElementById('formCargaPlanilla').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btnSubir = document.getElementById('btnSubir');
+        const nombrePlanilla = document.getElementById('nombrePlanilla').value.trim();
+        const archivo = document.getElementById('archivoPdf').files[0];
+
+        if (!archivo || archivo.type !== 'application/pdf') {
+            alert('Por favor selecciona un archivo PDF válido.');
+            return;
+        }
+
+        // Límite recomendado para Base64 directo en la base de datos (5 MB)
+        if (archivo.size > 5 * 1024 * 1024) {
+            alert('El archivo PDF supera el tamaño máximo permitido (5 MB).');
+            return;
+        }
+
+        btnSubir.disabled = true;
+        btnSubir.innerText = '⏳ Procesando y guardando...';
+
+        try {
+            const base64Data = await toBase64(archivo);
+            const nuevaPlanillaRef = push(ref(db, 'planillas_pdf'));
+
+            await set(nuevaPlanillaRef, {
+                id: nuevaPlanillaRef.key,
+                nombre: nombrePlanilla,
+                pdfData: base64Data,
+                fechaCarga: new Date().toLocaleDateString('es-AR')
+            });
+
+            alert('¡Planilla guardada exitosamente!');
+            document.getElementById('formCargaPlanilla').reset();
+        } catch (error) {
+            alert('Error al guardar: ' + error.message);
+        } finally {
+            btnSubir.disabled = false;
+            btnSubir.innerText = '📤 Guardar Planilla';
+        }
+    });
+
+    function renderizarPlanillas() {
+        const tbody = document.getElementById('tablaPlanillasBody');
+        const filtroTexto = document.getElementById('inputBuscar').value.toLowerCase().trim();
+        tbody.innerHTML = '';
+
+        const lista = Object.values(baseDeDatosPlanillas);
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="color: var(--text-muted);">No hay planillas cargadas.</td></tr>';
+            return;
+        }
+
+        const filtradas = lista.filter(p => p.nombre.toLowerCase().includes(filtroTexto));
+
+        filtradas.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${p.nombre}</strong></td>
+                <td>${p.fechaCarga || 'N/A'}</td>
+                <td>
+                    <div style="display: flex; gap: 6px; justify-content: center;">
+                        <a href="${p.pdfData}" download="${p.nombre}.pdf" class="btn btn-download">📥 Descargar</a>
+                        <button class="btn btn-danger btn-eliminar" data-id="${p.id}" data-nombre="${p.nombre}">🗑️ Eliminar</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.btn-eliminar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                eliminarPlanilla(e.target.getAttribute('data-id'), e.target.getAttribute('data-nombre'));
+            });
+        });
+    }
+
+    async function eliminarPlanilla(id, nombre) {
+        const pass = prompt(`Contraseña para ELIMINAR "${nombre}":`);
+        if (pass !== CLAVE_ADMIN) {
+            if (pass !== null) alert("❌ Contraseña incorrecta.");
+            return;
+        }
+
+        if (confirm(`¿Eliminar la planilla "${nombre}"?`)) {
+            await remove(ref(db, `planillas_pdf/${id}`));
+            alert('Eliminada con éxito.');
+        }
+    }
+
+    document.getElementById('inputBuscar').addEventListener('input', renderizarPlanillas);
+</script>
+</body>
+</html>
