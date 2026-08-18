@@ -128,7 +128,7 @@
         /* FORMULARIO DE INGRESO DE DATOS */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -210,22 +210,48 @@
             font-weight: 700;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
+        /* BOTONES INTERACTIVOS DE LA TABLA */
+        .status-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 6px 10px;
             border-radius: 6px;
             font-weight: 700;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
         }
 
-        .badge-success {
+        .toggle-cargado-si {
             background-color: #d1fae5;
             color: #065f46;
+            border: 1px solid #a7f3d0;
         }
 
-        .badge-pending {
+        .toggle-cargado-no {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+
+        .toggle-devuelto-si {
             background-color: #fef3c7;
             color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .toggle-devuelto-no {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+
+        .status-toggle:hover {
+            filter: brightness(0.95);
+            transform: scale(1.03);
         }
 
         /* BOTONES */
@@ -346,7 +372,7 @@
     <!-- FORMULARIO DE CARGA -->
     <div class="card" id="seccionFormulario">
         <div class="card-header">
-            <h2 id="tituloFormulario">Cargar Nuevo Registro</h2>
+            <h2 id="tituloFormulario">Cargar Nuevo Sobre / Registro</h2>
         </div>
         
         <form id="formPlanBonaerense">
@@ -384,7 +410,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Registro en la Nube</button>
+            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Sobre en la Nube</button>
             <button type="button" class="btn btn-secondary btn-block" id="btnCancelarEdicion" style="display: none; margin-top: 8px;">Cancelar Edición</button>
         </form>
     </div>
@@ -409,9 +435,9 @@
                         <th>Escuela</th>
                         <th>Efector</th>
                         <th>Código</th>
-                        <th>Cargado</th>
+                        <th>Cargado (Haz clic para cambiar)</th>
                         <th>Usuario</th>
-                        <th>Devuelto</th>
+                        <th>Devuelto (Haz clic para cambiar)</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -436,7 +462,7 @@
 <!-- CÓDIGO JS CON FIREBASE v10 (MODULAR) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const CLAVE_ADMIN = "Cristo25";
 
@@ -447,18 +473,16 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // NUEVA CARPETA / RUTA ESPECÍFICA EN FIREBASE
     const dbRef = ref(db, 'plan_bonaerense');
-
     let baseDeDatos = {};
 
-    // Escuchar cambios en la base de datos de Firebase
+    // Escuchar cambios en Firebase
     onValue(dbRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
         renderizarTabla();
     });
 
-    // Envío del Formulario (Crear / Modificar)
+    // Guardar nuevo sobre o actualizar entero
     document.getElementById('formPlanBonaerense').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -473,7 +497,6 @@
         const registro = { escuela, efector, codigo, cargado, usuario, devuelto, timestamp: Date.now() };
 
         if (editKey) {
-            // Actualizar registro existente
             set(ref(db, `plan_bonaerense/${editKey}`), registro)
                 .then(() => {
                     alert('¡Registro actualizado correctamente!');
@@ -481,18 +504,17 @@
                 })
                 .catch((error) => alert('Error al actualizar: ' + error.message));
         } else {
-            // Crear nuevo registro con clave autogenerada por Firebase
             const nuevoRef = push(dbRef);
             set(nuevoRef, registro)
                 .then(() => {
-                    alert('¡Registro guardado correctamente!');
+                    alert('¡Sobre guardado correctamente!');
                     resetearFormulario();
                 })
                 .catch((error) => alert('Error al guardar: ' + error.message));
         }
     });
 
-    // Renderizado de la tabla con filtro opcional de búsqueda
+    // Renderizado de tabla con controles de toggle directos
     function renderizarTabla() {
         const tbody = document.getElementById('tablaRegistrosBody');
         const filtro = document.getElementById('inputBuscar').value.toLowerCase();
@@ -501,7 +523,7 @@
         const keys = Object.keys(baseDeDatos);
 
         if (keys.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún en el Plan Bonaerense.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún.</td></tr>';
             return;
         }
 
@@ -514,7 +536,7 @@
         });
 
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros que coincidan con la búsqueda.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros coincidentes.</td></tr>';
             return;
         }
 
@@ -527,15 +549,15 @@
                 <td>${item.efector}</td>
                 <td>${item.codigo || '-'}</td>
                 <td>
-                    ${item.cargado 
-                        ? '<span class="status-badge badge-success">☑ Cargado</span>' 
-                        : '<span class="status-badge badge-pending">☐ Pendiente</span>'}
+                    <button class="status-toggle ${item.cargado ? 'toggle-cargado-si' : 'toggle-cargado-no'} btn-toggle-cargado" data-key="${key}" data-estado="${item.cargado}">
+                        ${item.cargado ? '☑ CARGADO' : '☐ PENDIENTE'}
+                    </button>
                 </td>
                 <td><strong>${item.usuario}</strong></td>
                 <td>
-                    ${item.devuelto 
-                        ? '<span class="status-badge badge-pending">☑ Sí</span>' 
-                        : '<span class="status-badge">☐ No</span>'}
+                    <button class="status-toggle ${item.devuelto ? 'toggle-devuelto-si' : 'toggle-devuelto-no'} btn-toggle-devuelto" data-key="${key}" data-estado="${item.devuelto}">
+                        ${item.devuelto ? '☑ DEVUELTO' : '☐ NO DEVUELTO'}
+                    </button>
                 </td>
                 <td>
                     <div class="card-actions">
@@ -547,7 +569,24 @@
             tbody.appendChild(tr);
         });
 
-        // Eventos de botones Modificar/Eliminar
+        // Eventos para cambiar estado posterior a la carga
+        document.querySelectorAll('.btn-toggle-cargado').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const key = e.currentTarget.getAttribute('data-key');
+                const estadoActual = e.currentTarget.getAttribute('data-estado') === 'true';
+                cambiarEstadoPosterior(key, 'cargado', !estadoActual);
+            });
+        });
+
+        document.querySelectorAll('.btn-toggle-devuelto').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const key = e.currentTarget.getAttribute('data-key');
+                const estadoActual = e.currentTarget.getAttribute('data-estado') === 'true';
+                cambiarEstadoPosterior(key, 'devuelto', !estadoActual);
+            });
+        });
+
+        // Modificar / Eliminar
         document.querySelectorAll('.btn-modificar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const key = e.currentTarget.getAttribute('data-key');
@@ -563,9 +602,19 @@
         });
     }
 
-    // Cargar datos en el formulario para editar
+    // Función rápida para tildar/destildar después de haber cargado el sobre
+    function cambiarEstadoPosterior(key, campo, nuevoValor) {
+        const actualizaciones = {};
+        actualizaciones[`plan_bonaerense/${key}/${campo}`] = nuevoValor;
+
+        update(ref(db), actualizaciones)
+            .then(() => console.log(`Campo ${campo} actualizado.`))
+            .catch(err => alert("Error al actualizar estado: " + err.message));
+    }
+
+    // Editar registro completo
     function modificarRegistro(key) {
-        const pass = prompt("Introduce la contraseña autorizada para modificar este registro:");
+        const pass = prompt("Introduce la contraseña para modificar el registro completo:");
         if (pass === null) return;
 
         if (pass !== CLAVE_ADMIN) {
@@ -607,19 +656,17 @@
         }
     }
 
-    // Resetear formulario a estado inicial
     function resetearFormulario() {
         document.getElementById('formPlanBonaerense').reset();
         document.getElementById('editKey').value = '';
-        document.getElementById('tituloFormulario').innerText = "Cargar Nuevo Registro";
-        document.getElementById('btnGuardar').innerText = "Guardar Registro en la Nube";
+        document.getElementById('tituloFormulario').innerText = "Cargar Nuevo Sobre / Registro";
+        document.getElementById('btnGuardar').innerText = "Guardar Sobre en la Nube";
         document.getElementById('btnCancelarEdicion').style.display = 'none';
     }
 
     document.getElementById('btnCancelarEdicion').addEventListener('click', resetearFormulario);
     document.getElementById('inputBuscar').addEventListener('input', renderizarTabla);
 
-    // Exportar datos a JSON
     document.getElementById('btnExportar').addEventListener('click', () => {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(baseDeDatos));
         const downloadAnchor = document.createElement('a');
