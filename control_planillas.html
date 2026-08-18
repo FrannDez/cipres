@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Bonaerense - Registro y Control</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <script src="global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --warning-orange: #d97706;
+            --warning-hover: #b45309;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 140px;
+        }
+
+        /* HEADER & LOGO */
+        header {
+            margin: 25px 15px 20px;
+            text-align: center;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .logo-container {
+            width: 180px;
+            max-width: 80%;
+            margin: 0 auto 15px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            padding: 0 10px;
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container {
+            width: 95%;
+            max-width: 1100px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                padding: 24px;
+            }
+            header h1 {
+                font-size: 1.7rem;
+            }
+            .logo-container {
+                width: 230px;
+            }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORMULARIO DE INGRESO DE DATOS */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+        }
+
+        .form-control {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.15);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 25px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--brand-blue);
+        }
+
+        .checkbox-group label {
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* TABLAS Y HISTORIAL */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: #ffffff;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 0.82rem;
+        }
+
+        th {
+            background-color: var(--brand-blue);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* BOTONES */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            background-color: var(--brand-blue-hover);
+        }
+
+        .btn-block {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-orange);
+            color: white;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            border-radius: 6px;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-red);
+            color: white;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            border-radius: 6px;
+        }
+
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        /* ANIMACIÓN DE OLAS */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: waveMove 22s linear infinite;
+        }
+
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: waveMove 16s linear infinite reverse;
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Plan Bonaerense</h1>
+    <p>Gestión y Seguimiento de Planillas por Efector y Escuela</p>
+</header>
+
+<div class="container">
+
+    <!-- FORMULARIO DE CARGA -->
+    <div class="card" id="seccionFormulario">
+        <div class="card-header">
+            <h2 id="tituloFormulario">Cargar Nuevo Registro</h2>
+        </div>
+        
+        <form id="formPlanBonaerense">
+            <input type="hidden" id="editKey" value="">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="inputEscuela">Escuela:</label>
+                    <input type="text" id="inputEscuela" class="form-control" placeholder="Ej: EP 03, EP 05..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputEfector">Efector:</label>
+                    <input type="text" id="inputEfector" class="form-control" placeholder="Ej: HOSP. ST, CAPS. LAS TONINAS..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputCodigo">Código del Efector:</label>
+                    <input type="text" id="inputCodigo" class="form-control" placeholder="Ej: 42000055">
+                </div>
+
+                <div class="form-group">
+                    <label for="inputUsuario">Usuario que Carga:</label>
+                    <input type="text" id="inputUsuario" class="form-control" placeholder="Ej: DBLANCO, HOSP. MDA..." required>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="checkCargado">
+                    <label for="checkCargado">¿Está Cargado?</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="checkDevuelto">
+                    <label for="checkDevuelto">¿Fue Devuelto?</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Registro en la Nube</button>
+            <button type="button" class="btn btn-secondary btn-block" id="btnCancelarEdicion" style="display: none; margin-top: 8px;">Cancelar Edición</button>
+        </form>
+    </div>
+
+    <!-- TABLA DE REGISTROS -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Registros de Plan Bonaerense</h2>
+        </div>
+        
+        <div class="actions-bar">
+            <div style="display: flex; gap: 10px; align-items: center; width: 100%; max-width: 400px;">
+                <input type="text" id="inputBuscar" class="form-control" placeholder="🔍 Buscar por Escuela, Efector o Usuario...">
+            </div>
+            <button class="btn btn-secondary" id="btnExportar">📥 Guardar Copia (JSON)</button>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Escuela</th>
+                        <th>Efector</th>
+                        <th>Código</th>
+                        <th>Cargado</th>
+                        <th>Usuario</th>
+                        <th>Devuelto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaRegistrosBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            Conectando con Firebase...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ANIMACIÓN DE OLAS -->
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<!-- CÓDIGO JS CON FIREBASE v10 (MODULAR) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const CLAVE_ADMIN = "Cristo25";
+
+    const firebaseConfig = { 
+        databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // NUEVA CARPETA / RUTA ESPECÍFICA EN FIREBASE
+    const dbRef = ref(db, 'plan_bonaerense');
+
+    let baseDeDatos = {};
+
+    // Escuchar cambios en la base de datos de Firebase
+    onValue(dbRef, (snapshot) => {
+        baseDeDatos = snapshot.val() || {};
+        renderizarTabla();
+    });
+
+    // Envío del Formulario (Crear / Modificar)
+    document.getElementById('formPlanBonaerense').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const editKey = document.getElementById('editKey').value;
+        const escuela = document.getElementById('inputEscuela').value.trim();
+        const efector = document.getElementById('inputEfector').value.trim();
+        const codigo = document.getElementById('inputCodigo').value.trim();
+        const cargado = document.getElementById('checkCargado').checked;
+        const usuario = document.getElementById('inputUsuario').value.trim();
+        const devuelto = document.getElementById('checkDevuelto').checked;
+
+        const registro = { escuela, efector, codigo, cargado, usuario, devuelto, timestamp: Date.now() };
+
+        if (editKey) {
+            // Actualizar registro existente
+            set(ref(db, `plan_bonaerense/${editKey}`), registro)
+                .then(() => {
+                    alert('¡Registro actualizado correctamente!');
+                    resetearFormulario();
+                })
+                .catch((error) => alert('Error al actualizar: ' + error.message));
+        } else {
+            // Crear nuevo registro con clave autogenerada por Firebase
+            const nuevoRef = push(dbRef);
+            set(nuevoRef, registro)
+                .then(() => {
+                    alert('¡Registro guardado correctamente!');
+                    resetearFormulario();
+                })
+                .catch((error) => alert('Error al guardar: ' + error.message));
+        }
+    });
+
+    // Renderizado de la tabla con filtro opcional de búsqueda
+    function renderizarTabla() {
+        const tbody = document.getElementById('tablaRegistrosBody');
+        const filtro = document.getElementById('inputBuscar').value.toLowerCase();
+        tbody.innerHTML = '';
+
+        const keys = Object.keys(baseDeDatos);
+
+        if (keys.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún en el Plan Bonaerense.</td></tr>';
+            return;
+        }
+
+        let filtrados = keys.filter(key => {
+            const item = baseDeDatos[key];
+            return item.escuela.toLowerCase().includes(filtro) ||
+                   item.efector.toLowerCase().includes(filtro) ||
+                   item.usuario.toLowerCase().includes(filtro) ||
+                   (item.codigo && item.codigo.toLowerCase().includes(filtro));
+        });
+
+        if (filtrados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros que coincidan con la búsqueda.</td></tr>';
+            return;
+        }
+
+        filtrados.forEach(key => {
+            const item = baseDeDatos[key];
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td><strong>${item.escuela}</strong></td>
+                <td>${item.efector}</td>
+                <td>${item.codigo || '-'}</td>
+                <td>
+                    ${item.cargado 
+                        ? '<span class="status-badge badge-success">☑ Cargado</span>' 
+                        : '<span class="status-badge badge-pending">☐ Pendiente</span>'}
+                </td>
+                <td><strong>${item.usuario}</strong></td>
+                <td>
+                    ${item.devuelto 
+                        ? '<span class="status-badge badge-pending">☑ Sí</span>' 
+                        : '<span class="status-badge">☐ No</span>'}
+                </td>
+                <td>
+                    <div class="card-actions">
+                        <button class="btn btn-warning btn-modificar" data-key="${key}">✏️</button>
+                        <button class="btn btn-danger btn-eliminar" data-key="${key}">🗑️</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Eventos de botones Modificar/Eliminar
+        document.querySelectorAll('.btn-modificar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const key = e.currentTarget.getAttribute('data-key');
+                modificarRegistro(key);
+            });
+        });
+
+        document.querySelectorAll('.btn-eliminar').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const key = e.currentTarget.getAttribute('data-key');
+                eliminarRegistro(key);
+            });
+        });
+    }
+
+    // Cargar datos en el formulario para editar
+    function modificarRegistro(key) {
+        const pass = prompt("Introduce la contraseña autorizada para modificar este registro:");
+        if (pass === null) return;
+
+        if (pass !== CLAVE_ADMIN) {
+            alert("❌ Contraseña incorrecta.");
+            return;
+        }
+
+        const registro = baseDeDatos[key];
+        if (!registro) return;
+
+        document.getElementById('editKey').value = key;
+        document.getElementById('inputEscuela').value = registro.escuela;
+        document.getElementById('inputEfector').value = registro.efector;
+        document.getElementById('inputCodigo').value = registro.codigo || '';
+        document.getElementById('checkCargado').checked = registro.cargado || false;
+        document.getElementById('inputUsuario').value = registro.usuario;
+        document.getElementById('checkDevuelto').checked = registro.devuelto || false;
+
+        document.getElementById('tituloFormulario').innerText = "✏️ Editando Registro";
+        document.getElementById('btnGuardar').innerText = "Actualizar Registro";
+        document.getElementById('btnCancelarEdicion').style.display = 'block';
+        document.getElementById('seccionFormulario').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Eliminar registro
+    function eliminarRegistro(key) {
+        const pass = prompt("Introduce la contraseña para ELIMINAR el registro:");
+        if (pass === null) return;
+
+        if (pass !== CLAVE_ADMIN) {
+            alert("❌ Contraseña incorrecta.");
+            return;
+        }
+
+        if (confirm("¿Eliminar definitivamente este registro del Plan Bonaerense?")) {
+            remove(ref(db, `plan_bonaerense/${key}`))
+                .then(() => alert("Registro eliminado."))
+                .catch(error => alert("Error al eliminar: " + error.message));
+        }
+    }
+
+    // Resetear formulario a estado inicial
+    function resetearFormulario() {
+        document.getElementById('formPlanBonaerense').reset();
+        document.getElementById('editKey').value = '';
+        document.getElementById('tituloFormulario').innerText = "Cargar Nuevo Registro";
+        document.getElementById('btnGuardar').innerText = "Guardar Registro en la Nube";
+        document.getElementById('btnCancelarEdicion').style.display = 'none';
+    }
+
+    document.getElementById('btnCancelarEdicion').addEventListener('click', resetearFormulario);
+    document.getElementById('inputBuscar').addEventListener('input', renderizarTabla);
+
+    // Exportar datos a JSON
+    document.getElementById('btnExportar').addEventListener('click', () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(baseDeDatos));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "respaldo_plan_bonaerense.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    });
+</script>
+
+</body>
+</html>
