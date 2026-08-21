@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas de Facturación - CIPRES</title>
+    <title>Estadísticas de Facturación - PAMI</title>
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -326,7 +326,7 @@
     <div class="logo-container">
         <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
     </div>
-    <h1 id="tituloHeader">CIPRES - ESTADÍSTICAS</h1>
+    <h1 id="tituloHeader">ESTADÍSTICAS - PAMI</h1>
     <p>Sistema Unificado de Control de Facturación Mensual</p>
     
     <div class="year-selector-wrapper">
@@ -520,7 +520,7 @@
     // Cargar datos según el año activo
     window.cambiarAnio = function(anio) {
         anioSeleccionado = anio;
-        document.getElementById('tituloHeader').innerText = `CIPRES - ESTADÍSTICAS ${anioSeleccionado}`;
+        document.getElementById('tituloHeader').innerText = `ESTADÍSTICAS - PAMI ${anioSeleccionado}`;
         document.getElementById('tituloConsolidado').innerText = `Consolidado Anual de Facturación - ${anioSeleccionado}`;
         document.getElementById('tituloGrafico1').innerText = `FACTURACION BRUTA vs NETA - ${anioSeleccionado}`;
         document.getElementById('tituloGrafico2').innerText = `TOTAL DESCONTADO - ${anioSeleccionado}`;
