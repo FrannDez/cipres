@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de Facturación - CIPRES</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --warning-orange: #d97706;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 140px;
+        }
+
+        /* HEADER & LOGO */
+        header {
+            margin: 25px 15px 15px;
+            text-align: center;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .logo-container {
+            width: 180px;
+            max-width: 80%;
+            margin: 0 auto 10px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* SELECTOR DE AÑO EN HEADER */
+        .year-selector-wrapper {
+            margin-top: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .year-selector-wrapper label {
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .select-year {
+            background: white;
+            color: var(--brand-blue);
+            font-weight: 800;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container {
+            width: 95%;
+            max-width: 1300px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (min-width: 768px) {
+            .card { padding: 24px; }
+            header h1 { font-size: 1.7rem; }
+            .logo-container { width: 220px; }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+        }
+
+        /* BARRA DE NAVEGACIÓN */
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            width: 100%;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--brand-blue);
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* FORMULARIO Y TEXTAREA */
+        .form-control {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 2px rgba(0, 86, 179, 0.15);
+        }
+
+        textarea.form-control {
+            font-family: monospace;
+            font-size: 0.75rem;
+            resize: vertical;
+        }
+
+        /* TABLAS Y ESTILOS DE CELDAS */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: #ffffff;
+            font-size: 0.82rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--brand-blue);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .th-red { background-color: var(--danger-red); }
+        .th-dark { background-color: #0f172a; }
+        .th-green { background-color: #047857; }
+        .td-red-bg { background-color: #dc2626; color: white; font-weight: bold; }
+        .td-green-bg { background-color: #10b981; color: white; font-weight: bold; }
+        .monto-negativo { color: var(--danger-red); font-weight: bold; }
+        .monto-positivo { color: #047857; font-weight: 600; }
+
+        /* BOTONES */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover { background-color: var(--brand-blue-hover); }
+        .btn-success { background-color: var(--success-green); }
+        .btn-success:hover { background-color: #059669; }
+        .btn-danger { background-color: var(--danger-red); }
+        .btn-secondary {
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* GRÁFICOS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ANIMACIÓN DE OLAS */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: waveMove 22s linear infinite;
+        }
+
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: waveMove 16s linear infinite reverse;
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1 id="tituloHeader">CIPRES - ESTADÍSTICAS</h1>
+    <p>Sistema Unificado de Control de Facturación Mensual</p>
+    
+    <div class="year-selector-wrapper">
+        <label for="selectAnio">📅 Ejercicio / Año:</label>
+        <select id="selectAnio" class="select-year" onchange="cambiarAnio(this.value)">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+        </select>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- BARRA SUPERIOR DE PESTAÑAS -->
+    <div class="nav-tabs" id="barrasPestanias">
+        <button class="tab-btn active" onclick="seleccionarVista('ESTADISTICA')">📊 ESTADISTICA</button>
+        <button class="tab-btn" onclick="seleccionarVista('MODULOS')" id="tab-modulos">⚙️ MÓDULOS (GLOBAL)</button>
+        <!-- Pestañas 1 a 12 -->
+    </div>
+
+    <!-- VISTA 1: HOJA DE ESTADÍSTICA GENERAL -->
+    <div class="card" id="vistaEstadistica">
+        <div class="card-header">
+            <h2 id="tituloConsolidado">Consolidado Anual de Facturación</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>MES</th>
+                        <th class="th-dark">FACTURACION x MES</th>
+                        <th>MEDICO CABECERA</th>
+                        <th>AJUSTE DC</th>
+                        <th>DEBITOS</th>
+                        <th>RECHAZOS</th>
+                        <th class="th-red">TOTAL DESCONTADO</th>
+                        <th class="th-green">FACTURACIÓN NETA</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaEstadisticasBody">
+                    <!-- Filas calculadas -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 0.9rem;">
+                        <td style="padding: 12px;">TOTALES ANUALES</td>
+                        <td id="montoTotalAnualBruto" style="color: #facc15; font-size: 1.05rem;">$0.00</td>
+                        <td colspan="4"></td>
+                        <td id="montoTotalAnualDescuentos" style="color: #f87171; font-size: 1.05rem;">$0.00</td>
+                        <td id="montoTotalAnualNeto" style="color: #4ade80; font-size: 1.15rem; font-weight: 800;">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="charts-grid">
+            <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;" id="tituloGrafico1">FACTURACION BRUTA vs NETA</h3>
+                <canvas id="chartFacturacion"></canvas>
+            </div>
+            <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;" id="tituloGrafico2">TOTAL DESCONTADO</h3>
+                <canvas id="chartDescuentos"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA 2: PANEL DE MÓDULOS Y ESPECIALISTAS -->
+    <div class="card" id="vistaModulos" style="display: none;">
+        <div class="card-header">
+            <h2>Configuración Global de Módulos (Aplica a Todos los Años)</h2>
+        </div>
+
+        <!-- OPCIÓN 1: CARGA INDIVIDUAL -->
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+            <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 10px;">➕ Registrar o Actualizar Módulo Individual</h3>
+            <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: center;">
+                <input type="number" id="inputModNumero" class="form-control" placeholder="N° Módulo (ej: 1)">
+                <input type="text" id="inputModNombre" class="form-control" placeholder="Nombre Especialista (ej: MEDICO CABECERA)">
+                <button class="btn btn-success" onclick="guardarModulo()">💾 Guardar Uno</button>
+            </div>
+        </div>
+
+        <!-- OPCIÓN 2: CARGA MASIVA DE MÓDULOS -->
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 8px;">📋 Carga Masiva de Módulos (Pegar Lista Completa):</h3>
+            <textarea id="inputPegaModulos" rows="3" class="form-control" placeholder="Pegá tu lista aquí (Ejemplo:&#10;1 - MEDICO CABECERA&#10;69 - MODULO INTERNACION&#10;72 - LABORATORIO)"></textarea>
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn btn-success" onclick="guardarModulosMasivo()">💾 Cargar Varios Módulos</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Módulo</th>
+                        <th>Especialista / Nombre Asignado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaModulosBody">
+                    <!-- Módulos guardados -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- VISTA 3: HOJAS MENSUALES INDIVIDUALES (1 A 12) -->
+    <div class="card" id="vistaMensual" style="display: none;">
+        <div class="card-header">
+            <h2 id="tituloHojaMensual">Carga y Detalle del Mes</h2>
+            <button class="btn btn-secondary" onclick="exportarMesJSON()">📥 Exportar Mes (JSON)</button>
+        </div>
+
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 8px;">📋 Importar desde la Web Oficial (Copiar y Pegar):</h3>
+            <textarea id="inputPegaWeb" rows="4" class="form-control" placeholder="Pegá el contenido copiado de la web oficial aquí..."></textarea>
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn btn-success" onclick="procesarTextoWeb()">💾 Guardar y Reemplazar Hoja Mensual</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Período Liquidación</th>
+                        <th>Especialista</th>
+                        <th>Modelo Retributivo</th>
+                        <th>Red</th>
+                        <th>Cápita</th>
+                        <th>Valor Período ($)</th>
+                        <th>Módulo</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaMesBody">
+                    <!-- Registros del mes activo -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ANIMACIÓN DE OLAS -->
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<!-- SDK DE FIREBASE V10 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const MESES = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+    
+    let anioSeleccionado = "2026";
+    let dbGlobal = {};
+    let modulosDiccionario = {};
+    let mesActivo = "ESTADISTICA";
+
+    // Generar pestañas 1 a 12
+    const contenedorTabs = document.getElementById('barrasPestanias');
+    MESES.forEach((nombre, idx) => {
+        const num = idx + 1;
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.id = `tab-mes-${num}`;
+        btn.innerText = `${num} (${nombre.substr(0,3)})`;
+        btn.onclick = () => seleccionarVista(num);
+        contenedorTabs.appendChild(btn);
+    });
+
+    // Escuchar Modulos Globales
+    onValue(ref(db, 'Modulos_Globales'), (snapshot) => {
+        modulosDiccionario = snapshot.val() || {
+            1: "MEDICO CABECERA",
+            69: "MODULO INTERNACION (LABORATORIO + FISIO + IMAGENES)"
+        };
+        renderizarTodo();
+    });
+
+    // Cargar datos según el año activo
+    window.cambiarAnio = function(anio) {
+        anioSeleccionado = anio;
+        document.getElementById('tituloHeader').innerText = `CIPRES - ESTADÍSTICAS ${anioSeleccionado}`;
+        document.getElementById('tituloConsolidado').innerText = `Consolidado Anual de Facturación - ${anioSeleccionado}`;
+        document.getElementById('tituloGrafico1').innerText = `FACTURACION BRUTA vs NETA - ${anioSeleccionado}`;
+        document.getElementById('tituloGrafico2').innerText = `TOTAL DESCONTADO - ${anioSeleccionado}`;
+
+        // Escuchar la base de datos del año seleccionado
+        onValue(ref(db, `Estadisticas_${anioSeleccionado}`), (snapshot) => {
+            const data = snapshot.val() || {};
+            dbGlobal = data.meses || {};
+            renderizarTodo();
+        });
+    }
+
+    // Inicio por defecto con 2026
+    cambiarAnio("2026");
+
+    window.seleccionarVista = function(vista) {
+        mesActivo = vista;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById('vistaEstadistica').style.display = 'none';
+        document.getElementById('vistaModulos').style.display = 'none';
+        document.getElementById('vistaMensual').style.display = 'none';
+
+        if (vista === 'ESTADISTICA') {
+            document.querySelector('.tab-btn').classList.add('active');
+            document.getElementById('vistaEstadistica').style.display = 'block';
+        } else if (vista === 'MODULOS') {
+            document.getElementById('tab-modulos').classList.add('active');
+            document.getElementById('vistaModulos').style.display = 'block';
+        } else {
+            document.getElementById(`tab-mes-${vista}`).classList.add('active');
+            document.getElementById('vistaMensual').style.display = 'block';
+            document.getElementById('tituloHojaMensual').innerText = `Hoja Mensual - ${vista} (${MESES[vista - 1]} ${anioSeleccionado})`;
+        }
+        renderizarTodo();
+    }
+
+    function renderizarTodo() {
+        if (mesActivo === 'ESTADISTICA') {
+            renderizarEstadisticas();
+        } else if (mesActivo === 'MODULOS') {
+            renderizarTablaModulos();
+        } else {
+            renderizarMes(mesActivo);
+        }
+    }
+
+    // Calculador de la hoja de Estadísticas con Facturación Neta
+    function renderizarEstadisticas() {
+        const tbody = document.getElementById('tablaEstadisticasBody');
+        tbody.innerHTML = '';
+        
+        let sumaAnualBruta = 0;
+        let sumaAnualDescuentos = 0;
+        let sumaAnualNeta = 0;
+
+        const factBrutaMeses = [];
+        const factNetaMeses = [];
+        const descMeses = [];
+
+        MESES.forEach((nombreMes, index) => {
+            const numMes = index + 1;
+            const registros = dbGlobal[numMes] || [];
+
+            let facturacion = 0;
+            let medicoCabecera = 0;
+            let ajusteDC = 0;
+            let debitos = 0;
+            let rechazos = 0;
+
+            registros.forEach(r => {
+                const val = parseFloat(r.valor) || 0;
+                const conc = (r.concepto || "").toUpperCase();
+
+                if (val > 0) facturacion += val;
+                if (r.modulo == 1 && val > 0) medicoCabecera += val;
+                if (conc.includes('AJUSTE DC')) ajusteDC += val;
+                
+                if (conc.includes('DEBITO')) debitos += Math.abs(val);
+                if (conc.includes('RECHAZO')) rechazos += Math.abs(val);
+            });
+
+            const totalDescontadoAbs = debitos + rechazos;
+            const totalDescontado = totalDescontadoAbs * -1;
+            const facturacionNeta = facturacion - totalDescontadoAbs;
+
+            sumaAnualBruta += facturacion;
+            sumaAnualDescuentos += totalDescontadoAbs;
+            sumaAnualNeta += facturacionNeta;
+
+            factBrutaMeses.push(facturacion);
+            factNetaMeses.push(facturacionNeta);
+            descMeses.push(totalDescontadoAbs);
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:700;">${nombreMes}</td>
+                    <td style="font-weight:800;">${formatearMoneda(facturacion)}</td>
+                    <td>${formatearMoneda(medicoCabecera)}</td>
+                    <td>${formatearMoneda(ajusteDC)}</td>
+                    <td class="monto-negativo">${formatearMoneda(debitos > 0 ? -debitos : 0)}</td>
+                    <td class="monto-negativo">${formatearMoneda(rechazos > 0 ? -rechazos : 0)}</td>
+                    <td class="td-red-bg">${formatearMoneda(totalDescontado)}</td>
+                    <td class="td-green-bg">${formatearMoneda(facturacionNeta)}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('montoTotalAnualBruto').innerText = formatearMoneda(sumaAnualBruta);
+        document.getElementById('montoTotalAnualDescuentos').innerText = formatearMoneda(sumaAnualDescuentos > 0 ? -sumaAnualDescuentos : 0);
+        document.getElementById('montoTotalAnualNeto').innerText = formatearMoneda(sumaAnualNeta);
+        
+        actualizarGraficos(factBrutaMeses, factNetaMeses, descMeses);
+    }
+
+    // Panel de Módulos Globales
+    function renderizarTablaModulos() {
+        const tbody = document.getElementById('tablaModulosBody');
+        tbody.innerHTML = '';
+        const keys = Object.keys(modulosDiccionario);
+
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="color:var(--text-muted); padding:15px;">No hay módulos registrados. Usá las herramientas de arriba para agregar.</td></tr>`;
+            return;
+        }
+
+        keys.forEach(num => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${num}</strong></td>
+                    <td style="text-align:left;">${modulosDiccionario[num]}</td>
+                    <td><button class="btn btn-danger" onclick="eliminarModulo('${num}')">🗑️ Eliminar</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    window.guardarModulo = function() {
+        const num = document.getElementById('inputModNumero').value.trim();
+        const nombre = document.getElementById('inputModNombre').value.trim().toUpperCase();
+
+        if (!num || !nombre) return alert('Por favor ingresá tanto el número de módulo como el nombre.');
+
+        set(ref(db, `Modulos_Globales/${num}`), nombre)
+            .then(() => {
+                alert(`Módulo ${num} registrado en la lista global.`);
+                document.getElementById('inputModNumero').value = '';
+                document.getElementById('inputModNombre').value = '';
+            })
+            .catch(err => alert('Error al guardar módulo: ' + err.message));
+    }
+
+    window.guardarModulosMasivo = function() {
+        const texto = document.getElementById('inputPegaModulos').value.trim();
+        if (!texto) return alert('Pegá un texto con los módulos a cargar.');
+
+        const lineas = texto.split('\n');
+        const nuevosModulos = {};
+        let contador = 0;
+
+        lineas.forEach(linea => {
+            if (!linea.trim()) return;
+
+            let partes = linea.split(/\t|-|:/);
+            if (partes.length >= 2) {
+                let num = partes[0].trim();
+                let nombre = partes.slice(1).join('-').trim().toUpperCase();
+
+                if (!isNaN(num) && num !== '' && nombre !== '') {
+                    nuevosModulos[num] = nombre;
+                    contador++;
+                }
+            }
+        });
+
+        if (contador === 0) return alert('No se encontraron módulos válidos. Verificá el formato.');
+
+        update(ref(db, 'Modulos_Globales'), nuevosModulos)
+            .then(() => {
+                alert(`¡Se guardaron/actualizaron ${contador} módulos globalmente!`);
+                document.getElementById('inputPegaModulos').value = '';
+            })
+            .catch(err => alert('Error al procesar carga masiva: ' + err.message));
+    }
+
+    window.eliminarModulo = function(num) {
+        if (confirm(`¿Eliminar el módulo ${num} de la lista global?`)) {
+            remove(ref(db, `Modulos_Globales/${num}`));
+        }
+    }
+
+    // Renderizado del mes activo
+    function renderizarMes(numMes) {
+        const tbody = document.getElementById('tablaMesBody');
+        tbody.innerHTML = '';
+        const registros = dbGlobal[numMes] || [];
+
+        if (registros.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="color:var(--text-muted); padding: 20px;">No hay información cargada para el mes ${numMes} de ${anioSeleccionado}. Usá el recuadro superior para importar datos.</td></tr>`;
+            return;
+        }
+
+        registros.forEach(r => {
+            const esNegativo = (r.valor < 0);
+            const nombreEsp = modulosDiccionario[r.modulo] || r.especialista || ("MODULO " + r.modulo);
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align:left; font-weight:600;">${r.concepto}</td>
+                    <td>${r.periodo || '-'}</td>
+                    <td style="text-align:left;">${nombreEsp}</td>
+                    <td>${r.modelo || '-'}</td>
+                    <td style="font-size:0.75rem;">${r.red || '-'}</td>
+                    <td>${r.capita ? new Intl.NumberFormat('es-AR').format(r.capita) : '-'}</td>
+                    <td class="${esNegativo ? 'monto-negativo' : 'monto-positivo'}">${formatearMoneda(r.valor)}</td>
+                    <td><strong>${r.modulo || '-'}</strong></td>
+                </tr>
+            `;
+        });
+    }
+
+    // Importador
+    window.procesarTextoWeb = function() {
+        if (mesActivo === 'ESTADISTICA' || mesActivo === 'MODULOS') return alert('Elegí un mes específico (1 al 12) para cargar datos.');
+
+        const rawText = document.getElementById('inputPegaWeb').value;
+        if (!rawText.trim()) return alert('Por favor pegá el texto de la web.');
+
+        const lineas = rawText.split('\n');
+        const listaMes = [];
+
+        lineas.forEach(linea => {
+            const cols = linea.split('\t').map(c => c.trim()).filter(c => c !== '');
+            if (cols.length >= 3) {
+                const moduloIdx = cols.findIndex(c => !isNaN(c) && parseInt(c) > 0 && parseInt(c) < 1000);
+                
+                let valorTexto = cols[cols.length - 1].replace(/\$/g, '').trim();
+                let valorNum = 0;
+
+                if (valorTexto.includes('.')) {
+                    valorTexto = valorTexto.replace(/,/g, '');
+                    valorNum = parseFloat(valorTexto);
+                } else if (valorTexto.includes(',')) {
+                    valorTexto = valorTexto.replace(/\./g, '').replace(',', '.');
+                    valorNum = parseFloat(valorTexto);
+                } else {
+                    valorNum = parseFloat(valorTexto);
+                }
+
+                if (!isNaN(valorNum) && moduloIdx !== -1) {
+                    const mod = parseInt(cols[moduloIdx]);
+                    listaMes.push({
+                        concepto: cols[0],
+                        periodo: cols[1] || "",
+                        modulo: mod,
+                        especialista: modulosDiccionario[mod] || (cols[2] && isNaN(cols[2]) ? cols[2] : "MODULO " + mod),
+                        modelo: cols.length > 5 ? cols[3] : "",
+                        red: cols.length > 6 ? cols[4] : "",
+                        capita: cols.length > 7 ? parseInt(cols[5]) || null : null,
+                        valor: valorNum
+                    });
+                }
+            }
+        });
+
+        if (listaMes.length === 0) return alert('No se reconocieron registros válidos. Verificá haber copiado la tabla entera.');
+
+        set(ref(db, `Estadisticas_${anioSeleccionado}/meses/${mesActivo}`), listaMes)
+            .then(() => {
+                alert(`¡Hoja ${mesActivo} (${MESES[mesActivo - 1]} ${anioSeleccionado}) actualizada correctamente!`);
+                document.getElementById('inputPegaWeb').value = '';
+            })
+            .catch(err => alert('Error al guardar en Firebase: ' + err.message));
+    }
+
+    window.exportarMesJSON = function() {
+        const data = dbGlobal[mesActivo] || [];
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        const anchor = document.createElement('a');
+        anchor.setAttribute("href", dataStr);
+        anchor.setAttribute("download", `mes_${mesActivo}_${MESES[mesActivo - 1]}_${anioSeleccionado}.json`);
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+    }
+
+    function formatearMoneda(m) {
+        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(m || 0);
+    }
+
+    // Renderizado de Gráficos
+    let c1, c2;
+    function actualizarGraficos(factBruta, factNeta, desc) {
+        const ctx1 = document.getElementById('chartFacturacion').getContext('2d');
+        const ctx2 = document.getElementById('chartDescuentos').getContext('2d');
+
+        if (c1) c1.destroy();
+        if (c2) c2.destroy();
+
+        c1 = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: MESES.map(m => m.substr(0,3)),
+                datasets: [
+                    { label: 'Bruta ($)', data: factBruta, backgroundColor: '#0056b3' },
+                    { label: 'Neta ($)', data: factNeta, backgroundColor: '#10b981' }
+                ]
+            },
+            options: { responsive: true }
+        });
+
+        c2 = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: MESES.map(m => m.substr(0,3)),
+                datasets: [{ label: 'Total Descontado ($)', data: desc, backgroundColor: '#ef4444' }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    }
+</script>
+
+</body>
+</html>
