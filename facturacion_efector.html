@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes de Facturación por Efector - CIPRES</title>
+    
+    <!-- Favicon y Fuentes -->
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Enlace a los Estilos Globales CIPRES -->
+    <link rel="stylesheet" href="estilos.css">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <!-- Librerías JS: jQuery, PapaParse, DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <style>
+        .dataTables_wrapper {
+            color: var(--text-dark, #1e293b);
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+        .dataTables_length select, .dataTables_filter input {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 8px;
+            outline: none;
+        }
+        .dataTables_paginate .paginate_button.current {
+            background: var(--brand-blue, #0056b3) !important;
+            color: white !important;
+            border-radius: 6px;
+            border: none !important;
+        }
+        .metric-card {
+            background-color: var(--card-bg, #ffffff);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border-bottom: 4px solid var(--brand-blue, #0056b3);
+        }
+        .metric-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted, #64748b);
+            text-transform: uppercase;
+        }
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1 id="tituloHeader">CIPRES - REPORTES POR EFECTOR</h1>
+    <p>Sistema Unificado de Control de Facturación por Efectores y Salud Pública</p>
+</header>
+
+<div class="container">
+
+    <!-- TARJETAS DE MÉTRICAS GENERALES -->
+    <div class="kpi-grid">
+        <div class="metric-card" style="border-bottom-color: var(--warning-orange, #d97706);">
+            <div class="metric-title">Facturación Anual Acumulada</div>
+            <div class="metric-value" id="kpiFacturacionAnual" style="color: var(--warning-orange, #d97706);">$ 0,00</div>
+        </div>
+        <div class="metric-card" style="border-bottom-color: var(--success-green, #10b981);">
+            <div class="metric-title" id="lblTotalVista">Total Filtrado / Visualizado</div>
+            <div class="metric-value" id="kpiTotalFacturado" style="color: var(--success-green, #10b981);">$ 0,00</div>
+        </div>
+        <div class="metric-card" style="border-bottom-color: var(--brand-blue, #0056b3);">
+            <div class="metric-title">Total Comprobantes</div>
+            <div class="metric-value" id="kpiTotalCantidad" style="color: var(--brand-blue, #0056b3);">0</div>
+        </div>
+        <div class="metric-card" style="border-bottom-color: #6366f1;">
+            <div class="metric-title">Efectores Registrados</div>
+            <div class="metric-value" id="kpiTotalEfectores" style="color: #6366f1;">0</div>
+        </div>
+    </div>
+
+    <!-- PANEL DE CARGA CSV Y SELECTOR DE MES -->
+    <div class="card">
+        <div class="card-header">
+            <h2>⚙️ Carga de Dataset y Selección de Mes</h2>
+        </div>
+        <div style="background-color: #f8fafc; border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; padding: 18px;">
+            <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                
+                <!-- Carga de CSV -->
+                <div style="flex: 2; min-width: 250px;">
+                    <label for="csvFileInput" style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark, #1e293b); display: block; margin-bottom: 6px;">
+                        Cargar dataset (.csv):
+                    </label>
+                    <input class="form-control" type="file" id="csvFileInput" accept=".csv">
+                </div>
+
+                <div>
+                    <button id="btnProcesar" class="btn btn-success">
+                        <i class="fa-solid fa-file-import me-2"></i> Anexar / Cargar
+                    </button>
+                </div>
+
+                <!-- Filtro de Selección de Mes -->
+                <div style="flex: 1; min-width: 200px; margin-left: auto;">
+                    <label for="selectMesFiltro" style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue, #0056b3); display: block; margin-bottom: 6px;">
+                        📅 Seleccionar Mes:
+                    </label>
+                    <select id="selectMesFiltro" class="form-control" style="font-weight: 700; background: white;" onchange="filtrarPorMes(this.value)">
+                        <option value="TODOS" selected>Todos los meses</option>
+                        <option value="Enero">Enero</option>
+                        <option value="Febrero">Febrero</option>
+                        <option value="Marzo">Marzo</option>
+                        <option value="Abril">Abril</option>
+                        <option value="Mayo">Mayo</option>
+                        <option value="Junio">Junio</option>
+                        <option value="Julio">Julio</option>
+                        <option value="Agosto">Agosto</option>
+                        <option value="Septiembre">Septiembre</option>
+                        <option value="Octubre">Octubre</option>
+                        <option value="Noviembre">Noviembre</option>
+                        <option value="Diciembre">Diciembre</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE RESULTADOS POR EFECTOR -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Detalle de Facturación por Efector</h2>
+        </div>
+        
+        <div class="table-responsive">
+            <table id="tablaFacturacion" class="table table-hover align-middle w-100">
+                <thead>
+                    <tr>
+                        <th>MES</th>
+                        <th>EFECTOR / HOSPITAL</th>
+                        <th style="text-align: center;">CANTIDAD</th>
+                        <th style="text-align: right;" class="th-dark">MONTO TOTAL ($)</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaCuerpo">
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ANIMACIÓN DE OLAS MUNICIPALES -->
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<!-- INTEGRACIÓN DE BASE DE DATOS Y LÓGICA -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let dataTable;
+    let todosLosRegistros = [];
+
+    // Formateador oficial de moneda ARS
+    function formatearMoneda(m) {
+        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(m || 0);
+    }
+
+    $(document).ready(function() {
+        // Inicializar tabla interactiva DataTables
+        dataTable = $('#tablaFacturacion').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+            },
+            pageLength: 15,
+            responsive: true
+        });
+
+        // Escuchar datos del nodo de la base de datos unificada 'bd_sistema'
+        onValue(ref(db, 'bd_sistema/facturacion_efectores'), (snapshot) => {
+            todosLosRegistros = snapshot.val() || [];
+            aplicarFiltros();
+        });
+
+        // Procesar dataset CSV cargado
+        $('#btnProcesar').on('click', function() {
+            const fileInput = document.getElementById('csvFileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Por favor, selecciona un archivo CSV (ej: detallefacturaspesos3.csv)');
+                return;
+            }
+
+            Papa.parse(file, {
+                header: false,
+                skipEmptyLines: true,
+                encoding: "ISO-8859-1",
+                complete: function(results) {
+                    let nuevosRegistros = [];
+
+                    results.data.forEach(row => {
+                        if (row.length >= 12) {
+                            let mes = row[3] ? row[3].trim() : '';
+                            let hospitalRaw = row[7] ? row[7].trim() : '';
+                            let cantidad = parseInt(row[9]) || 0;
+                            
+                            let totalStr = row[11] ? row[11].replace(/\./g, '').replace(',', '.') : '0';
+                            let total = parseFloat(totalStr) || 0;
+
+                            // NORMALIZACIÓN ESTRICTA DE NOMBRE
+                            let hospital = hospitalRaw;
+
+                            if (
+                                hospitalRaw.toUpperCase().includes("MAR DE AJ") && 
+                                !hospitalRaw.toUpperCase().includes("NORTE")
+                            ) {
+                                hospital = "Hospital Municipal Dr. Carlos Macias";
+                            }
+
+                            if (mes && hospital) {
+                                nuevosRegistros.push({
+                                    mes: mes,
+                                    hospital: hospital,
+                                    cantidad: cantidad,
+                                    total: total
+                                });
+                            }
+                        }
+                    });
+
+                    if (nuevosRegistros.length === 0) {
+                        alert('No se encontraron registros válidos en el archivo CSV.');
+                        return;
+                    }
+
+                    // LÓGICA DE FUSIÓN (ACUMULACIÓN SIN SOBREESCRIBIR)
+                    const mesesNuevos = [...new Set(nuevosRegistros.map(r => r.mes.toLowerCase()))];
+                    const registrosMantenidos = todosLosRegistros.filter(r => !mesesNuevos.includes(r.mes.toLowerCase()));
+                    const baseDeDatosActualizada = [...registrosMantenidos, ...nuevosRegistros];
+
+                    // Guardar la lista completa acumulada en Firebase
+                    set(ref(db, 'bd_sistema/facturacion_efectores'), baseDeDatosActualizada)
+                        .then(() => {
+                            alert(`¡Datos procesados! Se integraron correctamente los registros del mes de: ${mesesNuevos.join(', ')}.`);
+                            $('#csvFileInput').val('');
+                        })
+                        .catch(err => alert('Error al guardar en la base de datos: ' + err.message));
+                }
+            });
+        });
+    });
+
+    window.filtrarPorMes = function(mesSeleccionado) {
+        aplicarFiltros();
+    };
+
+    function aplicarFiltros() {
+        const mesFiltro = $('#selectMesFiltro').val();
+        
+        // 1. Facturación Anual Total (Suma acumulada de TODOS los meses)
+        const sumaAnualTotal = todosLosRegistros.reduce((acc, r) => acc + r.total, 0);
+        $('#kpiFacturacionAnual').text(formatearMoneda(sumaAnualTotal));
+
+        // 2. Filtrar los datos según el mes seleccionado
+        let registrosFiltrados = todosLosRegistros;
+        if (mesFiltro !== 'TODOS') {
+            registrosFiltrados = todosLosRegistros.filter(r => r.mes.toLowerCase() === mesFiltro.toLowerCase());
+            $('#lblTotalVista').text(`Facturación (${mesFiltro})`);
+        } else {
+            $('#lblTotalVista').text('Total Filtrado / Visualizado');
+        }
+
+        // 3. Dibujar tabla y recalcular métricas
+        dataTable.clear();
+
+        let totalMontoFiltrado = 0;
+        let totalCantidadFiltrado = 0;
+        let efectoresUnicos = new Set();
+
+        registrosFiltrados.forEach(r => {
+            totalMontoFiltrado += r.total;
+            totalCantidadFiltrado += r.cantidad;
+
+            // SANITIZACIÓN EN TIEMPO REAL (Limpia datos antiguos almacenados en Firebase)
+            let nombreHospital = r.hospital || '';
+            
+            if (
+                nombreHospital.toUpperCase().includes("MAR DE AJ") && 
+                !nombreHospital.toUpperCase().includes("NORTE")
+            ) {
+                nombreHospital = "Hospital Municipal Dr. Carlos Macias";
+            }
+
+            efectoresUnicos.add(nombreHospital);
+
+            dataTable.row.add([
+                `<strong>${r.mes}</strong>`,
+                nombreHospital,
+                `<div style="text-align: center;">${r.cantidad}</div>`,
+                `<div style="text-align: right; font-weight: 700; color: var(--brand-blue, #0056b3);">${formatearMoneda(r.total)}</div>`
+            ]);
+        });
+
+        dataTable.draw();
+
+        // Actualizar KPIs de la vista
+        $('#kpiTotalFacturado').text(formatearMoneda(totalMontoFiltrado));
+        $('#kpiTotalCantidad').text(totalCantidadFiltrado.toLocaleString('es-AR'));
+        $('#kpiTotalEfectores').text(efectoresUnicos.size);
+    }
+</script>
+
+</body>
+</html>
