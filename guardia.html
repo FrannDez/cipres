@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control PAMI - Guardia Hospital Municipal</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Librería para leer archivos .xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --border-color: #cbd5e1;
+            --warning-orange: #d97706;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden; /* Elimina doble scroll de la ventana principal */
+            padding: 10px;
+        }
+
+        header {
+            margin-bottom: 8px;
+            text-align: center;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .logo-container {
+            width: 120px;
+            max-width: 80%;
+            margin: 0 auto 4px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.75rem;
+        }
+
+        .container {
+            width: 98%;
+            max-width: 1400px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-height: 0; /* Permite contener el scroll internamente */
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            width: 100%;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--brand-blue);
+            font-weight: 800;
+        }
+
+        .tab-btn.provisorio {
+            background: #f59e0b;
+            color: #ffffff;
+        }
+
+        .tab-btn.provisorio.active {
+            background: #ffffff;
+            color: #b45309;
+        }
+
+        .tab-content { 
+            display: none; 
+            height: 100%;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .tab-content.active { 
+            display: flex; 
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            gap: 6px;
+        }
+
+        .btn-guardar { background-color: var(--brand-blue); }
+        .btn-finalizar { background-color: var(--success-green); }
+        .btn-finalizar:hover { background-color: #059669; }
+
+        .file-upload-box {
+            border: 2px dashed var(--brand-blue);
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            background: #f0f9ff;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-box input[type="file"] { display: none; }
+
+        /* Ajuste estricto de tabla para evitar desbordes */
+        .table-responsive {
+            width: 100%;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 0;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            text-align: center;
+            background-color: #ffffff;
+            table-layout: fixed; /* Mantiene proporciones ajustadas */
+        }
+
+        table.data-table th {
+            background-color: var(--brand-blue);
+            color: #ffffff;
+            padding: 8px 6px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+
+        table.data-table td {
+            padding: 4px 6px;
+            border: 1px solid var(--border-color);
+            word-wrap: break-word;
+        }
+
+        /* Anchos de columna optimizados */
+        .col-fecha { width: 85px; }
+        .col-nombre { width: 160px; }
+        .col-dni { width: 95px; }
+        .col-tramite { width: 90px; }
+        .col-afiliado { width: 95px; }
+        .col-especialidad { width: 110px; }
+        .col-diag { width: 130px; }
+        .col-falta { width: 140px; }
+        .col-obs { width: 160px; }
+        .col-acciones { width: 45px; }
+
+        tr.status-falta { background-color: #fee2e2 !important; color: #991b1b !important; }
+        tr.status-cargado { background-color: #d1fae5 !important; color: #065f46 !important; }
+        tr.status-alerta-klinicos { background-color: #fca5a5 !important; color: #7f1d1d !important; font-weight: bold; }
+
+        .table-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .select-table {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 4px 4px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+        }
+
+        .info-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid var(--brand-blue);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.78rem;
+            color: #0369a1;
+            flex-shrink: 0;
+        }
+
+        .badge-success { background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .badge-danger { background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: waveMove 22s linear infinite;
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo Municipalidad" class="logo-img">
+        </div>
+        <h1>Registro de Atenciones con Obra Social - PAMI</h1>
+        <p>HOSPITAL MUNICIPAL DR. CARLOS MACÍAS</p>
+    </header>
+
+    <div class="container">
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('reportes')">📊 REPORTES (Día)</button>
+            <button class="tab-btn" onclick="switchTab('historial')">📦 HISTORIAL ARCHIVADO</button>
+            <button class="tab-btn provisorio" onclick="switchTab('diagnostico')">🔍 DIAGNÓSTICO BD</button>
+            <button class="tab-btn" onclick="switchTab('cargar-excel')">📁 CARGAR EXCEL (.XLSX)</button>
+            <button class="tab-btn" onclick="switchTab('incompletos')">⚠️ INCOMPLETOS</button>
+            <button class="tab-btn" onclick="switchTab('sin-doc')">🚫 SIN DOCUMENTACIÓN</button>
+            <button class="tab-btn" onclick="switchTab('listos')">✅ LISTOS</button>
+            <button class="tab-btn" onclick="switchTab('carga-bd')">⚙️ CARGA BD PACIENTES</button>
+        </nav>
+
+        <div class="card">
+            <!-- PESTAÑA 1: REPORTES DEL DÍA -->
+            <section id="tab-reportes" class="tab-content active">
+                <div class="toolbar">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-guardar" onclick="guardarTodoManual()">💾 GUARDAR BD</button>
+                        <button class="btn btn-finalizar" onclick="finalizarDia()">✅ FINALIZAR DÍA</button>
+                    </div>
+                    <input type="text" placeholder="Buscar por Nombre o DNI..." onkeyup="filtrarTabla('tabla-reportes', this.value)" class="table-input" style="width:220px;">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-reportes">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">FECHA</th>
+                                <th class="col-nombre">APELLIDO Y NOMBRE/S</th>
+                                <th class="col-dni">DOCUMENTO</th>
+                                <th class="col-tramite">NRO TRAMITE</th>
+                                <th class="col-afiliado">NRO AFILIADO</th>
+                                <th class="col-especialidad">ESPECIALIDAD</th>
+                                <th class="col-diag">DIAGNÓSTICO</th>
+                                <th class="col-falta">FALTA</th>
+                                <th class="col-obs">OBSERVACIÓN</th>
+                                <th class="col-acciones">X</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-reportes"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA NUEVA: HISTORIAL ARCHIVADO -->
+            <section id="tab-historial" class="tab-content">
+                <div class="info-box">
+                    <strong>Historial de Registros Finalizados:</strong> Contiene las atenciones de días anteriores procesadas.
+                </div>
+                <div class="toolbar">
+                    <input type="text" placeholder="Buscar en historial..." onkeyup="filtrarTabla('tabla-historial', this.value)" class="table-input" style="width:220px;">
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-historial">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">FECHA</th>
+                                <th class="col-nombre">APELLIDO Y NOMBRE/S</th>
+                                <th class="col-dni">DOCUMENTO</th>
+                                <th class="col-tramite">NRO TRAMITE</th>
+                                <th class="col-afiliado">NRO AFILIADO</th>
+                                <th class="col-especialidad">ESPECIALIDAD</th>
+                                <th class="col-diag">DIAGNÓSTICO</th>
+                                <th class="col-falta">ESTADO</th>
+                                <th class="col-obs">OBSERVACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-historial"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA PROVISORIA: DIAGNÓSTICO -->
+            <section id="tab-diagnostico" class="tab-content">
+                <div class="info-box">
+                    <strong>Pestaña de Verificación:</strong> Cruce de datos en tiempo real entre el reporte del día y la BD global.
+                </div>
+                <div class="toolbar">
+                    <button class="btn" onclick="forzarCruzamientoData()">🔄 FORZAR CRUCE AHORA</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-diagnostico">
+                        <thead>
+                            <tr>
+                                <th>PACIENTE (EXCEL)</th>
+                                <th>DNI EXCEL</th>
+                                <th>¿EN BD?</th>
+                                <th>TRÁMITE (BD)</th>
+                                <th>AFILIADO (BD)</th>
+                                <th>ESTADO RESULTANTE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-diagnostico"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA: CARGAR EXCEL -->
+            <section id="tab-cargar-excel" class="tab-content">
+                <div class="info-box">
+                    <strong>Cargar archivo Excel (.xlsx):</strong> Lectura automática desde la <strong>fila 5</strong>.
+                </div>
+                <div class="file-upload-box" onclick="document.getElementById('excel-file-input').click()">
+                    <span style="font-size:2rem;">📄</span>
+                    <p style="font-weight:700; margin-top:6px; color:var(--brand-blue);">Seleccionar archivo .xlsx de Guardia</p>
+                    <span id="file-name" style="font-size:0.75rem; color:var(--text-muted);">Ningún archivo seleccionado</span>
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="procesarArchivoExcel(event)">
+                </div>
+            </section>
+
+            <!-- PESTAÑA: INCOMPLETOS -->
+            <section id="tab-incompletos" class="tab-content">
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-incompletos">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">FECHA</th>
+                                <th class="col-nombre">APELLIDO Y NOMBRE/S</th>
+                                <th class="col-dni">DOCUMENTO</th>
+                                <th class="col-tramite">NRO TRAMITE</th>
+                                <th class="col-afiliado">NRO AFILIADO</th>
+                                <th class="col-especialidad">ESPECIALIDAD</th>
+                                <th class="col-diag">DIAGNÓSTICO</th>
+                                <th class="col-falta">FALTA</th>
+                                <th class="col-obs">OBSERVACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-incompletos"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA: SIN DOCUMENTACIÓN -->
+            <section id="tab-sin-doc" class="tab-content">
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-sin-doc">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">FECHA</th>
+                                <th class="col-nombre">APELLIDO Y NOMBRE/S</th>
+                                <th class="col-dni">DOCUMENTO (EDITABLE)</th>
+                                <th class="col-tramite">NRO TRAMITE</th>
+                                <th class="col-afiliado">NRO AFILIADO</th>
+                                <th class="col-especialidad">ESPECIALIDAD</th>
+                                <th class="col-diag">DIAGNÓSTICO</th>
+                                <th class="col-falta">ESTADO</th>
+                                <th class="col-obs">OBSERVACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-sin-doc"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA: LISTOS -->
+            <section id="tab-listos" class="tab-content">
+                <div class="table-responsive">
+                    <table class="data-table" id="tabla-listos">
+                        <thead>
+                            <tr>
+                                <th class="col-fecha">FECHA</th>
+                                <th class="col-nombre">APELLIDO Y NOMBRE/S</th>
+                                <th class="col-dni">DOCUMENTO</th>
+                                <th class="col-tramite">NRO TRAMITE</th>
+                                <th class="col-afiliado">NRO AFILIADO</th>
+                                <th class="col-especialidad">ESPECIALIDAD</th>
+                                <th class="col-diag">DIAGNÓSTICO</th>
+                                <th class="col-falta">FALTA</th>
+                                <th class="col-obs">OBSERVACIÓN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-listos"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- PESTAÑA: CARGA BD PACIENTES -->
+            <section id="tab-carga-bd" class="tab-content">
+                <div class="info-box">
+                    <strong>Importar Pacientes a la BD:</strong> Seleccione un archivo `.xlsx` (Columna A: DNI, Columna B: Trámite, Columna C: Afiliado).
+                </div>
+                
+                <div class="file-upload-box" onclick="document.getElementById('excel-bd-input').click()">
+                    <span style="font-size:2rem;">🗂️</span>
+                    <p style="font-weight:700; color:var(--brand-blue);">Cargar Excel de BD Pacientes (.xlsx)</p>
+                    <input type="file" id="excel-bd-input" accept=".xlsx, .xls" onchange="procesarExcelBD(event)">
+                </div>
+
+                <div class="toolbar">
+                    <span id="cant-bd-pacientes" style="font-weight:700; color:var(--brand-blue);">Pacientes registrados en BD: 0</span>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="waves-container">
+        <div class="wave wave1"></div>
+    </div>
+
+    <script>
+        const BASE_FIREBASE_URL = "https://cipres-control-default-rtdb.firebaseio.com";
+        const FIREBASE_REPORTES_URL = `${BASE_FIREBASE_URL}/REPORTES_GUARDIA`;
+        const FIREBASE_HISTORIAL_URL = `${BASE_FIREBASE_URL}/HISTORIAL_GUARDIA`;
+        const FIREBASE_PACIENTES_BD_URL = `${BASE_FIREBASE_URL}/PACIENTES_BD`;
+
+        let pacientesReporte = [];
+        let pacientesHistorial = [];
+        let pacientesBD = {};
+
+        const OPCIONES_OBSERVACION = [
+            "",
+            "NO POSEE DOCUMENTO CARGADO EN KLINICOS",
+            "NO POSEE PAMI ACTIVO (ACTUALIZAR KLINICOS)",
+            "NO POSEE CONSULTA EN EL DIA CORRESPONDIENTE",
+            "EL DOCUMENTO ES ILEGIBLE"
+        ];
+
+        function limpiarDNI(dniRaw) {
+            if (dniRaw === undefined || dniRaw === null) return '';
+            return String(dniRaw).replace(/[^0-9]/g, '').trim();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            cargarTodaLaBaseDatos();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetContent = document.getElementById(`tab-${tabId}`);
+            if (targetContent) targetContent.classList.add('active');
+
+            renderizarTodasLasTablas();
+        }
+
+        // CARGA EXCEL DE GUARDIA (FILA 5 EN ADELANTE)
+        function procesarArchivoExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-name').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+
+                let agregados = 0;
+
+                for (let i = 4; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length === 0) continue;
+
+                    const fecha = row[1] ? String(row[1]).trim() : '';
+                    const nombre = row[2] ? String(row[2]).trim() : '';
+                    const dniLimpio = limpiarDNI(row[3]);
+                    const especialidad = row[9] ? String(row[9]).trim() : '';
+                    const diagnostico = row[12] ? String(row[12]).trim() : '';
+                    const obraSocial = row[13] ? String(row[13]).trim() : '';
+
+                    if (!nombre) continue;
+
+                    if (obraSocial.toUpperCase().includes("PAMI")) {
+                        let nroTramiteAuto = '';
+                        let nroAfiliadoAuto = '';
+                        let marcaKlinicosRojo = false;
+
+                        if (dniLimpio && pacientesBD[dniLimpio]) {
+                            nroTramiteAuto = pacientesBD[dniLimpio].nroTramite || '';
+                            nroAfiliadoAuto = pacientesBD[dniLimpio].nroAfiliado || '';
+                            if (pacientesBD[dniLimpio].sinDocKlinicos) marcaKlinicosRojo = true;
+                        }
+
+                        const existe = pacientesReporte.some(p => p.fecha === fecha && p.nombre === nombre && p.dni === dniLimpio);
+
+                        if (!existe) {
+                            pacientesReporte.push({
+                                id: Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                                fecha: fecha || new Date().toLocaleDateString('es-AR'),
+                                nombre: nombre,
+                                dni: dniLimpio,
+                                nroTramite: nroTramiteAuto,
+                                nroAfiliado: nroAfiliadoAuto,
+                                especialidad: especialidad,
+                                diagnostico: diagnostico,
+                                falta: '',
+                                observacion: marcaKlinicosRojo ? 'NO POSEE DOCUMENTO CARGADO EN KLINICOS' : '',
+                                alertaKlinicos: marcaKlinicosRojo,
+                                sinDoc: !dniLimpio,
+                                creadoAt: new Date().toISOString()
+                            });
+                            agregados++;
+                        }
+                    }
+                }
+
+                if (agregados > 0) {
+                    guardarEnFirebase();
+                    switchTab('reportes');
+                } else {
+                    alert("No se encontraron nuevos registros válidos de PAMI.");
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // CARGA EXCEL BD
+        function procesarExcelBD(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+
+                let contador = 0;
+                rows.forEach(row => {
+                    const dniLimpio = limpiarDNI(row[0]);
+                    const nroTramite = row[1] ? String(row[1]).trim() : '';
+                    const nroAfiliado = row[2] ? String(row[2]).trim() : '';
+
+                    if (dniLimpio) {
+                        pacientesBD[dniLimpio] = {
+                            nroTramite: nroTramite,
+                            nroAfiliado: nroAfiliado
+                        };
+                        contador++;
+                    }
+                });
+
+                if (contador > 0) {
+                    forzarCruzamientoData();
+                    guardarPacientesBDInFirebase();
+                    guardarEnFirebase();
+                    alert(`Se importaron ${contador} pacientes a la BD.`);
+                    switchTab('diagnostico');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function forzarCruzamientoData() {
+            pacientesReporte.forEach(p => {
+                const dni = limpiarDNI(p.dni);
+                if (dni && pacientesBD[dni]) {
+                    p.nroTramite = pacientesBD[dni].nroTramite || p.nroTramite;
+                    p.nroAfiliado = pacientesBD[dni].nroAfiliado || p.nroAfiliado;
+                }
+            });
+            renderizarTodasLasTablas();
+        }
+
+        // EDICIÓN EN TIEMPO REAL CON IMPACTO INMEDIATO
+        function actualizarDatoPacienteBD(id, campo, valor) {
+            const valorLimpio = valor.trim();
+            const p = pacientesReporte.find(x => x.id === id);
+            
+            if (p) {
+                p[campo] = valorLimpio;
+                const dniLimpio = limpiarDNI(p.dni);
+
+                if (dniLimpio) {
+                    if (!pacientesBD[dniLimpio]) pacientesBD[dniLimpio] = {};
+                    pacientesBD[dniLimpio][campo] = valorLimpio;
+
+                    pacientesReporte.forEach(rep => {
+                        if (limpiarDNI(rep.dni) === dniLimpio) {
+                            rep[campo] = valorLimpio;
+                        }
+                    });
+
+                    guardarPacientesBDInFirebase();
+                    guardarEnFirebase();
+                    renderizarTodasLasTablas();
+                }
+            }
+        }
+
+        function actualizarCampo(id, campo, valor) {
+            const p = pacientesReporte.find(x => x.id === id);
+            if (p) {
+                p[campo] = valor;
+                guardarEnFirebase();
+                if (campo === 'falta') renderizarTodasLasTablas();
+            }
+        }
+
+        function actualizarObservacion(id, valor) {
+            const p = pacientesReporte.find(x => x.id === id);
+            if (p) {
+                p.observacion = valor;
+                p.alertaKlinicos = (valor === 'NO POSEE DOCUMENTO CARGADO EN KLINICOS');
+                guardarEnFirebase();
+                renderizarTodasLasTablas();
+            }
+        }
+
+        function actualizarDNI(id, nuevoDniRaw) {
+            const dniLimpio = limpiarDNI(nuevoDniRaw);
+            const p = pacientesReporte.find(x => x.id === id);
+            if (p) {
+                p.dni = dniLimpio;
+                p.sinDoc = !dniLimpio;
+                if (dniLimpio && pacientesBD[dniLimpio]) {
+                    p.nroTramite = pacientesBD[dniLimpio].nroTramite || p.nroTramite;
+                    p.nroAfiliado = pacientesBD[dniLimpio].nroAfiliado || p.nroAfiliado;
+                }
+                guardarEnFirebase();
+                renderizarTodasLasTablas();
+            }
+        }
+
+        // --- ACCIÓN FINALIZAR DÍA ---
+        async function finalizarDia() {
+            if (pacientesReporte.length === 0) {
+                alert("No hay registros cargados en el día actual para finalizar.");
+                return;
+            }
+
+            if (confirm(`¿Confirma finalizar el día? Se archivarán ${pacientesReporte.length} registros en el Historial y la tabla del día quedará vacía.`)) {
+                // Trasladar todos los elementos de reportes al historial
+                pacientesHistorial = pacientesHistorial.concat(pacientesReporte);
+                
+                // Vaciar los reportes diarios
+                pacientesReporte = [];
+
+                // Sincronizar en Firebase
+                await guardarEnFirebase();
+                await guardarHistorialInFirebase();
+
+                renderizarTodasLasTablas();
+                switchTab('historial');
+                alert("Día finalizado exitosamente. Los registros pasaron al Historial.");
+            }
+        }
+
+        // --- RENDERIZADO DE TABLAS ---
+        function renderizarTodasLasTablas() {
+            renderizarReportes();
+            renderizarHistorial();
+            renderizarDiagnostico();
+            renderizarIncompletos();
+            renderizarSinDoc();
+            renderizarListos();
+            actualizarContadorBD();
+        }
+
+        function obtenerClaseFila(p) {
+            if (p.observacion === 'NO POSEE DOCUMENTO CARGADO EN KLINICOS' || p.alertaKlinicos) return 'status-alerta-klinicos';
+            if (p.falta === 'CARGADO') return 'status-cargado';
+            return 'status-falta';
+        }
+
+        function generarSelectObservacion(p) {
+            let optionsHtml = '';
+            OPCIONES_OBSERVACION.forEach(op => {
+                const selected = (p.observacion === op) ? 'selected' : '';
+                optionsHtml += `<option value="${op}" ${selected}>${op || '-- Seleccionar --'}</option>`;
+            });
+            return `<select class="select-table" onchange="actualizarObservacion('${p.id}', this.value)">${optionsHtml}</select>`;
+        }
+
+        function generarSelectFalta(p) {
+            return `
+                <select class="select-table" onchange="actualizarCampo('${p.id}', 'falta', this.value)">
+                    <option value="" ${!p.falta ? 'selected' : ''}>-- Seleccionar --</option>
+                    <option value="FALTA DOCUMENTACION" ${p.falta === 'FALTA DOCUMENTACION' ? 'selected' : ''}>FALTA DOCUMENTACION</option>
+                    <option value="CARGADO" ${p.falta === 'CARGADO' ? 'selected' : ''}>CARGADO</option>
+                </select>
+            `;
+        }
+
+        function renderizarReportes() {
+            const tbody = document.getElementById('tbody-reportes');
+            tbody.innerHTML = '';
+            pacientesReporte.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = obtenerClaseFila(p);
+                tr.innerHTML = `
+                    <td>${p.fecha}</td>
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td>${p.dni || 'SIN DNI'}</td>
+                    <td><input type="text" class="table-input" value="${p.nroTramite || ''}" onchange="actualizarDatoPacienteBD('${p.id}', 'nroTramite', this.value)"></td>
+                    <td><input type="text" class="table-input" value="${p.nroAfiliado || ''}" onchange="actualizarDatoPacienteBD('${p.id}', 'nroAfiliado', this.value)"></td>
+                    <td>${p.especialidad}</td>
+                    <td><input type="text" class="table-input" value="${p.diagnostico || ''}" onchange="actualizarCampo('${p.id}', 'diagnostico', this.value)"></td>
+                    <td>${generarSelectFalta(p)}</td>
+                    <td>${generarSelectObservacion(p)}</td>
+                    <td><button class="btn" style="background:var(--danger-red); padding:2px 6px; font-size:0.7rem;" onclick="eliminarRegistro('${p.id}')">✕</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderizarHistorial() {
+            const tbody = document.getElementById('tbody-historial');
+            tbody.innerHTML = '';
+            pacientesHistorial.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = obtenerClaseFila(p);
+                tr.innerHTML = `
+                    <td>${p.fecha}</td>
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td>${p.dni || 'SIN DNI'}</td>
+                    <td>${p.nroTramite || '-'}</td>
+                    <td>${p.nroAfiliado || '-'}</td>
+                    <td>${p.especialidad}</td>
+                    <td>${p.diagnostico || '-'}</td>
+                    <td>${p.falta || 'SIN ESTADO'}</td>
+                    <td>${p.observacion || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderizarDiagnostico() {
+            const tbody = document.getElementById('tbody-diagnostico');
+            tbody.innerHTML = '';
+            pacientesReporte.forEach(p => {
+                const tr = document.createElement('tr');
+                const dniLimpio = limpiarDNI(p.dni);
+                const encontrado = pacientesBD[dniLimpio];
+
+                tr.innerHTML = `
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td><code>${dniLimpio || 'SIN DNI'}</code></td>
+                    <td>${encontrado ? '<span class="badge-success">SÍ</span>' : '<span class="badge-danger">NO</span>'}</td>
+                    <td>${encontrado ? (encontrado.nroTramite || '<i>Vacío</i>') : '-'}</td>
+                    <td>${encontrado ? (encontrado.nroAfiliado || '<i>Vacío</i>') : '-'}</td>
+                    <td>${(p.nroTramite && p.nroAfiliado) ? '✅ COMPLETO' : '⚠️ INCOMPLETO'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderizarIncompletos() {
+            const tbody = document.getElementById('tbody-incompletos');
+            tbody.innerHTML = '';
+            pacientesReporte.filter(p => p.falta !== 'CARGADO').forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = obtenerClaseFila(p);
+                tr.innerHTML = `
+                    <td>${p.fecha}</td>
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td>${p.dni}</td>
+                    <td><input type="text" class="table-input" value="${p.nroTramite || ''}" onchange="actualizarDatoPacienteBD('${p.id}', 'nroTramite', this.value)"></td>
+                    <td><input type="text" class="table-input" value="${p.nroAfiliado || ''}" onchange="actualizarDatoPacienteBD('${p.id}', 'nroAfiliado', this.value)"></td>
+                    <td>${p.especialidad}</td>
+                    <td><input type="text" class="table-input" value="${p.diagnostico || ''}" onchange="actualizarCampo('${p.id}', 'diagnostico', this.value)"></td>
+                    <td>${generarSelectFalta(p)}</td>
+                    <td>${generarSelectObservacion(p)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderizarSinDoc() {
+            const tbody = document.getElementById('tbody-sin-doc');
+            tbody.innerHTML = '';
+            pacientesReporte.filter(p => p.sinDoc || !p.dni || p.observacion === 'NO POSEE DOCUMENTO CARGADO EN KLINICOS').forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'status-alerta-klinicos';
+                tr.innerHTML = `
+                    <td>${p.fecha}</td>
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td><input type="text" class="table-input" value="${p.dni || ''}" placeholder="DNI..." onchange="actualizarDNI('${p.id}', this.value)"></td>
+                    <td>${p.nroTramite || '-'}</td>
+                    <td>${p.nroAfiliado || '-'}</td>
+                    <td>${p.especialidad}</td>
+                    <td>${p.diagnostico}</td>
+                    <td>ALERTA</td>
+                    <td>${generarSelectObservacion(p)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderizarListos() {
+            const tbody = document.getElementById('tbody-listos');
+            tbody.innerHTML = '';
+            pacientesReporte.filter(p => p.falta === 'CARGADO').forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = 'status-cargado';
+                tr.innerHTML = `
+                    <td>${p.fecha}</td>
+                    <td style="text-align:left; font-weight:700;">${p.nombre}</td>
+                    <td>${p.dni}</td>
+                    <td>${p.nroTramite || '-'}</td>
+                    <td>${p.nroAfiliado || '-'}</td>
+                    <td>${p.especialidad}</td>
+                    <td>${p.diagnostico}</td>
+                    <td>CARGADO</td>
+                    <td>${p.observacion || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function eliminarRegistro(id) {
+            if (confirm("¿Eliminar registro del reporte diario?")) {
+                pacientesReporte = pacientesReporte.filter(p => p.id !== id);
+                renderizarTodasLasTablas();
+                guardarEnFirebase();
+            }
+        }
+
+        function actualizarContadorBD() {
+            document.getElementById('cant-bd-pacientes').innerText = `Pacientes registrados en BD: ${Object.keys(pacientesBD).length}`;
+        }
+
+        function filtrarTabla(tablaId, texto) {
+            const q = texto.toLowerCase();
+            document.querySelectorAll(`#${tablaId} tbody tr`).forEach(fila => {
+                fila.style.display = fila.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        // --- CONEXIÓN FIREBASE ---
+        async function cargarTodaLaBaseDatos() {
+            try {
+                const resReportes = await fetch(`${FIREBASE_REPORTES_URL}.json`);
+                if (resReportes.ok) {
+                    const dataRep = await resReportes.json();
+                    pacientesReporte = dataRep ? (Array.isArray(dataRep) ? dataRep : Object.values(dataRep)) : [];
+                }
+
+                const resHistorial = await fetch(`${FIREBASE_HISTORIAL_URL}.json`);
+                if (resHistorial.ok) {
+                    const dataHist = await resHistorial.json();
+                    pacientesHistorial = dataHist ? (Array.isArray(dataHist) ? dataHist : Object.values(dataHist)) : [];
+                }
+
+                const resBD = await fetch(`${FIREBASE_PACIENTES_BD_URL}.json`);
+                if (resBD.ok) {
+                    pacientesBD = (await resBD.json()) || {};
+                }
+                renderizarTodasLasTablas();
+            } catch (err) { console.error("Error al conectar con Firebase:", err); }
+        }
+
+        async function guardarEnFirebase() {
+            await fetch(`${FIREBASE_REPORTES_URL}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pacientesReporte)
+            });
+        }
+
+        async function guardarHistorialInFirebase() {
+            await fetch(`${FIREBASE_HISTORIAL_URL}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pacientesHistorial)
+            });
+        }
+
+        async function guardarPacientesBDInFirebase() {
+            await fetch(`${FIREBASE_PACIENTES_BD_URL}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pacientesBD)
+            });
+        }
+
+        function guardarTodoManual() {
+            guardarEnFirebase();
+            guardarPacientesBDInFirebase();
+            guardarHistorialInFirebase();
+            alert("Sincronización manual completada.");
+        }
+
+        setInterval(() => {
+            if (pacientesReporte.length > 0) {
+                guardarEnFirebase();
+                guardarPacientesBDInFirebase();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
