@@ -765,7 +765,26 @@
         function renderPami() {
             const cont = document.getElementById('contenedor-tablas-pami');
             cont.innerHTML = '';
-            const keys = Object.keys(pamiData);
+            // Definimos el orden cronológico de los meses
+const ordenMeses = [
+    "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+    "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+];
+
+// Obtenemos las claves y las ordenamos según la posición de su mes correspondiente
+const keys = Object.keys(pamiData).sort((a, b) => {
+    const mesA = (pamiData[a].mes || "").toUpperCase();
+    const mesB = (pamiData[b].mes || "").toUpperCase();
+    
+    let indexA = ordenMeses.indexOf(mesA);
+    let indexB = ordenMeses.indexOf(mesB);
+    
+    // Si algún mes no se encuentra en la lista, lo ubica al final
+    if (indexA === -1) indexA = 99;
+    if (indexB === -1) indexB = 99;
+    
+    return indexA - indexB;
+});
 
             if (keys.length === 0) {
                 cont.innerHTML = `<div class="empty-state">No hay datos cargados en PAMI. Presione "＋ Cargar Mes PAMI" para agregar información.</div>`;
