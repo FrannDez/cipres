@@ -281,7 +281,7 @@
         <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
     </div>
     <h1 id="tituloHeader">CIPRES - FACTURACIÓN Y OBRAS SOCIALES 2026</h1>
-    <p>Resumen de Cobranzas, Pendientes y Top Obras Sociales 
+    <p>Resumen de Cobranzas, Pendientes y Obras Sociales 
         <button class="edit-toggle-btn" onclick="solicitarAccesoEdicion()" title="Editar valores">✏️</button>
     </p>
 </header>
@@ -319,10 +319,10 @@
         </div>
     </div>
 
-    <!-- SECCIÓN 2: TOP 10 OBRAS SOCIALES + OTRAS -->
+    <!-- SECCIÓN 2: OBRAS SOCIALES + OTRAS -->
     <div class="card">
         <div class="card-header">
-            <h2 id="tituloTopOS">Top 10 Obras Sociales con Mayor Facturación 2026</h2>
+            <h2 id="tituloTopOS">Facturación por Obras Sociales 2026</h2>
         </div>
 
         <div class="table-responsive">
@@ -350,7 +350,7 @@
 
         <div class="charts-grid">
             <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
-                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">DISTRIBUCIÓN DE FACTURACIÓN (TOP 10 + OTRAS)</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">DISTRIBUCIÓN DE FACTURACIÓN (OBRAS SOCIALES + OTRAS)</h3>
                 <canvas id="chartTopOS"></canvas>
             </div>
             <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -370,7 +370,7 @@
         
         <select id="selectSeccionEditar" class="form-control" onchange="cambiarSeccionEdicion(this.value)">
             <option value="facturacion">Facturación General (Cobrado / Facturado)</option>
-            <option value="topOS">Top 10 Obras Sociales</option>
+            <option value="topOS">Obras Sociales</option>
         </select>
 
         <div id="contenedorFormEdicion" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
@@ -412,16 +412,30 @@
     ];
 
     const INIT_TOP_OS_2026 = [
-        { nombre: "OSECAC", facturado: 51590189.79, facturas: 1226 },
         { nombre: "IOMA O", facturado: 35468872.72, facturas: 5111 },
         { nombre: "OSUTHGRA", facturado: 20113869.41, facturas: 405 },
-        { nombre: "OSPCN", facturado: 14326194.17, facturas: 225 },
-        { nombre: "OSCHOCA", facturado: 13610073.14, facturas: 194 },
         { nombre: "OSPEDYC", facturado: 13312484.59, facturas: 495 },
+        { nombre: "OSECAC", facturado: 51590189.79, facturas: 1226 },
+        { nombre: "OSCHOCA", facturado: 13610073.14, facturas: 194 },
         { nombre: "POL. FED", facturado: 10151788.96, facturas: 50 },
         { nombre: "OSPECON", facturado: 8585158.80, facturas: 198 },
         { nombre: "IOMA V", facturado: 1584020.72, facturas: 229 },
-        { nombre: "OBSBA", facturado: 1266004.00, facturas: 58 }
+        { nombre: "OBSBA", facturado: 1266004.00, facturas: 58 },
+        { nombre: "OSPCN", facturado: 14326194.17, facturas: 225 },
+        { nombre: "SWISS MED", facturado: 3770009.98, facturas: 131 },
+        { nombre: "OSPECON", facturado: 8585157.80, facturas: 198 },
+        { nombre: "GALENO", facturado: 2113759.85, facturas: 98 },
+        { nombre: "MEDICUS / MEDICARD", facturado: 466444.00, facturas: 29 },
+        { nombre: "OSALARA", facturado: 2861656.00, facturas: 91 },
+        { nombre: "SANCOR", facturado: 4292127.97, facturas: 71 },
+        { nombre: "OSDEPYM", facturado: 16695965.45, facturas: 232 },
+        { nombre: "OSAMOC", facturado: 63957.00, facturas: 4 },
+        { nombre: "OSPACA", facturado: 146990.80, facturas: 4 },
+        { nombre: "HOSP. BRITANICO", facturado: 65164.00, facturas: 4 },
+        { nombre: "HOSP. ITALIANO", facturado: 1128094.00, facturas: 12 },
+        { nombre: "IOMA C", facturado: 1483613.91, facturas: 130 },
+        { nombre: "OSPRERA", facturado: 2575008.08, facturas: 64 },
+        { nombre: "OSUOMRA", facturado: 533003.44, facturas: 27 }
     ];
 
     function cargarDatos() {
@@ -486,7 +500,7 @@
         const tbody = document.getElementById('tablaTopOSBody');
         tbody.innerHTML = '';
 
-        let sumaTopFacturado = 0;
+        let sumaTodasFacturado = 0;
         let totFacturas = 0;
 
         if (datosTopOS.length === 0) {
@@ -494,12 +508,15 @@
             return;
         }
 
-        // Renderizar Top 10
-        datosTopOS.forEach((os, idx) => {
+        // Ordenar de mayor a menor según monto facturado
+        const datosOrdenados = [...datosTopOS].sort((a, b) => (parseFloat(b.facturado) || 0) - (parseFloat(a.facturado) || 0));
+
+        // Renderizar TODAS las obras sociales
+        datosOrdenados.forEach((os, idx) => {
             const fact = parseFloat(os.facturado) || 0;
             const numFacturas = parseInt(os.facturas) || 0;
 
-            sumaTopFacturado += fact;
+            sumaTodasFacturado += fact;
             totFacturas += numFacturas;
 
             tbody.innerHTML += `
@@ -512,12 +529,12 @@
             `;
         });
 
-        // Buscar total facturado de Obras Sociales en la tabla principal
+        // Buscar total facturado de Obras Sociales en la tabla principal ($809.107.093,45 por defecto)
         const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
         const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
 
-        // Calcular la fila "OTRAS"
-        const montoOtras = totalFacturadoOS - sumaTopFacturado;
+        // Calcular "OTRAS" (Total Obras Sociales - Suma de todas las listadas)
+        const montoOtras = totalFacturadoOS - sumaTodasFacturado;
 
         tbody.innerHTML += `
             <tr style="background-color: #f8fafc; font-weight:600;">
@@ -529,7 +546,7 @@
         `;
 
         document.getElementById('totalTopFacturado').innerText = formatearMoneda(totalFacturadoOS);
-        document.getElementById('totalTopFacturas').innerText = `${totFacturas.toLocaleString('es-AR')} (Top 10)`;
+        document.getElementById('totalTopFacturas').innerText = `${totFacturas.toLocaleString('es-AR')} (Listadas)`;
     }
 
     function actualizarGraficos() {
@@ -539,30 +556,38 @@
         if (chart1) chart1.destroy();
         if (chart2) chart2.destroy();
 
-        // Calcular 'OTRAS' para el gráfico
+        // Ordenar de mayor a menor para el gráfico
+        const datosOrdenados = [...datosTopOS].sort((a, b) => (parseFloat(b.facturado) || 0) - (parseFloat(a.facturado) || 0));
+
+        // Calcular 'OTRAS'
         const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
         const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
-        const sumaTopFacturado = datosTopOS.reduce((acc, curr) => acc + (parseFloat(curr.facturado) || 0), 0);
-        const montoOtras = Math.max(0, totalFacturadoOS - sumaTopFacturado);
+        const sumaTodasFacturado = datosOrdenados.reduce((acc, curr) => acc + (parseFloat(curr.facturado) || 0), 0);
+        const montoOtras = Math.max(0, totalFacturadoOS - sumaTodasFacturado);
 
-        const labelsChart = [...datosTopOS.map(d => d.nombre), 'OTRAS'];
-        const dataChart = [...datosTopOS.map(d => d.facturado), montoOtras];
+        const labelsChart = [...datosOrdenados.map(d => d.nombre), 'OTRAS'];
+        const dataChart = [...datosOrdenados.map(d => d.facturado), montoOtras];
 
-        // Chart 1: Donut Top OS + OTRAS
+        // Paleta de colores extendida para cubrir todas las Obras Sociales
+        const colores = [
+            '#0056b3', '#10b981', '#d97706', '#ef4444', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#64748b',
+            '#0284c7', '#059669', '#d97706', '#dc2626', '#7c3aed',
+            '#db2777', '#0d9488', '#eab308', '#4f46e5', '#475569',
+            '#0369a1', '#047857', '#b45309', '#cbd5e1'
+        ];
+
+        // Chart 1: Donut Obras Sociales + OTRAS
         chart1 = new Chart(ctx1, {
             type: 'doughnut',
             data: {
                 labels: labelsChart,
                 datasets: [{
                     data: dataChart,
-                    backgroundColor: [
-                        '#0056b3', '#10b981', '#d97706', '#ef4444', '#8b5cf6',
-                        '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#64748b',
-                        '#cbd5e1'
-                    ]
+                    backgroundColor: colores
                 }]
             },
-            options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } } }
+            options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 9 } } } } }
         });
 
         // Chart 2: Estado Cobrado vs Pendiente
