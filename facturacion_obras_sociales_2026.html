@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen de Facturación y Obras Sociales - CIPRES</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --brand-blue: #0056b3;
+            --brand-blue-hover: #003d82;
+            --btn-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --warning-orange: #d97706;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #2b6cb0 0%, #0d253f 70%, #06101e 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding-bottom: 140px;
+        }
+
+        /* HEADER & LOGO */
+        header {
+            margin: 25px 15px 15px;
+            text-align: center;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .logo-container {
+            width: 180px;
+            max-width: 80%;
+            margin: 0 auto 10px;
+        }
+
+        .logo-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.3));
+        }
+
+        header h1 {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+        }
+
+        header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container {
+            width: 95%;
+            max-width: 1300px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (min-width: 768px) {
+            .card { padding: 24px; }
+            header h1 { font-size: 1.7rem; }
+            .logo-container { width: 220px; }
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--brand-blue);
+            text-transform: uppercase;
+        }
+
+        /* BOTÓN EDICIÓN OCULTO */
+        .edit-toggle-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            padding: 4px;
+        }
+        .edit-toggle-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* TABLAS Y ESTILOS DE CELDAS */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: #ffffff;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--brand-blue);
+            color: white;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .th-dark { background-color: #0f172a; }
+        .th-orange { background-color: var(--warning-orange); }
+        .th-green { background-color: #047857; }
+        .monto-positivo { color: #047857; font-weight: 600; }
+        .monto-pendiente { color: var(--warning-orange); font-weight: 700; }
+
+        /* MODAL DE EDICIÓN */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .modal-card h3 {
+            color: var(--brand-blue);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .form-control {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background-color: var(--btn-bg);
+            color: var(--text-dark);
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--brand-blue);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:hover { background-color: var(--brand-blue-hover); }
+        .btn-success { background-color: var(--success-green); }
+        .btn-danger { background-color: var(--danger-red); }
+
+        /* GRÁFICOS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* ANIMACIÓN DE OLAS */
+        .waves-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            transform-origin: center bottom;
+        }
+
+        .wave1 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.15)"></path></svg>');
+            animation: waveMove 22s linear infinite;
+        }
+
+        .wave2 {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,30 C200,100 450,0 600,60 C750,120 1000,20 1200,50 L1200,120 L0,120 Z" fill="rgba(255, 255, 255, 0.25)"></path></svg>');
+            animation: waveMove 16s linear infinite reverse;
+        }
+
+        @keyframes waveMove {
+            0% { translate: 0 0; }
+            100% { translate: -50% 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1 id="tituloHeader">CIPRES - FACTURACIÓN Y OBRAS SOCIALES 2026</h1>
+    <p>Resumen de Cobranzas, Pendientes y Top Obras Sociales 
+        <button class="edit-toggle-btn" onclick="solicitarAccesoEdicion()" title="Editar valores">✏️</button>
+    </p>
+</header>
+
+<div class="container">
+
+    <!-- SECCIÓN 1: RESUMEN GENERAL DE FACTURACIÓN 2026 -->
+    <div class="card">
+        <div class="card-header">
+            <h2 id="tituloResumenFacturacion">Estado de Facturación y Cobranzas 2026</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Entidad / Cobertura</th>
+                        <th class="th-green">Cobrado en Ctas Brias</th>
+                        <th class="th-dark">Total Facturado</th>
+                        <th class="th-orange">Pendiente de Cobro</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaFacturacionBody">
+                    <!-- Cargado dinámicamente desde Firebase -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 0.9rem;">
+                        <td style="text-align: left; padding: 12px;">TOTALES GENERALES</td>
+                        <td id="totalCobrado" style="color: #4ade80;">$0.00</td>
+                        <td id="totalFacturado" style="color: #facc15;">$0.00</td>
+                        <td id="totalPendiente" style="color: #fbbf24;">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 2: TOP 10 OBRAS SOCIALES + OTRAS -->
+    <div class="card">
+        <div class="card-header">
+            <h2 id="tituloTopOS">Top 10 Obras Sociales con Mayor Facturación 2026</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th style="text-align: left;">Obra Social</th>
+                        <th class="th-dark">Monto Facturado ($)</th>
+                        <th>Facturas Emitidas</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaTopOSBody">
+                    <!-- Cargado dinámicamente desde Firebase -->
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 0.9rem;">
+                        <td colspan="2" style="text-align: left; padding: 12px;">TOTAL GENERAL OBRAS SOCIALES</td>
+                        <td id="totalTopFacturado" style="color: #facc15;">$0.00</td>
+                        <td id="totalTopFacturas" style="color: #ffffff;">-</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="charts-grid">
+            <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">DISTRIBUCIÓN DE FACTURACIÓN (TOP 10 + OTRAS)</h3>
+                <canvas id="chartTopOS"></canvas>
+            </div>
+            <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">COMPARATIVA COBRADO VS PENDIENTE</h3>
+                <canvas id="chartEstadoCobros"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL DE EDICIÓN RÁPIDA -->
+<div class="modal-overlay" id="modalEdicion">
+    <div class="modal-card">
+        <h3>✏️ Modo Edición (Clave Aceptada)</h3>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;">Seleccioná qué sección querés editar:</p>
+        
+        <select id="selectSeccionEditar" class="form-control" onchange="cambiarSeccionEdicion(this.value)">
+            <option value="facturacion">Facturación General (Cobrado / Facturado)</option>
+            <option value="topOS">Top 10 Obras Sociales</option>
+        </select>
+
+        <div id="contenedorFormEdicion" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+            <!-- Formulario dinámico -->
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn btn-danger" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn-success" onclick="guardarCambiosModal()">💾 Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- ANIMACIÓN DE OLAS -->
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<!-- SDK DE FIREBASE V10 -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = { databaseURL: "https://cipres-control-default-rtdb.firebaseio.com" };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const anioSeleccionado = "2026";
+    let datosFacturacion = [];
+    let datosTopOS = [];
+    let chart1, chart2;
+
+    // Datos iniciales requeridos
+    const INIT_FACTURACION_2026 = [
+        { entidad: "Obras Sociales", cobrado: 159421188.50, facturado: 809107093.45, pendiente: 649685904.95 },
+        { entidad: "PAMI", cobrado: 800307220.70, facturado: 1243540962.98, pendiente: 443233733.28 },
+        { entidad: "SUMAR", cobrado: 21344650.00, facturado: 80895700.00, pendiente: 80895700.00 }
+    ];
+
+    const INIT_TOP_OS_2026 = [
+        { nombre: "OSECAC", facturado: 51590189.79, facturas: 1226 },
+        { nombre: "IOMA O", facturado: 35468872.72, facturas: 5111 },
+        { nombre: "OSUTHGRA", facturado: 20113869.41, facturas: 405 },
+        { nombre: "OSPCN", facturado: 14326194.17, facturas: 225 },
+        { nombre: "OSCHOCA", facturado: 13610073.14, facturas: 194 },
+        { nombre: "OSPEDYC", facturado: 13312484.59, facturas: 495 },
+        { nombre: "POL. FED", facturado: 10151788.96, facturas: 50 },
+        { nombre: "OSPECON", facturado: 8585158.80, facturas: 198 },
+        { nombre: "IOMA V", facturado: 1584020.72, facturas: 229 },
+        { nombre: "OBSBA", facturado: 1266004.00, facturas: 58 }
+    ];
+
+    function cargarDatos() {
+        onValue(ref(db, `Facturacion_Resumen_${anioSeleccionado}`), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                datosFacturacion = data.resumenFacturacion || [];
+                datosTopOS = data.topObrasSociales || [];
+            } else {
+                datosFacturacion = INIT_FACTURACION_2026;
+                datosTopOS = INIT_TOP_OS_2026;
+                set(ref(db, `Facturacion_Resumen_${anioSeleccionado}`), {
+                    resumenFacturacion: datosFacturacion,
+                    topObrasSociales: datosTopOS
+                });
+            }
+            renderizarTodo();
+        });
+    }
+
+    function renderizarTodo() {
+        renderizarTablaFacturacion();
+        renderizarTablaTopOS();
+        actualizarGraficos();
+    }
+
+    function renderizarTablaFacturacion() {
+        const tbody = document.getElementById('tablaFacturacionBody');
+        tbody.innerHTML = '';
+
+        let totCobrado = 0, totFacturado = 0, totPendiente = 0;
+
+        if (datosFacturacion.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="color:var(--text-muted); padding:15px;">No hay registros cargados para el ejercicio ${anioSeleccionado}.</td></tr>`;
+        }
+
+        datosFacturacion.forEach(item => {
+            const cobrado = parseFloat(item.cobrado) || 0;
+            const facturado = parseFloat(item.facturado) || 0;
+            const pendiente = parseFloat(item.pendiente) || 0;
+
+            totCobrado += cobrado;
+            totFacturado += facturado;
+            totPendiente += pendiente;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align: left; font-weight:700;">${item.entidad}</td>
+                    <td class="monto-positivo">${formatearMoneda(cobrado)}</td>
+                    <td style="font-weight:700; color:var(--brand-blue);">${formatearMoneda(facturado)}</td>
+                    <td class="monto-pendiente">${formatearMoneda(pendiente)}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('totalCobrado').innerText = formatearMoneda(totCobrado);
+        document.getElementById('totalFacturado').innerText = formatearMoneda(totFacturado);
+        document.getElementById('totalPendiente').innerText = formatearMoneda(totPendiente);
+    }
+
+    function renderizarTablaTopOS() {
+        const tbody = document.getElementById('tablaTopOSBody');
+        tbody.innerHTML = '';
+
+        let sumaTopFacturado = 0;
+        let totFacturas = 0;
+
+        if (datosTopOS.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="color:var(--text-muted); padding:15px;">No hay obras sociales registradas para el ejercicio ${anioSeleccionado}.</td></tr>`;
+            return;
+        }
+
+        // Renderizar Top 10
+        datosTopOS.forEach((os, idx) => {
+            const fact = parseFloat(os.facturado) || 0;
+            const numFacturas = parseInt(os.facturas) || 0;
+
+            sumaTopFacturado += fact;
+            totFacturas += numFacturas;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>#${idx + 1}</strong></td>
+                    <td style="text-align: left; font-weight:600;">${os.nombre}</td>
+                    <td style="font-weight:700;">${formatearMoneda(fact)}</td>
+                    <td>${numFacturas.toLocaleString('es-AR')}</td>
+                </tr>
+            `;
+        });
+
+        // Buscar total facturado de Obras Sociales en la tabla principal
+        const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
+        const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
+
+        // Calcular la fila "OTRAS"
+        const montoOtras = totalFacturadoOS - sumaTopFacturado;
+
+        tbody.innerHTML += `
+            <tr style="background-color: #f8fafc; font-weight:600;">
+                <td><strong>-</strong></td>
+                <td style="text-align: left; color: var(--text-muted);">OTRAS</td>
+                <td style="font-weight:700; color: var(--text-muted);">${formatearMoneda(montoOtras)}</td>
+                <td style="color: var(--text-muted);">-</td>
+            </tr>
+        `;
+
+        document.getElementById('totalTopFacturado').innerText = formatearMoneda(totalFacturadoOS);
+        document.getElementById('totalTopFacturas').innerText = `${totFacturas.toLocaleString('es-AR')} (Top 10)`;
+    }
+
+    function actualizarGraficos() {
+        const ctx1 = document.getElementById('chartTopOS').getContext('2d');
+        const ctx2 = document.getElementById('chartEstadoCobros').getContext('2d');
+
+        if (chart1) chart1.destroy();
+        if (chart2) chart2.destroy();
+
+        // Calcular 'OTRAS' para el gráfico
+        const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
+        const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
+        const sumaTopFacturado = datosTopOS.reduce((acc, curr) => acc + (parseFloat(curr.facturado) || 0), 0);
+        const montoOtras = Math.max(0, totalFacturadoOS - sumaTopFacturado);
+
+        const labelsChart = [...datosTopOS.map(d => d.nombre), 'OTRAS'];
+        const dataChart = [...datosTopOS.map(d => d.facturado), montoOtras];
+
+        // Chart 1: Donut Top OS + OTRAS
+        chart1 = new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: labelsChart,
+                datasets: [{
+                    data: dataChart,
+                    backgroundColor: [
+                        '#0056b3', '#10b981', '#d97706', '#ef4444', '#8b5cf6',
+                        '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#64748b',
+                        '#cbd5e1'
+                    ]
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } } } }
+        });
+
+        // Chart 2: Estado Cobrado vs Pendiente
+        let totCobrado = datosFacturacion.reduce((a,b) => a + (parseFloat(b.cobrado)||0), 0);
+        let totPendiente = datosFacturacion.reduce((a,b) => a + (parseFloat(b.pendiente)||0), 0);
+
+        chart2 = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ['Cobrado', 'Pendiente de Cobro'],
+                datasets: [{
+                    data: [totCobrado, totPendiente],
+                    backgroundColor: ['#10b981', '#d97706']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // ACCESO CON CLAVE
+    window.solicitarAccesoEdicion = function() {
+        const pass = prompt("Ingresá la clave de acceso para modificar datos:");
+        if (pass === "Cristo25") {
+            document.getElementById('modalEdicion').style.display = 'flex';
+            cambiarSeccionEdicion('facturacion');
+        } else if (pass !== null) {
+            alert("Clave incorrecta. Acceso denegado.");
+        }
+    }
+
+    window.cerrarModal = function() {
+        document.getElementById('modalEdicion').style.display = 'none';
+    }
+
+    window.cambiarSeccionEdicion = function(sec) {
+        const container = document.getElementById('contenedorFormEdicion');
+        container.innerHTML = '';
+
+        if (sec === 'facturacion') {
+            datosFacturacion.forEach((item, i) => {
+                container.innerHTML += `
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #e2e8f0;">
+                        <strong style="color:var(--brand-blue);">${item.entidad}</strong>
+                        <label style="font-size:0.75rem; display:block; margin-top:5px;">Cobrado ($):</label>
+                        <input type="number" step="0.01" id="f_cobrado_${i}" class="form-control" value="${item.cobrado}">
+                        <label style="font-size:0.75rem; display:block;">Facturado ($):</label>
+                        <input type="number" step="0.01" id="f_facturado_${i}" class="form-control" value="${item.facturado}">
+                        <label style="font-size:0.75rem; display:block;">Pendiente ($):</label>
+                        <input type="number" step="0.01" id="f_pendiente_${i}" class="form-control" value="${item.pendiente}">
+                    </div>
+                `;
+            });
+        } else {
+            datosTopOS.forEach((os, i) => {
+                container.innerHTML += `
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #e2e8f0;">
+                        <input type="text" id="os_nombre_${i}" class="form-control" value="${os.nombre}" style="font-weight:bold;">
+                        <label style="font-size:0.75rem; display:block;">Monto Facturado ($):</label>
+                        <input type="number" step="0.01" id="os_facturado_${i}" class="form-control" value="${os.facturado}">
+                        <label style="font-size:0.75rem; display:block;">Facturas Emitidas:</label>
+                        <input type="number" id="os_facturas_${i}" class="form-control" value="${os.facturas}">
+                    </div>
+                `;
+            });
+        }
+    }
+
+    window.guardarCambiosModal = function() {
+        const sec = document.getElementById('selectSeccionEditar').value;
+
+        if (sec === 'facturacion') {
+            datosFacturacion.forEach((item, i) => {
+                item.cobrado = parseFloat(document.getElementById(`f_cobrado_${i}`).value) || 0;
+                item.facturado = parseFloat(document.getElementById(`f_facturado_${i}`).value) || 0;
+                item.pendiente = parseFloat(document.getElementById(`f_pendiente_${i}`).value) || 0;
+            });
+        } else {
+            datosTopOS.forEach((os, i) => {
+                os.nombre = document.getElementById(`os_nombre_${i}`).value.trim();
+                os.facturado = parseFloat(document.getElementById(`os_facturado_${i}`).value) || 0;
+                os.facturas = parseInt(document.getElementById(`os_facturas_${i}`).value) || 0;
+            });
+        }
+
+        // Actualizar en Firebase
+        set(ref(db, `Facturacion_Resumen_${anioSeleccionado}`), {
+            resumenFacturacion: datosFacturacion,
+            topObrasSociales: datosTopOS
+        }).then(() => {
+            alert("¡Datos actualizados y sincronizados con Firebase exitosamente!");
+            cerrarModal();
+            renderizarTodo();
+        }).catch(err => alert("Error al guardar: " + err.message));
+    }
+
+    function formatearMoneda(m) {
+        return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(m || 0);
+    }
+
+    // Inicializar
+    cargarDatos();
+</script>
+
+</body>
+</html>
