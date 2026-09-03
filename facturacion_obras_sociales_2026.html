@@ -166,6 +166,31 @@
         .monto-positivo { color: #047857; font-weight: 600; }
         .monto-pendiente { color: var(--warning-orange); font-weight: 700; }
 
+        /* ESTILOS PARA LA FILA OTRAS DESPLEGABLE */
+        .row-otras-header {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .row-otras-header:hover {
+            background-color: #e2e8f0;
+        }
+        .toggle-arrow {
+            display: inline-block;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+            font-size: 0.8rem;
+            color: var(--brand-blue);
+        }
+        .row-extra-os {
+            background-color: #fafafa;
+            display: none;
+        }
+        .row-extra-os.visible {
+            display: table-row;
+        }
+
         /* MODAL DE EDICIÓN */
         .modal-overlay {
             position: fixed;
@@ -350,7 +375,7 @@
 
         <div class="charts-grid">
             <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
-                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">DISTRIBUCIÓN DE FACTURACIÓN (OBRAS SOCIALES + OTRAS)</h3>
+                <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px;">DISTRIBUCIÓN DE FACTURACIÓN (TOP 10 + OTRAS)</h3>
                 <canvas id="chartTopOS"></canvas>
             </div>
             <div style="background: #fafafa; padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -403,6 +428,7 @@
     let datosFacturacion = [];
     let datosTopOS = [];
     let chart1, chart2;
+    let desplegadoOtras = false;
 
     // Datos iniciales requeridos
     const INIT_FACTURACION_2026 = [
@@ -411,6 +437,7 @@
         { entidad: "SUMAR", cobrado: 21344650.00, facturado: 80895700.00, pendiente: 80895700.00 }
     ];
 
+    // Lista unificada y depurada de Obras Sociales (Sin duplicados)
     const INIT_TOP_OS_2026 = [
         { nombre: "IOMA O", facturado: 35468872.72, facturas: 5111 },
         { nombre: "OSUTHGRA", facturado: 20113869.41, facturas: 405 },
@@ -423,7 +450,6 @@
         { nombre: "OBSBA", facturado: 1266004.00, facturas: 58 },
         { nombre: "OSPCN", facturado: 14326194.17, facturas: 225 },
         { nombre: "SWISS MED", facturado: 3770009.98, facturas: 131 },
-        { nombre: "OSPECON", facturado: 8585157.80, facturas: 198 },
         { nombre: "GALENO", facturado: 2113759.85, facturas: 98 },
         { nombre: "MEDICUS / MEDICARD", facturado: 466444.00, facturas: 29 },
         { nombre: "OSALARA", facturado: 2861656.00, facturas: 91 },
@@ -435,7 +461,77 @@
         { nombre: "HOSP. ITALIANO", facturado: 1128094.00, facturas: 12 },
         { nombre: "IOMA C", facturado: 1483613.91, facturas: 130 },
         { nombre: "OSPRERA", facturado: 2575008.08, facturas: 64 },
-        { nombre: "OSUOMRA", facturado: 533003.44, facturas: 27 }
+        { nombre: "OSUOMRA", facturado: 533003.44, facturas: 27 },
+        { nombre: "DOSUBA", facturado: 48873.00, facturas: 3 },
+        { nombre: "ENSALUD", facturado: 32582.00, facturas: 2 },
+        { nombre: "Fedecámaras", facturado: 569517.04, facturas: 4 },
+        { nombre: "FEDERADA", facturado: 16291.00, facturas: 1 },
+        { nombre: "GERDANNA", facturado: 16291.00, facturas: 1 },
+        { nombre: "HOMINIS", facturado: 2110873.61, facturas: 16 },
+        { nombre: "IAPOS", facturado: 16291.00, facturas: 1 },
+        { nombre: "IOMA_GENERAL", facturado: 53336507.35, facturas: 5470 },
+        { nombre: "IOSEP", facturado: 32582.00, facturas: 2 },
+        { nombre: "IOSFA", facturado: 2183056.55, facturas: 27 },
+        { nombre: "AMEBPBA", facturado: 129121.00, facturas: 8 },
+        { nombre: "JERARQUICOS", facturado: 136142.00, facturas: 8 },
+        { nombre: "LUIS.PASTEUR", facturado: 314128.00, facturas: 14 },
+        { nombre: "MEDICAL´S", facturado: 16291.00, facturas: 1 },
+        { nombre: "MEDIFE", facturado: 475327.00, facturas: 25 },
+        { nombre: "FUNDACION_CO.ME.I", facturado: 16291.00, facturas: 1 },
+        { nombre: "OMINT_SA", facturado: 13325425.10, facturas: 24 },
+        { nombre: "OPDEA", facturado: 16291.00, facturas: 1 },
+        { nombre: "OSADEF", facturado: 32582.00, facturas: 2 },
+        { nombre: "PADRE.FEDERICO.GROTE", facturado: 63957.00, facturas: 4 },
+        { nombre: "AMR_SALUD", facturado: 16291.00, facturas: 1 },
+        { nombre: "OSAP", facturado: 32582.00, facturas: 2 },
+        { nombre: "OSBARA", facturado: 699202.08, facturas: 1 },
+        { nombre: "OSCCPTAC", facturado: 16291.00, facturas: 1 },
+        { nombre: "OSCE", facturado: 111067.00, facturas: 1 },
+        { nombre: "OSCEARA", facturado: 128714.00, facturas: 8 },
+        { nombre: "OSCEP", facturado: 382132.98, facturas: 2 },
+        { nombre: "OSCOEMA", facturado: 748544.79, facturas: 3 },
+        { nombre: "SICONARA", facturado: 16291.00, facturas: 1 },
+        { nombre: "O.S.C.T.C.P.", facturado: 1981824.46, facturas: 22 },
+        { nombre: "OSDIC", facturado: 30568.00, facturas: 2 },
+        { nombre: "OSDIPP", facturado: 16291.00, facturas: 1 },
+        { nombre: "OSDOP", facturado: 976753.00, facturas: 50 },
+        { nombre: "OSEDEIV", facturado: 222134.00, facturas: 1 },
+        { nombre: "OSEIV", facturado: 255317.00, facturas: 4 },
+        { nombre: "OSEMM", facturado: 201527.84, facturas: 4 },
+        { nombre: "OSEN", facturado: 98347.00, facturas: 5 },
+        { nombre: "OSEPJANA", facturado: 2515582.15, facturas: 72 },
+        { nombre: "OSETYA", facturado: 1341685.00, facturas: 13 },
+        { nombre: "OSFATLYF", facturado: 443064.00, facturas: 15 },
+        { nombre: "OSFE", facturado: 121297.00, facturas: 4 },
+        { nombre: "OSFFeNTOS", facturado: 524593.00, facturas: 20 },
+        { nombre: "OSFYB", facturado: 86551.00, facturas: 1 },
+        { nombre: "OSIM", facturado: 122763.00, facturas: 2 },
+        { nombre: "SMATA", facturado: 1513137.10, facturas: 80 },
+        { nombre: "OSMECON_L.d.Z", facturado: 81455.00, facturas: 5 },
+        { nombre: "OSMEDICA", facturado: 226891.00, facturas: 11 },
+        { nombre: "OSMISS", facturado: 3146205.73, facturas: 15 },
+        { nombre: "OSMITA", facturado: 536403.00, facturas: 25 },
+        { nombre: "OSMMEDT", facturado: 214496.00, facturas: 6 },
+        { nombre: "OSMTT", facturado: 81455.00, facturas: 5 },
+        { nombre: "APRES", facturado: 32582.00, facturas: 2 },
+        { nombre: "OSOCNA", facturado: 148424.00, facturas: 8 },
+        { nombre: "OSOETSYLARA", facturado: 148007.69, facturas: 1 },
+        { nombre: "APROSS", facturado: 48873.00, facturas: 3 },
+        { nombre: "APSOT", facturado: 16291.00, facturas: 1 },
+        { nombre: "ASE", facturado: 81455.00, facturas: 5 },
+        { nombre: "ASI", facturado: 352129.00, facturas: 16 },
+        { nombre: "ASSPE", facturado: 258016.82, facturas: 10 },
+        { nombre: "AUSTRAL", facturado: 32582.00, facturas: 2 },
+        { nombre: "AVALIAN", facturado: 328167.00, facturas: 18 },
+        { nombre: "AMMO", facturado: 32582.00, facturas: 2 },
+        { nombre: "BOREAL", facturado: 16291.00, facturas: 1 },
+        { nombre: "CENTRO_MEDICO_PUEYRREDON", facturado: 48873.00, facturas: 3 },
+        { nombre: "C.A.S.A.", facturado: 48873.00, facturas: 3 },
+        { nombre: "S.A.M.", facturado: 16291.00, facturas: 1 },
+        { nombre: "CMA", facturado: 48873.00, facturas: 3 },
+        { nombre: "DAS", facturado: 65164.00, facturas: 4 },
+        { nombre: "DASUT", facturado: 48873.00, facturas: 3 },
+        { nombre: "DOCTORED", facturado: 816328.78, facturas: 4 }
     ];
 
     function cargarDatos() {
@@ -500,9 +596,6 @@
         const tbody = document.getElementById('tablaTopOSBody');
         tbody.innerHTML = '';
 
-        let sumaTodasFacturado = 0;
-        let totFacturas = 0;
-
         if (datosTopOS.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" style="color:var(--text-muted); padding:15px;">No hay obras sociales registradas para el ejercicio ${anioSeleccionado}.</td></tr>`;
             return;
@@ -511,13 +604,21 @@
         // Ordenar de mayor a menor según monto facturado
         const datosOrdenados = [...datosTopOS].sort((a, b) => (parseFloat(b.facturado) || 0) - (parseFloat(a.facturado) || 0));
 
-        // Renderizar TODAS las obras sociales
-        datosOrdenados.forEach((os, idx) => {
+        const top10 = datosOrdenados.slice(0, 10);
+        const restoOS = datosOrdenados.slice(10);
+
+        let sumaTop10Facturado = 0;
+        let totFacturasTodas = 0;
+
+        datosOrdenados.forEach(os => {
+            totFacturasTodas += parseInt(os.facturas) || 0;
+        });
+
+        // Renderizar TOP 10
+        top10.forEach((os, idx) => {
             const fact = parseFloat(os.facturado) || 0;
             const numFacturas = parseInt(os.facturas) || 0;
-
-            sumaTodasFacturado += fact;
-            totFacturas += numFacturas;
+            sumaTop10Facturado += fact;
 
             tbody.innerHTML += `
                 <tr>
@@ -529,24 +630,50 @@
             `;
         });
 
-        // Buscar total facturado de Obras Sociales en la tabla principal ($809.107.093,45 por defecto)
+        // Buscar total facturado de Obras Sociales en la tabla principal
         const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
         const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
 
-        // Calcular "OTRAS" (Total Obras Sociales - Suma de todas las listadas)
-        const montoOtras = totalFacturadoOS - sumaTodasFacturado;
+        // Calcular "OTRAS" (Total Obras Sociales - Suma del Top 10)
+        const montoOtrasCalculado = Math.max(0, totalFacturadoOS - sumaTop10Facturado);
+        const montoOtrasMostrar = desplegadoOtras ? 0 : montoOtrasCalculado;
 
+        // Fila contenedora "OTRAS" (#11)
         tbody.innerHTML += `
-            <tr style="background-color: #f8fafc; font-weight:600;">
-                <td><strong>-</strong></td>
-                <td style="text-align: left; color: var(--text-muted);">OTRAS</td>
-                <td style="font-weight:700; color: var(--text-muted);">${formatearMoneda(montoOtras)}</td>
-                <td style="color: var(--text-muted);">-</td>
+            <tr class="row-otras-header" onclick="toggleOtrasOS()">
+                <td><strong>#11</strong></td>
+                <td style="text-align: left; color: var(--brand-blue);">
+                    OTRAS 
+                    <span class="toggle-arrow" id="flechaOtras">${desplegadoOtras ? '▲' : '▼'}</span>
+                </td>
+                <td style="font-weight:700; color: var(--text-dark);" id="montoOtrasCell">${formatearMoneda(montoOtrasMostrar)}</td>
+                <td style="color: var(--text-muted); font-size:0.75rem;">(Hacer clic para ${desplegadoOtras ? 'contraer' : 'desplegar'})</td>
             </tr>
         `;
 
+        // Renderizar el resto de las Obras Sociales (ocultas o visibles según toggle)
+        restoOS.forEach((os, idx) => {
+            const fact = parseFloat(os.facturado) || 0;
+            const numFacturas = parseInt(os.facturas) || 0;
+            const numPuesto = 11 + idx;
+
+            tbody.innerHTML += `
+                <tr class="row-extra-os ${desplegadoOtras ? 'visible' : ''}">
+                    <td><strong>#${numPuesto}</strong></td>
+                    <td style="text-align: left; color: #475569; padding-left: 20px;">${os.nombre}</td>
+                    <td style="font-weight:600; color: #475569;">${formatearMoneda(fact)}</td>
+                    <td style="color: #475569;">${numFacturas.toLocaleString('es-AR')}</td>
+                </tr>
+            `;
+        });
+
         document.getElementById('totalTopFacturado').innerText = formatearMoneda(totalFacturadoOS);
-        document.getElementById('totalTopFacturas').innerText = `${totFacturas.toLocaleString('es-AR')} (Listadas)`;
+        document.getElementById('totalTopFacturas').innerText = `${totFacturasTodas.toLocaleString('es-AR')} (Total)`;
+    }
+
+    window.toggleOtrasOS = function() {
+        desplegadoOtras = !desplegadoOtras;
+        renderizarTablaTopOS();
     }
 
     function actualizarGraficos() {
@@ -559,25 +686,22 @@
         // Ordenar de mayor a menor para el gráfico
         const datosOrdenados = [...datosTopOS].sort((a, b) => (parseFloat(b.facturado) || 0) - (parseFloat(a.facturado) || 0));
 
-        // Calcular 'OTRAS'
+        const top10 = datosOrdenados.slice(0, 10);
         const itemOS = datosFacturacion.find(item => item.entidad.toLowerCase().includes("obras sociales"));
         const totalFacturadoOS = itemOS ? parseFloat(itemOS.facturado) : 809107093.45;
-        const sumaTodasFacturado = datosOrdenados.reduce((acc, curr) => acc + (parseFloat(curr.facturado) || 0), 0);
-        const montoOtras = Math.max(0, totalFacturadoOS - sumaTodasFacturado);
+        const sumaTop10 = top10.reduce((acc, curr) => acc + (parseFloat(curr.facturado) || 0), 0);
+        const montoOtras = Math.max(0, totalFacturadoOS - sumaTop10);
 
-        const labelsChart = [...datosOrdenados.map(d => d.nombre), 'OTRAS'];
-        const dataChart = [...datosOrdenados.map(d => d.facturado), montoOtras];
+        const labelsChart = [...top10.map(d => d.nombre), 'OTRAS'];
+        const dataChart = [...top10.map(d => d.facturado), montoOtras];
 
-        // Paleta de colores extendida para cubrir todas las Obras Sociales
         const colores = [
             '#0056b3', '#10b981', '#d97706', '#ef4444', '#8b5cf6',
             '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#64748b',
-            '#0284c7', '#059669', '#d97706', '#dc2626', '#7c3aed',
-            '#db2777', '#0d9488', '#eab308', '#4f46e5', '#475569',
-            '#0369a1', '#047857', '#b45309', '#cbd5e1'
+            '#cbd5e1'
         ];
 
-        // Chart 1: Donut Obras Sociales + OTRAS
+        // Chart 1: Donut Top 10 + OTRAS
         chart1 = new Chart(ctx1, {
             type: 'doughnut',
             data: {
