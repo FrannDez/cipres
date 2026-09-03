@@ -25,12 +25,30 @@
             padding: 20px;
             text-align: center;
             border-bottom: 4px solid #2563eb;
+            position: relative;
         }
 
         .logo-img {
             max-width: 180px;
             height: auto;
             margin-bottom: 10px;
+        }
+
+        /* Estilo para el botón oculto */
+        .btn-secret {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .btn-secret:hover {
+            color: white;
         }
 
         .container {
@@ -57,6 +75,9 @@
             border-bottom: 2px solid #f3f4f6;
             padding-bottom: 10px;
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .card-header h2 {
@@ -104,6 +125,8 @@
         }
 
         .btn:hover { background: #1d4ed8; }
+        .btn-success { background: #10b981; }
+        .btn-success:hover { background: #059669; }
         .btn-block { width: 100%; display: block; font-size: 1rem; }
 
         .table-responsive {
@@ -143,6 +166,14 @@
             white-space: pre-wrap;
         }
 
+        .input-edit {
+            width: 90%;
+            padding: 6px;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
         .toast {
             position: fixed;
             bottom: 20px;
@@ -170,6 +201,9 @@
     </div>
     <h1>Actualización de Nomencladores por RIPTE</h1>
     <p>Secretaría de Salud - Municipalidad de La Costa</p>
+    
+    <!-- Botón discreto/oculto -->
+    <button class="btn-secret" onclick="activarModoEdicion()" title="Administrar precios">🔒</button>
 </header>
 
 <div class="container">
@@ -256,6 +290,7 @@
         <div class="card">
             <div class="card-header">
                 <h2>Vista Previa de Precios Nomenclados</h2>
+                <button id="btnGuardarBase" class="btn btn-success" style="display: none;" onclick="guardarCambiosBaseBD()">💾 Guardar Precios Base Editados</button>
             </div>
             <div class="table-responsive">
                 <table>
@@ -326,6 +361,7 @@
     const db = getDatabase(app);
 
     let catalogoBase = []; 
+    let modoEdicionActivo = false;
 
     // Formateador de moneda argentina ($ 15.084)
     const formatearMoneda = (valor) => {
@@ -354,6 +390,27 @@
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
+
+    // Activación oculta con clave
+    window.activarModoEdicion = function() {
+        if (modoEdicionActivo) {
+            modoEdicionActivo = false;
+            document.getElementById('btnGuardarBase').style.display = 'none';
+            mostrarToast("Modo edición desactivado.");
+            renderizarTabla();
+            return;
+        }
+
+        const password = prompt("Ingrese la clave para editar precios base:");
+        if (password === "Cristo25") {
+            modoEdicionActivo = true;
+            document.getElementById('btnGuardarBase').style.display = 'inline-block';
+            mostrarToast("¡Modo edición activado!");
+            renderizarTabla();
+        } else if (password !== null) {
+            mostrarToast("Clave incorrecta.", true);
+        }
+    };
 
     window.cambiarSolapa = function(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -401,6 +458,15 @@
         });
     }
 
+    window.actualizarValorMemoria = function(index, nuevoValor) {
+        catalogoBase[index].valor = parseFloat(nuevoValor) || 0;
+        window.calcularEnVivo();
+    };
+
+    window.actualizarDescMemoria = function(index, nuevaDesc) {
+        catalogoBase[index].descripcion = nuevaDesc;
+    };
+
     window.renderizarTabla = function() {
         const tbody = document.getElementById('tablaNomencladorBody');
         const moduloFiltro = document.getElementById('filtroModulo').value;
@@ -411,7 +477,7 @@
 
         tbody.innerHTML = '';
 
-        catalogoBase.forEach((registro) => {
+        catalogoBase.forEach((registro, index) => {
             if (registro.tipo === 'modulo') {
                 if (moduloFiltro === 'TODOS' || registro.nombre === moduloFiltro) {
                     if (!busqueda) {
@@ -436,16 +502,36 @@
                     }
 
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${registro.codigo || ''}</strong></td>
-                        <td class="pre-wrap">${registro.descripcion}</td>
-                        <td class="val-base">${formatearMoneda(valBase)}</td>
-                        <td><strong class="val-ripte" style="color: #2563eb;">${formatearMoneda(nuevoValor)}</strong></td>
-                    `;
+                    
+                    if (modoEdicionActivo) {
+                        tr.innerHTML = `
+                            <td><strong>${registro.codigo || ''}</strong></td>
+                            <td><input type="text" class="input-edit" value="${registro.descripcion}" onchange="actualizarDescMemoria(${index}, this.value)"></td>
+                            <td><input type="number" class="input-edit" value="${valBase}" step="0.01" oninput="actualizarValorMemoria(${index}, this.value)"></td>
+                            <td><strong class="val-ripte" style="color: #2563eb;">${formatearMoneda(nuevoValor)}</strong></td>
+                        `;
+                    } else {
+                        tr.innerHTML = `
+                            <td><strong>${registro.codigo || ''}</strong></td>
+                            <td class="pre-wrap">${registro.descripcion}</td>
+                            <td class="val-base">${formatearMoneda(valBase)}</td>
+                            <td><strong class="val-ripte" style="color: #2563eb;">${formatearMoneda(nuevoValor)}</strong></td>
+                        `;
+                    }
+
                     tbody.appendChild(tr);
                 }
             }
         });
+    };
+
+    window.guardarCambiosBaseBD = async function() {
+        try {
+            await set(ref(db, 'nomenclador_base'), catalogoBase);
+            mostrarToast("¡Valores base de Firebase actualizados correctamente!");
+        } catch (err) {
+            mostrarToast("Error al guardar cambios: " + err.message, true);
+        }
     };
 
     window.calcularEnVivo = function() {
