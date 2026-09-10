@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Facturas por Obra Social</title>
+    <link rel="icon" type="image/jpeg" href="icono.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilos.css">
+    
+    <style>
+        .upload-card {
+            border: 2px dashed var(--primary, #2563eb);
+            padding: 2rem;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .upload-card:hover {
+            background: #eff6ff;
+            border-color: #1d4ed8;
+        }
+        .search-container {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+        
+        .accordion-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+        .accordion-header {
+            padding: 16px 20px;
+            background: #ffffff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            user-select: none;
+        }
+        .accordion-header:hover {
+            background: #f1f5f9;
+        }
+        .accordion-header .title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .badge-sigla {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .accordion-content {
+            display: none;
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #fafafa;
+        }
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+        .accordion-item.active .accordion-header {
+            background: #eff6ff;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .total-box-summary {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .total-box-summary span {
+            font-size: 1.2rem;
+            color: #38bdf8;
+        }
+
+        .os-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .os-table th, .os-table td {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .os-table th {
+            background: #f8fafc;
+            color: #475569;
+        }
+        .factura-code {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast">¡Información cargada!</div>
+
+<header>
+    <div class="logo-container">
+        <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
+    </div>
+    <h1>Visualizador de Facturas por Obra Social</h1>
+    <p>Secretaría de Salud - Municipalidad de La Costa</p>
+</header>
+
+<div class="container">
+
+    <!-- Cargar Archivo TXT -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Cargar y Guardar en Firestore (.txt)</h2>
+        </div>
+
+        <div class="upload-card" onclick="document.getElementById('fileInput').click()">
+            <span style="font-size: 2.5rem;">☁️</span>
+            <p style="margin-top: 10px; font-weight: 600;">Haz clic para subir <code>reporte_facturas.txt</code></p>
+            <input type="file" id="fileInput" accept=".txt" style="display: none;">
+        </div>
+
+        <!-- Buscador -->
+        <div class="search-container" id="searchContainer" style="display: none;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar por Siglas o Nombre de la Obra Social...">
+        </div>
+
+        <!-- Resumen Total General Acumulado -->
+        <div id="resumenGeneral" class="total-box-summary" style="display: none;">
+            <div>Monto Total Acumulado Adeudado:</div>
+            <span id="montoTotalTodasOS">$0,00</span>
+        </div>
+
+        <!-- Lista Desplegable (Acordeón) -->
+        <div id="listaAcordeon">
+            <p style="text-align:center; color:#64748b;">Cargando datos desde Firestore...</p>
+        </div>
+    </div>
+
+</div>
+
+<div class="waves-container">
+    <div class="wave wave1"></div>
+    <div class="wave wave2"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAsbGJxy3jtfUSq6TYYNMVT0iN5-0uzrvE",
+        authDomain: "cipres-control.firebaseapp.com",
+        databaseURL: "https://cipres-control-default-rtdb.firebaseio.com",
+        projectId: "cipres-control",
+        storageBucket: "cipres-control.firebasestorage.app",
+        messagingSenderId: "988840858285",
+        appId: "1:988840858285:web:cfb59ce1b98b0026362c24"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let obrasSocialesData = [];
+
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById('toast');
+        toast.innerText = mensaje;
+        toast.style.backgroundColor = esError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Escuchar cambios en tiempo real desde Firestore
+    const obSocialesRef = collection(db, "obras_sociales_facturas");
+    onSnapshot(obSocialesRef, (snapshot) => {
+        obrasSocialesData = [];
+        let sumaTotalAcumulada = 0;
+
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            obrasSocialesData.push(data);
+            sumaTotalAcumulada += (data.totalOS || 0);
+        });
+
+        document.getElementById('searchContainer').style.display = obrasSocialesData.length > 0 ? 'block' : 'none';
+        document.getElementById('resumenGeneral').style.display = obrasSocialesData.length > 0 ? 'flex' : 'none';
+        document.getElementById('montoTotalTodasOS').innerText = `$ ${formatearMoneda(sumaTotalAcumulada)}`;
+
+        renderizarAcordeon(obrasSocialesData);
+    });
+
+    // Subir y guardar el .txt en Firestore
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            const contenido = event.target.result;
+            await guardarEnFirestore(contenido);
+        };
+        reader.readAsText(file);
+    });
+
+    async function guardarEnFirestore(texto) {
+        const bloques = texto.split("============================================================");
+        let guardados = 0;
+
+        for (const bloque of bloques) {
+            const lineas = bloque.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lineas.length === 0) continue;
+
+            let obraSocialRaw = "";
+            let facturas = [];
+            let estActual = "";
+
+            lineas.forEach(linea => {
+                if (linea.startsWith("OBRA SOCIAL:")) {
+                    obraSocialRaw = linea.replace("OBRA SOCIAL:", "").trim();
+                }
+                if (linea.includes("• Establecimiento:")) {
+                    estActual = linea.replace("• Establecimiento:", "").trim();
+                }
+                if (linea.includes("Fecha:") && linea.includes("Importe:")) {
+                    const matchFecha = linea.match(/Fecha:\s*([\d\/]+)/);
+                    const matchFactura = linea.match(/Nro Factura:\s*([\d\-]+)/);
+                    const matchImporte = linea.match(/Importe:\s*\$?([\d\.]+(?:,\d{2})?)/);
+                    
+                    const fecha = matchFecha ? matchFecha[1] : "-";
+                    const nroFactura = matchFactura ? matchFactura[1] : "-";
+                    const importeStr = matchImporte ? matchImporte[1] : "0,00";
+
+                    facturas.push({
+                        establecimiento: estActual,
+                        fecha: fecha,
+                        nroFactura: nroFactura,
+                        importeStr: importeStr,
+                        importeNum: parseMoneda(importeStr)
+                    });
+                }
+            });
+
+            if (obraSocialRaw && facturas.length > 0) {
+                let siglas = "";
+                let nombreCompleto = "";
+
+                if (obraSocialRaw.includes("Nombre:")) {
+                    const partes = obraSocialRaw.split("Nombre:");
+                    siglas = partes[0].replace("Obra Social:", "").trim();
+                    nombreCompleto = partes[1].trim();
+                } else {
+                    siglas = obraSocialRaw.split(" ")[0];
+                    nombreCompleto = obraSocialRaw;
+                }
+
+                const totalOS = facturas.reduce((sum, f) => sum + f.importeNum, 0);
+
+                // ID limpio para Firestore
+                const idDoc = siglas.replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
+
+                // Guardar en Firestore
+                await setDoc(doc(db, "obras_sociales_facturas", idDoc), {
+                    siglas: siglas,
+                    nombreCompleto: nombreCompleto,
+                    facturas: facturas,
+                    totalOS: totalOS,
+                    ultimaActualizacion: new Date().toISOString()
+                });
+
+                guardados++;
+            }
+        }
+
+        if (guardados > 0) {
+            mostrarToast(`¡${guardados} obra(s) social(es) sincronizada(s) con Firestore!`);
+        } else {
+            mostrarToast("No se encontraron registros válidos para guardar", true);
+        }
+    }
+
+    function parseMoneda(str) {
+        if (!str) return 0;
+        let limpio = str.replace(/\./g, '').replace(',', '.');
+        return parseFloat(limpio) || 0;
+    }
+
+    function formatearMoneda(num) {
+        return num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderizarAcordeon(lista) {
+        const contenedor = document.getElementById('listaAcordeon');
+        contenedor.innerHTML = '';
+
+        if (lista.length === 0) {
+            contenedor.innerHTML = '<p style="text-align:center; color:#64748b;">No hay facturas registradas en la base de datos.</p>';
+            return;
+        }
+
+        lista.forEach((item, index) => {
+            const accordionItem = document.createElement('div');
+            accordionItem.className = 'accordion-item';
+
+            let filasFacturas = item.facturas.map(f => `
+                <tr>
+                    <td><strong>${f.establecimiento}</strong></td>
+                    <td>${f.fecha}</td>
+                    <td><span class="factura-code">${f.nroFactura}</span></td>
+                    <td><strong>$ ${f.importeStr}</strong></td>
+                </tr>
+            `).join('');
+
+            accordionItem.innerHTML = `
+                <div class="accordion-header" data-index="${index}">
+                    <div class="title-group">
+                        <span class="badge-sigla">${item.siglas}</span>
+                        <span>${item.nombreCompleto}</span>
+                    </div>
+                    <div>
+                        <span style="font-size:0.9rem; color:#64748b; margin-right:10px;">${item.facturas.length} Factura(s)</span>
+                        <span>▼</span>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <table class="os-table">
+                        <thead>
+                            <tr>
+                                <th>Establecimiento</th>
+                                <th>Fecha</th>
+                                <th>N° Factura</th>
+                                <th>Monto Factura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filasFacturas}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 15px; text-align: right; font-weight: 700; color: #0f172a; font-size: 1.05rem;">
+                        Subtotal Obra Social: <span style="color: #2563eb;">$ ${formatearMoneda(item.totalOS)}</span>
+                    </div>
+                </div>
+            `;
+
+            contenedor.appendChild(accordionItem);
+        });
+
+        // Eventos para desplegar
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                const idx = parseInt(header.getAttribute('data-index'));
+                toggleAccordion(idx);
+            });
+        });
+    }
+
+    function toggleAccordion(indexSeleccionado) {
+        const items = document.querySelectorAll('.accordion-item');
+        items.forEach((item, idx) => {
+            if (idx === indexSeleccionado) {
+                item.classList.toggle('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // Buscador en tiempo real
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const termino = e.target.value.toLowerCase().trim();
+        const filtrados = obrasSocialesData.filter(item => 
+            item.siglas.toLowerCase().includes(termino) || 
+            item.nombreCompleto.toLowerCase().includes(termino)
+        );
+        renderizarAcordeon(filtrados);
+    });
+</script>
+
+</body>
+</html>
