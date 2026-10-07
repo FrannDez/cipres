@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas de Facturación - PAMI</title>
+    <title>Estadísticas de Facturación - CIPRES</title>
     <link rel="icon" type="image/jpeg" href="icono.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -110,7 +110,7 @@
         /* CONTENEDOR PRINCIPAL */
         .container {
             width: 95%;
-            max-width: 1300px;
+            max-width: 1350px;
             z-index: 10;
             display: flex;
             flex-direction: column;
@@ -326,7 +326,7 @@
     <div class="logo-container">
         <img src="Municipalidad_de_La_Costa_idNxPJf2kM_0.png" alt="Municipalidad de La Costa" class="logo-img">
     </div>
-    <h1 id="tituloHeader">ESTADÍSTICAS - PAMI</h1>
+    <h1 id="tituloHeader">CIPRES - ESTADÍSTICAS</h1>
     <p>Sistema Unificado de Control de Facturación Mensual</p>
     
     <div class="year-selector-wrapper">
@@ -404,9 +404,10 @@
         <!-- OPCIÓN 1: CARGA INDIVIDUAL -->
         <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
             <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 10px;">➕ Registrar o Actualizar Módulo Individual</h3>
-            <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: center;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr 1.5fr auto; gap: 10px; align-items: center;">
                 <input type="number" id="inputModNumero" class="form-control" placeholder="N° Módulo (ej: 1)">
                 <input type="text" id="inputModNombre" class="form-control" placeholder="Nombre Especialista (ej: MEDICO CABECERA)">
+                <input type="number" id="inputModValorUn" class="form-control" placeholder="Valor Un Cápita ($ ej: 2700)" step="0.01">
                 <button class="btn btn-success" onclick="guardarModulo()">💾 Guardar Uno</button>
             </div>
         </div>
@@ -414,7 +415,7 @@
         <!-- OPCIÓN 2: CARGA MASIVA DE MÓDULOS -->
         <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
             <h3 style="font-size: 0.85rem; font-weight: 700; color: var(--brand-blue); margin-bottom: 8px;">📋 Carga Masiva de Módulos (Pegar Lista Completa):</h3>
-            <textarea id="inputPegaModulos" rows="3" class="form-control" placeholder="Pegá tu lista aquí (Ejemplo:&#10;1 - MEDICO CABECERA&#10;69 - MODULO INTERNACION&#10;72 - LABORATORIO)"></textarea>
+            <textarea id="inputPegaModulos" rows="3" class="form-control" placeholder="Pegá tu lista aquí (Ejemplo:&#10;1 - MEDICO CABECERA - 2700&#10;69 - MODULO INTERNACION - 6632.62&#10;72 - LABORATORIO)"></textarea>
             <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
                 <button class="btn btn-success" onclick="guardarModulosMasivo()">💾 Cargar Varios Módulos</button>
             </div>
@@ -426,6 +427,7 @@
                     <tr>
                         <th>N° Módulo</th>
                         <th>Especialista / Nombre Asignado</th>
+                        <th>Valor Cápita ($/Un)</th>
                         <th>Acción</th>
                     </tr>
                 </thead>
@@ -460,7 +462,8 @@
                         <th>Especialista</th>
                         <th>Modelo Retributivo</th>
                         <th>Red</th>
-                        <th>Cápita</th>
+                        <th>Cant. Pacientes / Cápita</th>
+                        <th>Valor Un ($/Un)</th>
                         <th>Valor Período ($)</th>
                         <th>Módulo</th>
                     </tr>
@@ -508,24 +511,34 @@
         contenedorTabs.appendChild(btn);
     });
 
-    // Escuchar Modulos Globales
+    // Escuchar Módulos Globales (Soporta nombre y valor Cápita)
     onValue(ref(db, 'Modulos_Globales'), (snapshot) => {
-        modulosDiccionario = snapshot.val() || {
-            1: "MEDICO CABECERA",
-            69: "MODULO INTERNACION (LABORATORIO + FISIO + IMAGENES)"
+        const rawModulos = snapshot.val() || {
+            1: { nombre: "MEDICO CABECERA", valorUn: 2700 },
+            69: { nombre: "MODULO INTERNACION (LABORATORIO + FISIO + IMAGENES)", valorUn: 6632.62 }
         };
+
+        // Normalizar estructura si viene de versión anterior (solo string)
+        modulosDiccionario = {};
+        Object.keys(rawModulos).forEach(k => {
+            if (typeof rawModulos[k] === 'string') {
+                modulosDiccionario[k] = { nombre: rawModulos[k], valorUn: null };
+            } else {
+                modulosDiccionario[k] = rawModulos[k];
+            }
+        });
+
         renderizarTodo();
     });
 
     // Cargar datos según el año activo
     window.cambiarAnio = function(anio) {
         anioSeleccionado = anio;
-        document.getElementById('tituloHeader').innerText = `ESTADÍSTICAS - PAMI ${anioSeleccionado}`;
+        document.getElementById('tituloHeader').innerText = `CIPRES - ESTADÍSTICAS ${anioSeleccionado}`;
         document.getElementById('tituloConsolidado').innerText = `Consolidado Anual de Facturación - ${anioSeleccionado}`;
         document.getElementById('tituloGrafico1').innerText = `FACTURACION BRUTA vs NETA - ${anioSeleccionado}`;
         document.getElementById('tituloGrafico2').innerText = `TOTAL DESCONTADO - ${anioSeleccionado}`;
 
-        // Escuchar la base de datos del año seleccionado
         onValue(ref(db, `Estadisticas_${anioSeleccionado}`), (snapshot) => {
             const data = snapshot.val() || {};
             dbGlobal = data.meses || {};
@@ -643,15 +656,18 @@
         const keys = Object.keys(modulosDiccionario);
 
         if (keys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="color:var(--text-muted); padding:15px;">No hay módulos registrados. Usá las herramientas de arriba para agregar.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="color:var(--text-muted); padding:15px;">No hay módulos registrados. Usá las herramientas de arriba para agregar.</td></tr>`;
             return;
         }
 
         keys.forEach(num => {
+            const item = modulosDiccionario[num];
+            const valUnStr = item.valorUn ? formatearMoneda(item.valorUn) : '-';
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${num}</strong></td>
-                    <td style="text-align:left;">${modulosDiccionario[num]}</td>
+                    <td style="text-align:left;">${item.nombre}</td>
+                    <td style="font-weight:700; color:var(--brand-blue);">${valUnStr}</td>
                     <td><button class="btn btn-danger" onclick="eliminarModulo('${num}')">🗑️ Eliminar</button></td>
                 </tr>
             `;
@@ -661,14 +677,16 @@
     window.guardarModulo = function() {
         const num = document.getElementById('inputModNumero').value.trim();
         const nombre = document.getElementById('inputModNombre').value.trim().toUpperCase();
+        const valUn = parseFloat(document.getElementById('inputModValorUn').value.trim()) || null;
 
         if (!num || !nombre) return alert('Por favor ingresá tanto el número de módulo como el nombre.');
 
-        set(ref(db, `Modulos_Globales/${num}`), nombre)
+        set(ref(db, `Modulos_Globales/${num}`), { nombre: nombre, valorUn: valUn })
             .then(() => {
-                alert(`Módulo ${num} registrado en la lista global.`);
+                alert(`Módulo ${num} guardado en la lista global.`);
                 document.getElementById('inputModNumero').value = '';
                 document.getElementById('inputModNombre').value = '';
+                document.getElementById('inputModValorUn').value = '';
             })
             .catch(err => alert('Error al guardar módulo: ' + err.message));
     }
@@ -687,10 +705,11 @@
             let partes = linea.split(/\t|-|:/);
             if (partes.length >= 2) {
                 let num = partes[0].trim();
-                let nombre = partes.slice(1).join('-').trim().toUpperCase();
+                let nombre = partes[1].trim().toUpperCase();
+                let valUn = partes[2] ? parseFloat(partes[2].trim().replace(',', '.')) : null;
 
                 if (!isNaN(num) && num !== '' && nombre !== '') {
-                    nuevosModulos[num] = nombre;
+                    nuevosModulos[num] = { nombre: nombre, valorUn: isNaN(valUn) ? null : valUn };
                     contador++;
                 }
             }
@@ -719,13 +738,22 @@
         const registros = dbGlobal[numMes] || [];
 
         if (registros.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="color:var(--text-muted); padding: 20px;">No hay información cargada para el mes ${numMes} de ${anioSeleccionado}. Usá el recuadro superior para importar datos.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" style="color:var(--text-muted); padding: 20px;">No hay información cargada para el mes ${numMes} de ${anioSeleccionado}. Usá el recuadro superior para importar datos.</td></tr>`;
             return;
         }
 
         registros.forEach(r => {
             const esNegativo = (r.valor < 0);
-            const nombreEsp = modulosDiccionario[r.modulo] || r.especialista || ("MODULO " + r.modulo);
+            const modObj = modulosDiccionario[r.modulo];
+            const nombreEsp = modObj ? modObj.nombre : (r.especialista || ("MODULO " + r.modulo));
+            
+            // Prioridad para el Valor Un: 1. Definido en Módulos Globales | 2. Calculado (Valor/Cápita)
+            let valorUnitario = null;
+            if (modObj && modObj.valorUn) {
+                valorUnitario = modObj.valorUn;
+            } else if (r.capita && parseFloat(r.capita) > 0) {
+                valorUnitario = parseFloat(r.valor) / parseFloat(r.capita);
+            }
 
             tbody.innerHTML += `
                 <tr>
@@ -734,7 +762,8 @@
                     <td style="text-align:left;">${nombreEsp}</td>
                     <td>${r.modelo || '-'}</td>
                     <td style="font-size:0.75rem;">${r.red || '-'}</td>
-                    <td>${r.capita ? new Intl.NumberFormat('es-AR').format(r.capita) : '-'}</td>
+                    <td><strong>${r.capita ? new Intl.NumberFormat('es-AR').format(r.capita) : '-'}</strong></td>
+                    <td style="font-weight:700; color:var(--brand-blue);">${valorUnitario !== null ? formatearMoneda(valorUnitario) : '-'}</td>
                     <td class="${esNegativo ? 'monto-negativo' : 'monto-positivo'}">${formatearMoneda(r.valor)}</td>
                     <td><strong>${r.modulo || '-'}</strong></td>
                 </tr>
@@ -772,14 +801,25 @@
 
                 if (!isNaN(valorNum) && moduloIdx !== -1) {
                     const mod = parseInt(cols[moduloIdx]);
+                    
+                    let capitaVal = null;
+                    if (cols.length > 5) {
+                        const posibleCapita = parseInt(cols[cols.length - 2].replace(/\./g, ''));
+                        if (!isNaN(posibleCapita) && posibleCapita > 0) {
+                            capitaVal = posibleCapita;
+                        }
+                    }
+
+                    const modObj = modulosDiccionario[mod];
+
                     listaMes.push({
                         concepto: cols[0],
                         periodo: cols[1] || "",
                         modulo: mod,
-                        especialista: modulosDiccionario[mod] || (cols[2] && isNaN(cols[2]) ? cols[2] : "MODULO " + mod),
+                        especialista: modObj ? modObj.nombre : (cols[2] && isNaN(cols[2]) ? cols[2] : "MODULO " + mod),
                         modelo: cols.length > 5 ? cols[3] : "",
                         red: cols.length > 6 ? cols[4] : "",
-                        capita: cols.length > 7 ? parseInt(cols[5]) || null : null,
+                        capita: capitaVal,
                         valor: valorNum
                     });
                 }
