@@ -771,70 +771,76 @@
         });
     }
 
-    // Importador
-    window.procesarTextoWeb = function() {
-        if (mesActivo === 'ESTADISTICA' || mesActivo === 'MODULOS') return alert('Elegí un mes específico (1 al 12) para cargar datos.');
+    // Importador Inteligente (descarta automáticamente las filas "Subtotal")
+window.procesarTextoWeb = function() {
+    if (mesActivo === 'ESTADISTICA' || mesActivo === 'MODULOS') return alert('Elegí un mes específico (1 al 12) para cargar datos.');
 
-        const rawText = document.getElementById('inputPegaWeb').value;
-        if (!rawText.trim()) return alert('Por favor pegá el texto de la web.');
+    const rawText = document.getElementById('inputPegaWeb').value;
+    if (!rawText.trim()) return alert('Por favor pegá el texto de la web.');
 
-        const lineas = rawText.split('\n');
-        const listaMes = [];
+    const lineas = rawText.split('\n');
+    const listaMes = [];
 
-        lineas.forEach(linea => {
-            const cols = linea.split('\t').map(c => c.trim()).filter(c => c !== '');
-            if (cols.length >= 3) {
-                const moduloIdx = cols.findIndex(c => !isNaN(c) && parseInt(c) > 0 && parseInt(c) < 1000);
-                
-                let valorTexto = cols[cols.length - 1].replace(/\$/g, '').trim();
-                let valorNum = 0;
+    lineas.forEach(linea => {
+        // Ignorar filas de subtotales
+        if (linea.toUpperCase().includes('SUBTOTAL')) return;
 
-                if (valorTexto.includes('.')) {
-                    valorTexto = valorTexto.replace(/,/g, '');
-                    valorNum = parseFloat(valorTexto);
-                } else if (valorTexto.includes(',')) {
-                    valorTexto = valorTexto.replace(/\./g, '').replace(',', '.');
-                    valorNum = parseFloat(valorTexto);
-                } else {
-                    valorNum = parseFloat(valorTexto);
-                }
+        const cols = linea.split('\t').map(c => c.trim()).filter(c => c !== '');
+        if (cols.length >= 3) {
+            // Buscar la columna del Módulo (número entero válido)
+            const moduloIdx = cols.findIndex(c => !isNaN(c) && parseInt(c) > 0 && parseInt(c) < 1000);
+            
+            let valorTexto = cols[cols.length - 1].replace(/\$/g, '').trim();
+            let valorNum = 0;
 
-                if (!isNaN(valorNum) && moduloIdx !== -1) {
-                    const mod = parseInt(cols[moduloIdx]);
-                    
-                    let capitaVal = null;
-                    if (cols.length > 5) {
-                        const posibleCapita = parseInt(cols[cols.length - 2].replace(/\./g, ''));
-                        if (!isNaN(posibleCapita) && posibleCapita > 0) {
-                            capitaVal = posibleCapita;
-                        }
-                    }
-
-                    const modObj = modulosDiccionario[mod];
-
-                    listaMes.push({
-                        concepto: cols[0],
-                        periodo: cols[1] || "",
-                        modulo: mod,
-                        especialista: modObj ? modObj.nombre : (cols[2] && isNaN(cols[2]) ? cols[2] : "MODULO " + mod),
-                        modelo: cols.length > 5 ? cols[3] : "",
-                        red: cols.length > 6 ? cols[4] : "",
-                        capita: capitaVal,
-                        valor: valorNum
-                    });
-                }
+            if (valorTexto.includes('.')) {
+                valorTexto = valorTexto.replace(/,/g, '');
+                valorNum = parseFloat(valorTexto);
+            } else if (valorTexto.includes(',')) {
+                valorTexto = valorTexto.replace(/\./g, '').replace(',', '.');
+                valorNum = parseFloat(valorTexto);
+            } else {
+                valorNum = parseFloat(valorTexto);
             }
-        });
 
-        if (listaMes.length === 0) return alert('No se reconocieron registros válidos. Verificá haber copiado la tabla entera.');
+            // Solo procesamos si encontramos un Módulo válido en la fila
+            if (!isNaN(valorNum) && moduloIdx !== -1) {
+                const mod = parseInt(cols[moduloIdx]);
+                
+                let capitaVal = null;
+                // Si la tabla incluye Cápita (antepenúltima o penúltima columna según formato)
+                if (cols.length >= 6) {
+                    const posibleCapita = parseInt(cols[cols.length - 2].replace(/\./g, ''));
+                    if (!isNaN(posibleCapita) && posibleCapita > 0) {
+                        capitaVal = posibleCapita;
+                    }
+                }
 
-        set(ref(db, `Estadisticas_${anioSeleccionado}/meses/${mesActivo}`), listaMes)
-            .then(() => {
-                alert(`¡Hoja ${mesActivo} (${MESES[mesActivo - 1]} ${anioSeleccionado}) actualizada correctamente!`);
-                document.getElementById('inputPegaWeb').value = '';
-            })
-            .catch(err => alert('Error al guardar en Firebase: ' + err.message));
-    }
+                const modObj = modulosDiccionario[mod];
+
+                listaMes.push({
+                    concepto: cols[0],
+                    periodo: cols[1] || "",
+                    modulo: mod,
+                    especialista: modObj ? modObj.nombre : (cols[2] && isNaN(cols[2]) ? cols[2] : "MODULO " + mod),
+                    modelo: cols.length >= 6 ? cols[3] : "",
+                    red: cols.length >= 6 ? cols[4] : "",
+                    capita: capitaVal,
+                    valor: valorNum
+                });
+            }
+        }
+    });
+
+    if (listaMes.length === 0) return alert('No se reconocieron registros válidos. Verificá haber copiado la tabla entera.');
+
+    set(ref(db, `Estadisticas_${anioSeleccionado}/meses/${mesActivo}`), listaMes)
+        .then(() => {
+            alert(`¡Hoja ${mesActivo} (${MESES[mesActivo - 1]} ${anioSeleccionado}) actualizada correctamente (${listaMes.length} filas procesadas)!`);
+            document.getElementById('inputPegaWeb').value = '';
+        })
+        .catch(err => alert('Error al guardar en Firebase: ' + err.message));
+}
 
     window.exportarMesJSON = function() {
         const data = dbGlobal[mesActivo] || [];
