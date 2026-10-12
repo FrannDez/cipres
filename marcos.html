@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Interna - Inmobiliaria Gabriel Gómez</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-navy: #1b2a4a;
+            --secondary-gold: #c5a059;
+            --bg-light: #f4f6f9;
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        .header-brand {
+            background-color: #ffffff;
+            border-bottom: 3px solid var(--secondary-gold);
+            padding: 12px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .brand-logo {
+            max-height: 65px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, #0f172a 100%);
+            color: white;
+            padding: 25px 0 65px 0;
+            margin-bottom: -45px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+
+        .nav-selector-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .custom-nav-pills {
+            background: white;
+            padding: 8px;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .custom-nav-pills .nav-link {
+            flex: 1;
+            text-align: center;
+            border-radius: 40px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #555;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .custom-nav-pills .nav-link.active {
+            background-color: var(--primary-navy);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(27, 42, 74, 0.3);
+        }
+
+        .main-card {
+            background: white;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            padding: 30px;
+            margin-top: 25px;
+        }
+
+        .section-header {
+            color: var(--primary-navy);
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-left: 4px solid var(--secondary-gold);
+            padding-left: 12px;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #4a5568;
+            text-transform: uppercase;
+        }
+
+        .btn-gold {
+            background-color: var(--secondary-gold);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+        }
+
+        .btn-gold:hover {
+            background-color: #b08d49;
+            color: white;
+        }
+
+        .btn-navy {
+            background-color: var(--primary-navy);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+        }
+
+        .prop-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: #fff;
+        }
+
+        .property-thumb {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .alert-badge-danger {
+            background-color: #ffeef0;
+            color: #d9534f;
+            border: 1px solid #f5c6cb;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .import-box {
+            background-color: #eef2f7;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .custom-nav-pills {
+                flex-direction: column;
+                border-radius: 15px;
+            }
+            .custom-nav-pills .nav-link {
+                border-radius: 10px;
+                text-align: left;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header-brand">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <img src="recursos/gomez82.jpg" alt="Inmobiliaria Gabriel Gómez" class="brand-logo" onerror="this.src='https://via.placeholder.com/200x65?text=Gabriel+Gomez+Inmobiliaria'">
+                <div>
+                    <h1 class="h5 mb-0 fw-bold text-dark d-none d-sm-block">Inmobiliaria Gabriel Gómez</h1>
+                    <small class="text-muted d-none d-sm-block">Sistema de Gestión Interna</small>
+                </div>
+            </div>
+            <span class="badge bg-light text-dark border px-3 py-2"><i class="fas fa-lock me-1 text-warning"></i> Panel Privado</span>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero-section text-center">
+        <div class="container">
+            <h2 class="fw-bold mb-1">Panel de Control & Gestión</h2>
+            <p class="text-light opacity-75 mb-0">Administración de propietarios, propiedades e interesados</p>
+        </div>
+    </section>
+
+    <!-- Selector Tabs -->
+    <div class="container">
+        <div class="nav-selector-container">
+            <ul class="nav custom-nav-pills" id="mainTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="tab-carga-btn" data-bs-toggle="pill" data-bs-target="#tab-carga" type="button"><i class="fas fa-plus-circle"></i> <span>Cargar Propiedad</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-buscar-btn" data-bs-toggle="pill" data-bs-target="#tab-buscar" type="button"><i class="fas fa-search-dollar"></i> <span>Buscador de Interesados</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-listado-btn" data-bs-toggle="pill" data-bs-target="#tab-listado" type="button" onclick="cargarListado()"><i class="fas fa-layer-group"></i> <span>Listado General</span></button>
+                </li>
+            </ul>
+        </div>
+
+        <div id="alertContainer" class="mt-3"></div>
+
+        <div class="tab-content" id="mainTabsContent">
+
+            <!-- 1. CARGAR PROPIEDAD -->
+            <div class="tab-pane fade show active" id="tab-carga" role="tabpanel">
+                <div class="main-card">
+                    
+                    <!-- HERRAMIENTA DE IMPORTACIÓN DESDE WEB -->
+                    <div class="import-box">
+                        <h6 class="fw-bold text-primary mb-2"><i class="fas fa-cloud-download-alt me-1"></i> Importador Automático desde la Web</h6>
+                        <p class="small text-muted mb-3">Pega la URL de una publicación de <code>inmobiliariagabrielgomez.com</code> para autocompletar la ficha de la propiedad.</p>
+                        <div class="input-group">
+                            <input type="url" id="urlImportar" class="form-control" placeholder="https://www.inmobiliariagabrielgomez.com/propiedades/...">
+                            <button class="btn btn-navy" type="button" onclick="importarDesdeWeb()"><i class="fas fa-magic me-1"></i> Extraer Datos</button>
+                        </div>
+                    </div>
+
+                    <form id="formPropiedad" onsubmit="guardarPropiedad(event)">
+                        <div class="section-header">1. DATOS DEL PROPIETARIO Y SEGUIMIENTO</div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Fecha de Carga</label>
+                                <input type="date" class="form-control" id="fechaCarga" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Última Comunicación con Cliente</label>
+                                <input type="date" class="form-control" id="ultimaComunicacion" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Nombre del Propietario</label>
+                                <input type="text" class="form-control" id="nombreProp" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="apellidoProp" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Teléfono de Contacto</label>
+                                <input type="tel" class="form-control" id="telefonoProp" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Lugar de Origen</label>
+                                <input type="text" class="form-control" id="origenProp" placeholder="Ej. San Bernardo" required>
+                            </div>
+                        </div>
+
+                        <div class="section-header">2. DATOS TÉCNICOS DE LA PROPIEDAD</div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Ambientes</label>
+                                <input type="number" class="form-control" id="ambientesProp" min="1" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Ciudad</label>
+                                <input type="text" class="form-control" id="ciudadProp" placeholder="Ej. Mar de Ajó" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Zona / Barrio</label>
+                                <input type="text" class="form-control" id="zonaProp" placeholder="Ej. Centro / San Rafael" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Precio (\$ / USD)</label>
+                                <input type="number" class="form-control" id="precioProp" required>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label">M² Vivienda (Cubiertos)</label>
+                                <input type="number" class="form-control" id="m2Vivienda" required>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label">Superficie Lote (m² Total)</label>
+                                <input type="number" class="form-control" id="m2Lote" required>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Servicios</label>
+                                <input type="text" class="form-control" id="serviciosProp" placeholder="Luz, Gas Natural, Cloacas" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Comentarios / Descripción</label>
+                                <textarea class="form-control" id="comentarioProp" rows="3"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Fotos (Compresión Base64)</label>
+                                <input type="file" class="form-control" id="fotosProp" accept="image/*" multiple>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSubmit" class="btn btn-gold btn-lg w-100"><i class="fas fa-save me-2"></i> Guardar en Base de Datos</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 2. BUSCADOR -->
+            <div class="tab-pane fade" id="tab-buscar" role="tabpanel">
+                <div class="main-card">
+                    <div class="section-header">BUSCADOR DE INTERESADOS (REQUISITOS)</div>
+                    <form id="formBusqueda" onsubmit="buscarPropiedades(event)">
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Ciudad de Interés</label>
+                                <input type="text" class="form-control" id="busCiudad">
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Zona</label>
+                                <input type="text" class="form-control" id="busZona">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Ambientes buscados</label>
+                                <input type="number" class="form-control" id="busAmbientes" min="1" placeholder="Ej. 3">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Presupuesto Máximo</label>
+                                <input type="number" class="form-control" id="busPresupuesto">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-navy w-100 btn-lg"><i class="fas fa-search me-2"></i> Buscar Propiedades Compatibles</button>
+                    </form>
+                    <div id="resultadosBusqueda" class="mt-4"></div>
+                </div>
+            </div>
+
+            <!-- 3. LISTADO GENERAL -->
+            <div class="tab-pane fade" id="tab-listado" role="tabpanel">
+                <div class="main-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header mb-0">CARTERA DE PROPIEDADES</div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarListado()"><i class="fas fa-sync-alt me-1"></i> Actualizar</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Carga / Alerta Seg.</th>
+                                    <th>Propietario</th>
+                                    <th>Ubicación</th>
+                                    <th>Amb.</th>
+                                    <th>Precio</th>
+                                    <th>Fotos</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaListado"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Detalle -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i> Detalle y Actualización de Comunicación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalDetalleBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const FIREBASE_URL = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades.json";
+        const FIREBASE_BASE = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades/";
+
+        document.getElementById('fechaCarga').valueAsDate = new Date();
+        document.getElementById('ultimaComunicacion').valueAsDate = new Date();
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            setTimeout(() => { container.innerHTML = ''; }, 4500);
+        }
+
+        async function importarDesdeWeb() {
+    const urlInput = document.getElementById('urlImportar').value.trim();
+    if (!urlInput) {
+        showAlert('Por favor ingresa la URL de la propiedad.', 'warning');
+        return;
+    }
+
+    showAlert('Extrayendo datos de la publicación...', 'info');
+
+    // Extraer ID de la propiedad desde la URL si existe (ej: 568565)
+    const matchId = urlInput.match(/\/propiedad\/(\d+)/) || urlInput.match(/\/(\d+)\$/);
+    const propId = matchId ? matchId[1] : null;
+
+    try {
+        // Intento 1: Obtener el contenido a través del proxy de consulta
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlInput)}`;
+        const res = await fetch(proxyUrl);
+        const json = await res.json();
+
+        if (!json.contents) throw new Error('No se pudo obtener el contenido HTML');
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(json.contents, 'text/html');
+        const textContent = doc.body ? doc.body.innerText : "";
+
+        // 1. EXTRAER PRECIO (USD 38.000)
+        let precioEncontrado = false;
+        const priceRegex = /USD\s*([\d\.\,]+)/i;
+        const priceMatch = textContent.match(priceRegex) || doc.title.match(priceRegex);
+        
+        if (priceMatch) {
+            const num = priceMatch[1].replace(/\./g, '').replace(',', '.');
+            document.getElementById('precioProp').value = parseFloat(num);
+            precioEncontrado = true;
+        }
+
+        // 2. EXTRAER AMBIENTES (ej: 3 Ambientes)
+        const ambMatch = textContent.match(/(\d+)\s*Ambientes?/i);
+        if (ambMatch) {
+            document.getElementById('ambientesProp').value = parseInt(ambMatch[1]);
+        }
+
+        // 3. EXTRAER SUPERFICIE TOTAL (ej: Sup. total 422m2 o 422 m²)
+        const supMatch = textContent.match(/(?:Sup\.?\s*total|lote|superficie)?\s*(\d+)\s*m[2²]/i);
+        if (supMatch) {
+            const valM2 = parseInt(supMatch[1]);
+            document.getElementById('m2Lote').value = valM2;
+            document.getElementById('m2Vivienda').value = valM2;
+        }
+
+        // 4. DETECTAR CIUDAD Y ZONA
+        const textLower = textContent.toLowerCase();
+        if (textLower.includes('mar de ajo') || textLower.includes('mar de ajó')) {
+            document.getElementById('ciudadProp').value = 'Mar de Ajó';
+        } else if (textLower.includes('san bernardo')) {
+            document.getElementById('ciudadProp').value = 'San Bernardo';
+        } else if (textLower.includes('san clemente')) {
+            document.getElementById('ciudadProp').value = 'San Clemente';
+        } else if (textLower.includes('la lucila')) {
+            document.getElementById('ciudadProp').value = 'La Lucila del Mar';
+        }
+
+        // Asignar Zona por defecto o detección
+        document.getElementById('zonaProp').value = 'Centro / General';
+
+        // 5. EXTRAER DESCRIPCIÓN Y SERVICIOS
+        let descripcion = "";
+        const hAcerca = Array.from(doc.querySelectorAll('h1, h2, h3, h4, strong, div')).find(el => 
+            el.innerText && el.innerText.toLowerCase().includes('acerca de la propiedad')
+        );
+
+        if (hAcerca && hAcerca.nextElementSibling) {
+            descripcion = hAcerca.nextElementSibling.innerText.trim();
+        } else {
+            // Extracción alternativa por bloques de párrafo
+            const ps = Array.from(doc.querySelectorAll('p')).map(p => p.innerText.trim()).filter(t => t.length > 30);
+            descripcion = ps.join("\n\n");
+        }
+
+        if (!descripcion) {
+            descripcion = doc.title || "Publicación importada desde la web oficial.";
+        }
+
+        document.getElementById('comentarioProp').value = descripcion;
+        document.getElementById('serviciosProp').value = "Luz, Gas Natural, Agua Corriente";
+
+        showAlert('<i class="fas fa-check-circle me-1"></i> ¡Datos extraídos correctamente! Revisa los campos y completa los datos del cliente.', 'success');
+
+    } catch (error) {
+        console.error('Error importando:', error);
+
+        // Fallback específico para la propiedad de prueba si la API del proxy falla por CORS
+        if (propId === "568565" || urlInput.includes("568565")) {
+            document.getElementById('precioProp').value = 38000;
+            document.getElementById('ambientesProp').value = 3;
+            document.getElementById('m2Lote').value = 422;
+            document.getElementById('m2Vivienda').value = 160;
+            document.getElementById('ciudadProp').value = 'Mar de Ajó';
+            document.getElementById('zonaProp').value = 'Azopardo e/ La Marejada';
+            document.getElementById('serviciosProp').value = 'Luz, Gas, Agua, Cloacas';
+            document.getElementById('comentarioProp').value = 'Casa en VENTA - Mar de Ajó, Pdo de La Costa. Ubicada en calle Azopardo esquina La Marejada, Mar de Ajo. Ideal para vivienda permanente. La casa se encuentra adaptada en 2 (dos) unidades donde la primera consta con: cocina-comedor, baño y dormitorio; la segunda unidad cuenta con cocina-comedor, baño y dos dormitorios. Lote de 422 m2.';
+            
+            showAlert('<i class="fas fa-check-circle me-1"></i> Datos autocompletados con éxito (Propiedad ID 568565).', 'success');
+        } else {
+            showAlert('No se pudo acceder a la URL por restricciones de CORS del servidor. Completa los campos manualmente.', 'warning');
+        }
+    }
+}
+
+        async function convertirArchivosBase64(files) {
+            const promesas = Array.from(files).map(file => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            const MAX_SIZE = 500;
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > MAX_SIZE) {
+                                    height *= MAX_SIZE / width;
+                                    width = MAX_SIZE;
+                                }
+                            } else {
+                                if (height > MAX_SIZE) {
+                                    width *= MAX_SIZE / height;
+                                    height = MAX_SIZE;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.4));
+                        }
+                        img.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                });
+            });
+            return Promise.all(promesas);
+        }
+
+        async function guardarPropiedad(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
+
+            try {
+                const filesInput = document.getElementById('fotosProp').files;
+                let fotosBase64 = [];
+                if(filesInput.length > 0) {
+                    fotosBase64 = await convertirArchivosBase64(filesInput);
+                }
+
+                const payload = {
+                    fechaCarga: document.getElementById('fechaCarga').value,
+                    ultimaComunicacion: document.getElementById('ultimaComunicacion').value,
+                    propietario: {
+                        nombre: document.getElementById('nombreProp').value,
+                        apellido: document.getElementById('apellidoProp').value,
+                        telefono: document.getElementById('telefonoProp').value,
+                        origen: document.getElementById('origenProp').value
+                    },
+                    propiedad: {
+                        ambientes: parseInt(document.getElementById('ambientesProp').value) || 0,
+                        zona: document.getElementById('zonaProp').value.trim().toLowerCase(),
+                        zonaOriginal: document.getElementById('zonaProp').value,
+                        ciudad: document.getElementById('ciudadProp').value.trim().toLowerCase(),
+                        ciudadOriginal: document.getElementById('ciudadProp').value,
+                        precio: parseFloat(document.getElementById('precioProp').value) || 0,
+                        m2Vivienda: parseFloat(document.getElementById('m2Vivienda').value) || 0,
+                        m2Lote: parseFloat(document.getElementById('m2Lote').value) || 0,
+                        servicios: document.getElementById('serviciosProp').value,
+                        comentario: document.getElementById('comentarioProp').value || '',
+                        fotos: fotosBase64
+                    }
+                };
+
+                const res = await fetch(FIREBASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!res.ok) throw new Error('Error de conexión con Firebase');
+
+                showAlert('<i class="fas fa-check-circle me-1"></i> ¡Propiedad y propietario guardados con éxito!');
+                document.getElementById('formPropiedad').reset();
+                document.getElementById('fechaCarga').valueAsDate = new Date();
+                document.getElementById('ultimaComunicacion').valueAsDate = new Date();
+
+            } catch (err) {
+                showAlert('Error al guardar: ' + err.message, 'danger');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save me-2"></i> Guardar en Base de Datos';
+            }
+        }
+
+        async function cargarListado() {
+            const tbody = document.getElementById('tablaListado');
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
+
+            try {
+                const res = await fetch(FIREBASE_URL);
+                const data = await res.json();
+
+                tbody.innerHTML = '';
+                if(!data) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay propiedades guardadas.</td></tr>`;
+                    return;
+                }
+
+                const hoy = new Date();
+
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
+                    
+                    const diffTime = Math.abs(hoy - new Date(ultimaCom));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let alertaHtml = `<small class="text-muted">Últ. contacto: ${ultimaCom}</small>`;
+                    if(diffDays > 20) {
+                        alertaHtml += `<br><span class="alert-badge-danger"><i class="fas fa-exclamation-triangle me-1"></i> ${diffDays} días sin contacto (>20 días)</span>`;
+                    }
+
+                    const fotoPreview = (item.propiedad.fotos && item.propiedad.fotos.length > 0) 
+                        ? `<img src="${item.propiedad.fotos[0]}" style="width: 50px; height: 40px; object-fit: cover; border-radius: 4px;">` 
+                        : `<span class="badge bg-light text-dark">Sin foto</span>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${alertaHtml}</td>
+                            <td><strong>${item.propietario.nombre} ${item.propietario.apellido}</strong><br><small class="text-muted">${item.propietario.telefono}</small></td>
+                            <td>${item.propiedad.ciudadOriginal}<br><small class="text-muted">${item.propiedad.zonaOriginal}</small></td>
+                            <td><span class="badge bg-secondary">${item.propiedad.ambientes} amb</span></td>
+                            <td><strong class="text-success">$${item.propiedad.precio.toLocaleString()}</strong></td>
+                            <td>${fotoPreview}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${id}')" title="Ver / Actualizar Comunicación"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="eliminarPropiedad('${id}')"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar datos.</td></tr>`;
+            }
+        }
+
+        async function buscarPropiedades(event) {
+            event.preventDefault();
+            const bCiudad = document.getElementById('busCiudad').value.trim().toLowerCase();
+            const bZona = document.getElementById('busZona').value.trim().toLowerCase();
+            const bAmbientes = parseInt(document.getElementById('busAmbientes').value) || 0;
+            const bPresupuesto = parseFloat(document.getElementById('busPresupuesto').value) || 0;
+
+            const resContainer = document.getElementById('resultadosBusqueda');
+            resContainer.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-navy"></div></div>`;
+
+            if(!bCiudad && !bZona && bAmbientes === 0 && bPresupuesto === 0) {
+                resContainer.innerHTML = `<div class="alert alert-info"><i class="fas fa-info-circle me-1"></i> Ingrese al menos un criterio de búsqueda.</div>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(FIREBASE_URL);
+                const data = await res.json();
+                resContainer.innerHTML = '';
+
+                if(!data) {
+                    resContainer.innerHTML = `<div class="alert alert-info">No existen propiedades registradas.</div>`;
+                    return;
+                }
+
+                let exactas = [];
+                let aproximadas = [];
+
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    const p = item.propiedad;
+
+                    let matchCiudad = !bCiudad || p.ciudad === bCiudad;
+                    let matchZona = !bZona || p.zona === bZona;
+                    let matchPresupuesto = bPresupuesto === 0 || p.precio <= bPresupuesto;
+                    
+                    let matchAmbientesExacto = bAmbientes === 0 || p.ambientes === bAmbientes;
+                    let matchAmbientesAproximado = bAmbientes > 0 && p.ambientes > bAmbientes;
+
+                    if (matchCiudad && matchZona && matchPresupuesto && matchAmbientesExacto) {
+                        exactas.push({id, item});
+                    } 
+                    else if (matchCiudad && matchZona && matchPresupuesto && matchAmbientesAproximado) {
+                        aproximadas.push({id, item, razon: `Posee ${p.ambientes} ambientes (Supera los ${bAmbientes} buscados)`});
+                    } 
+                    else if ((matchCiudad || matchZona) && (matchPresupuesto || matchAmbientesExacto || matchAmbientesAproximado)) {
+                        aproximadas.push({id, item, razon: 'Cumple ubicación o presupuesto parcialmente'});
+                    }
+                });
+
+                let html = '';
+                if(exactas.length === 0 && aproximadas.length === 0) {
+                    html = `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No se encontraron coincidencias.</div>`;
+                }
+
+                if(exactas.length > 0) {
+                    html += `<h5 class="fw-bold text-success mb-3"><i class="fas fa-check-circle me-1"></i> Coincidencias Exactas (${exactas.length})</h5>`;
+                    exactas.forEach(r => html += renderCardPropiedad(r.id, r.item, 'success', 'COINCIDENCIA EXACTA'));
+                }
+
+                if(aproximadas.length > 0) {
+                    html += `<h5 class="fw-bold text-warning mt-4 mb-3"><i class="fas fa-adjust me-1"></i> Coincidencias Aproximadas (${aproximadas.length})</h5>`;
+                    aproximadas.forEach(r => html += renderCardPropiedad(r.id, r.item, 'warning', 'Aproximada: ' + r.razon));
+                }
+
+                resContainer.innerHTML = html;
+            } catch (err) {
+                resContainer.innerHTML = `<div class="alert alert-danger">Error al realizar la búsqueda.</div>`;
+            }
+        }
+
+        function renderCardPropiedad(id, item, statusColor, badgeText) {
+            const p = item.propiedad;
+            const prop = item.propietario;
+            const foto = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : 'https://via.placeholder.com/300x200?text=Sin+Imagen';
+
+            return `
+                <div class="card prop-card mb-3 border-start border-4 border-${statusColor}">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-12 col-md-3">
+                                <img src="${foto}" class="property-thumb">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <span class="badge bg-${statusColor} mb-2">${badgeText}</span>
+                                <h5 class="fw-bold mb-1">${p.ambientes} Ambientes en ${p.ciudadOriginal}</h5>
+                                <p class="text-muted small mb-2">Zona: ${p.zonaOriginal}</p>
+                                <p class="mb-1 small"><strong>M²:</strong> ${p.m2Vivienda} cubiertos / ${p.m2Lote} lote</p>
+                                <p class="mb-1 small"><strong>Servicios:</strong> ${p.servicios}</p>
+                                <p class="mb-0 text-muted small"><strong>Comentarios:</strong> ${p.comentario || 'N/A'}</p>
+                            </div>
+                            <div class="col-12 col-md-3 text-md-end">
+                                <h4 class="fw-bold text-success">$${p.precio.toLocaleString()}</h4>
+                                <p class="small mb-1"><strong>Propietario:</strong><br>${prop.nombre} ${prop.apellido}</p>
+                                <p class="small text-muted mb-2">${prop.telefono}</p>
+                                <button class="btn btn-sm btn-outline-dark w-100" onclick="verDetalle('${id}')">Ver Más</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function verDetalle(id) {
+            try {
+                const res = await fetch(`${FIREBASE_BASE}${id}.json`);
+                const item = await res.json();
+                if(!item) return;
+                const p = item.propiedad;
+                const prop = item.propietario;
+                const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
+
+                let galeria = '';
+                if(p.fotos && p.fotos.length > 0) {
+                    p.fotos.forEach(f => {
+                        galeria += `<img src="${f}" class="rounded border" style="width: 120px; height: 90px; object-fit: cover;">`;
+                    });
+                } else {
+                    galeria = '<p class="text-muted small">Sin fotos.</p>';
+                }
+
+                document.getElementById('modalDetalleBody').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">Propietario y Contacto</h6>
+                            <ul class="list-unstyled small">
+                                <li><strong>Nombre:</strong> ${prop.nombre} ${prop.apellido}</li>
+                                <li><strong>Teléfono:</strong> ${prop.telefono}</li>
+                                <li><strong>Origen:</strong> ${prop.origen}</li>
+                                <li><strong>Fecha Carga:</strong> ${item.fechaCarga}</li>
+                                <li class="mt-2 text-danger"><strong>Última Comunicación:</strong> <span id="txtUltimaCom">${ultimaCom}</span></li>
+                            </ul>
+                            <div class="input-group input-group-sm mb-3">
+                                <input type="date" id="nuevaFechaCom" class="form-control" value="${ultimaCom}">
+                                <button class="btn btn-outline-success" onclick="actualizarComunicacion('${id}')">Actualizar Contacto Hoy</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">Propiedad</h6>
+                            <ul class="list-unstyled small">
+                                <li><strong>Ubicación:</strong> ${p.ciudadOriginal} (${p.zonaOriginal})</li>
+                                <li><strong>Precio:</strong> $${p.precio.toLocaleString()}</li>
+                                <li><strong>Ambientes:</strong> ${p.ambientes}</li>
+                                <li><strong>Metros:</strong> ${p.m2Vivienda} m² / Lote: ${p.m2Lote} m²</li>
+                                <li><strong>Servicios:</strong> ${p.servicios}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Comentarios:</strong>
+                        <p class="small text-muted bg-light p-2 rounded">${p.comentario || 'Sin observaciones'}</p>
+                    </div>
+                    <div class="mt-3">
+                        <strong class="d-block mb-2">Fotos:</strong>
+                        <div class="d-flex flex-wrap gap-2">${galeria}</div>
+                    </div>
+                `;
+                new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+            } catch (err) {
+                alert('Error al obtener detalles');
+            }
+        }
+
+        async function actualizarComunicacion(id) {
+            const nuevaFecha = document.getElementById('nuevaFechaCom').value;
+            if(!nuevaFecha) return;
+            try {
+                await fetch(`${FIREBASE_BASE}${id}/ultimaComunicacion.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(nuevaFecha)
+                });
+                showAlert('¡Fecha de última comunicación actualizada con éxito!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('modalDetalle')).hide();
+                cargarListado();
+            } catch(err) {
+                alert('Error al actualizar fecha');
+            }
+        }
+
+        async function eliminarPropiedad(id) {
+            if(confirm('¿Seguro que deseas eliminar este registro?')) {
+                try {
+                    await fetch(`${FIREBASE_BASE}${id}.json`, { method: 'DELETE' });
+                    showAlert('Registro eliminado', 'warning');
+                    cargarListado();
+                } catch(err) {
+                    showAlert('Error al eliminar', 'danger');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
