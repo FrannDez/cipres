@@ -48,7 +48,7 @@
         }
 
         .nav-selector-container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -60,22 +60,24 @@
             display: flex;
             justify-content: space-between;
             border: 1px solid rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
 
         .custom-nav-pills .nav-link {
             flex: 1;
             text-align: center;
             border-radius: 40px;
-            padding: 12px 20px;
+            padding: 10px 15px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: #555;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             border: none;
+            white-space: nowrap;
         }
 
         .custom-nav-pills .nav-link.active {
@@ -157,7 +159,37 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
+        /* Dashboard Stat Cards */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border-left: 4px solid var(--secondary-gold);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            color: var(--primary-navy);
+            opacity: 0.2;
+        }
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-navy);
+            margin-bottom: 0;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 992px) {
             .custom-nav-pills {
                 flex-direction: column;
                 border-radius: 15px;
@@ -199,10 +231,16 @@
         <div class="nav-selector-container">
             <ul class="nav custom-nav-pills" id="mainTabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active" id="tab-carga-btn" data-bs-toggle="pill" data-bs-target="#tab-carga" type="button"><i class="fas fa-plus-circle"></i> <span>Cargar Propiedad</span></button>
+                    <button class="nav-link active" id="tab-dash-btn" data-bs-toggle="pill" data-bs-target="#tab-dash" type="button" onclick="cargarDashboard()"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="tab-buscar-btn" data-bs-toggle="pill" data-bs-target="#tab-buscar" type="button"><i class="fas fa-search-dollar"></i> <span>Buscador de Interesados</span></button>
+                    <button class="nav-link" id="tab-carga-btn" data-bs-toggle="pill" data-bs-target="#tab-carga" type="button"><i class="fas fa-plus-circle"></i> <span>Cargar Propiedad</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-buscar-btn" data-bs-toggle="pill" data-bs-target="#tab-buscar" type="button"><i class="fas fa-search-dollar"></i> <span>Buscador Interesados</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-seguimiento-btn" data-bs-toggle="pill" data-bs-target="#tab-seguimiento" type="button" onclick="cargarSeguimientoClientes()"><i class="fas fa-users-cog"></i> <span>Seguimiento Clientes</span></button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" id="tab-listado-btn" data-bs-toggle="pill" data-bs-target="#tab-listado" type="button" onclick="cargarListado()"><i class="fas fa-layer-group"></i> <span>Listado General</span></button>
@@ -214,22 +252,97 @@
 
         <div class="tab-content" id="mainTabsContent">
 
+            <!-- 0. DASHBOARD ESTADÍSTICO -->
+            <div class="tab-pane fade show active" id="tab-dash" role="tabpanel">
+                <div class="main-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="section-header mb-0">ESTADÍSTICAS GENERALES DE LA INMOBILIARIA</div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarDashboard()"><i class="fas fa-sync-alt me-1"></i> Actualizar Métricas</button>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card">
+                                <div>
+                                    <p class="stat-label">Casas Cargadas</p>
+                                    <h3 class="stat-value" id="statCasas">0</h3>
+                                </div>
+                                <i class="fas fa-home stat-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card">
+                                <div>
+                                    <p class="stat-label">Propietarios</p>
+                                    <h3 class="stat-value" id="statPropietarios">0</h3>
+                                </div>
+                                <i class="fas fa-user-tie stat-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card">
+                                <div>
+                                    <p class="stat-label">Interesados</p>
+                                    <h3 class="stat-value" id="statInteresados">0</h3>
+                                </div>
+                                <i class="fas fa-user-friends stat-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card border-left-warning" style="border-left-color: #ffc107;">
+                                <div>
+                                    <p class="stat-label">En Seguimiento</p>
+                                    <h3 class="stat-value" id="statSeguimiento">0</h3>
+                                </div>
+                                <i class="fas fa-clock stat-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card border-left-info" style="border-left-color: #0dcaf0;">
+                                <div>
+                                    <p class="stat-label">Reservas</p>
+                                    <h3 class="stat-value" id="statReservas">0</h3>
+                                </div>
+                                <i class="fas fa-handshake stat-icon"></i>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="stat-card border-left-success" style="border-left-color: #198754;">
+                                <div>
+                                    <p class="stat-label">Vendidas</p>
+                                    <h3 class="stat-value" id="statVendidas">0</h3>
+                                </div>
+                                <i class="fas fa-check-circle stat-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 1. CARGAR PROPIEDAD -->
-            <div class="tab-pane fade show active" id="tab-carga" role="tabpanel">
+            <div class="tab-pane fade" id="tab-carga" role="tabpanel">
                 <div class="main-card">
                     <form id="formPropiedad" onsubmit="guardarPropiedad(event)">
                         
                         <div class="section-header">1. DATOS DEL PROPIETARIO Y SEGUIMIENTO</div>
                         <div class="row g-3 mb-4">
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">Fecha de Carga</label>
                                 <input type="date" class="form-control" id="fechaCarga" required>
                             </div>
-                            <div class="col-12 col-md-4">
-                                <label class="form-label">Última Comunicación con Cliente</label>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Última Comunicación</label>
                                 <input type="date" class="form-control" id="ultimaComunicacion" required>
                             </div>
-                            <div class="col-12 col-md-4">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Estado de la Propiedad</label>
+                                <select class="form-select fw-bold text-primary" id="estadoProp" required>
+                                    <option value="DISPONIBLE">DISPONIBLE</option>
+                                    <option value="RESERVADA">RESERVADA</option>
+                                    <option value="VENDIDA">VENDIDA</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3">
                                 <label class="form-label">Nombre del Propietario</label>
                                 <input type="text" class="form-control" id="nombreProp" required>
                             </div>
@@ -250,11 +363,10 @@
                         <div class="section-header">2. DATOS TÉCNICOS Y PUBLICACIÓN</div>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
-                                <label class="form-label"><i class="fas fa-link me-1"></i> URL de la Publicación Web (Para ver todas las fotos HD)</label>
+                                <label class="form-label"><i class="fas fa-link me-1"></i> URL de la Publicación Web</label>
                                 <input type="url" class="form-control" id="urlPropiedad" placeholder="https://www.inmobiliariagabrielgomez.com/propiedad/568565">
                             </div>
                             
-                            <!-- SELECCIONADOR DE CIUDAD Y ZONA -->
                             <div class="col-12 col-md-4">
                                 <label class="form-label">Ciudad / Localidad</label>
                                 <select class="form-select" id="ciudadProp" onchange="actualizarZonas('ciudadProp', 'zonaProp')" required>
@@ -288,7 +400,7 @@
                             </div>
                             
                             <div class="col-6 col-md-2">
-                                <label class="form-label">Precio (\$ / USD)</label>
+                                <label class="form-label">Precio ($ / USD)</label>
                                 <input type="number" class="form-control" id="precioProp" required>
                             </div>
                             
@@ -302,14 +414,14 @@
                             </div>
                             <div class="col-12 col-md-4">
                                 <label class="form-label">Servicios</label>
-                                <input type="text" class="form-control" id="serviciosProp" placeholder="Luz, Gas Natural, Cloacas" required>
+                                <input type="text" class="form-control" id="serviciosProp" placeholder="Luz, Gas, Cloacas" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Comentarios / Descripción</label>
-                                <textarea class="form-control" id="comentarioProp" rows="3" placeholder="Observaciones generales de la propiedad..."></textarea>
+                                <textarea class="form-control" id="comentarioProp" rows="3" placeholder="Observaciones generales..."></textarea>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Fotos Locales (Compresión Base64)</label>
+                                <label class="form-label">Fotos Locales</label>
                                 <input type="file" class="form-control" id="fotosProp" accept="image/*" multiple>
                             </div>
                         </div>
@@ -322,12 +434,37 @@
             <!-- 2. BUSCADOR DE INTERESADOS -->
             <div class="tab-pane fade" id="tab-buscar" role="tabpanel">
                 <div class="main-card">
-                    <div class="section-header">BUSCADOR DE INTERESADOS (REQUISITOS)</div>
+                    <div class="section-header">BUSCADOR DE INTERESADOS (FILTROS Y RANGO ±20%)</div>
                     <form id="formBusqueda" onsubmit="buscarPropiedades(event)">
                         <div class="row g-3 mb-4">
-                            
-                            <!-- SELECCIONADOR BUSCADOR -->
-                            <div class="col-12 col-md-3">
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Operación</label>
+                                <select class="form-select" id="busOperacion">
+                                    <option value="">-- Todas --</option>
+                                    <option value="Compra">Compra</option>
+                                    <option value="Alquiler">Alquiler</option>
+                                    <option value="Alquiler temporario">Alquiler temporario</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Tipo de Propiedad</label>
+                                <select class="form-select" id="busTipoProp">
+                                    <option value="">-- Todos --</option>
+                                    <option value="Casa">Casa</option>
+                                    <option value="Depto">Depto</option>
+                                    <option value="Cochera">Cochera</option>
+                                    <option value="Local comercial">Local comercial</option>
+                                    <option value="Oficina">Oficina</option>
+                                    <option value="Terreno">Terreno</option>
+                                    <option value="PH">PH</option>
+                                    <option value="Quinta">Quinta</option>
+                                    <option value="Campo">Campo</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
                                 <label class="form-label">Ciudad de Interés</label>
                                 <select class="form-select" id="busCiudad" onchange="actualizarZonas('busCiudad', 'busZona', true)">
                                     <option value="">-- Todas las Ciudades --</option>
@@ -347,21 +484,21 @@
                                 </select>
                             </div>
 
-                            <div class="col-12 col-md-3">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label">Zona</label>
                                 <select class="form-select" id="busZona">
                                     <option value="">-- Todas las Zonas --</option>
                                 </select>
                             </div>
 
-                            <div class="col-6 col-md-3">
-                                <label class="form-label">Ambientes buscados</label>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label">Ambientes</label>
                                 <input type="number" class="form-control" id="busAmbientes" min="1" placeholder="Ej. 3">
                             </div>
 
-                            <div class="col-6 col-md-3">
-                                <label class="form-label">Presupuesto Máximo</label>
-                                <input type="number" class="form-control" id="busPresupuesto">
+                            <div class="col-6 col-md-4">
+                                <label class="form-label">Presupuesto Base (Aplica ±20%)</label>
+                                <input type="number" class="form-control" id="busPresupuesto" placeholder="Ej. 50000">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-navy w-100 btn-lg"><i class="fas fa-search me-2"></i> Buscar Propiedades Compatibles</button>
@@ -370,7 +507,93 @@
                 </div>
             </div>
 
-            <!-- 3. LISTADO GENERAL -->
+            <!-- 3. SEGUIMIENTO DE CLIENTES E INTERESADOS -->
+            <div class="tab-pane fade" id="tab-seguimiento" role="tabpanel">
+                <div class="main-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header mb-0">LISTA DE SEGUIMIENTO DE CLIENTES E INTERESADOS</div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarSeguimientoClientes()"><i class="fas fa-sync-alt me-1"></i> Actualizar</button>
+                    </div>
+                    
+                    <!-- Formulario para agregar / registrar un interesado -->
+                    <div class="card bg-light border-0 p-3 mb-4">
+                        <h6 class="fw-bold text-primary mb-3"><i class="fas fa-user-plus me-1"></i> Registrar Nuevo Interesado</h6>
+                        <form id="formInteresado" onsubmit="guardarInteresado(event)">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Nombre y Apellido</label>
+                                    <input type="text" class="form-control form-control-sm" id="nombreInteresado" required>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="tel" class="form-control form-control-sm" id="telInteresado" required>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email5" class="form-control form-control-sm" id="emailInteresado" placeholder="correo@mail.com" required>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Operación</label>
+                                    <select class="form-select form-select-sm" id="operacionInteresado" required>
+                                        <option value="Compra">Compra</option>
+                                        <option value="Alquiler">Alquiler</option>
+                                        <option value="Alquiler temporario">Alquiler temporario</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Tipo de Propiedad</label>
+                                    <select class="form-select form-select-sm" id="tipoPropInteresado" required>
+                                        <option value="Casa">Casa</option>
+                                        <option value="Depto">Depto</option>
+                                        <option value="Cochera">Cochera</option>
+                                        <option value="Local comercial">Local comercial</option>
+                                        <option value="Oficina">Oficina</option>
+                                        <option value="Terreno">Terreno</option>
+                                        <option value="PH">PH</option>
+                                        <option value="Quinta">Quinta</option>
+                                        <option value="Campo">Campo</option>
+                                        <option value="Otros">Otros</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Barrio de Residencia</label>
+                                    <input type="text" class="form-control form-control-sm" id="barrioResidenciaInteresado" placeholder="Ej. Centro" required>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Detalle / Obs. de Interés</label>
+                                    <input type="text" class="form-control form-control-sm" id="detalleInteres" placeholder="Ej. 3 amb" required>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Último Contacto</label>
+                                    <input type="date" class="form-control form-control-sm" id="fechaContactoInteresado" required>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-sm btn-gold px-4"><i class="fas fa-save me-1"></i> Guardar Interesado</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Contacto (Tel/Email)</th>
+                                    <th>Operación / Tipo</th>
+                                    <th>B. Residencia</th>
+                                    <th>Búsqueda</th>
+                                    <th>Últ. Contacto</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaSeguimientoClientes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. LISTADO GENERAL -->
             <div class="tab-pane fade" id="tab-listado" role="tabpanel">
                 <div class="main-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -382,6 +605,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Carga / Alerta Seg.</th>
+                                    <th>Estado</th>
                                     <th>Propietario</th>
                                     <th>Ubicación</th>
                                     <th>Amb.</th>
@@ -417,6 +641,8 @@
     <script>
         const FIREBASE_URL = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades.json";
         const FIREBASE_BASE = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades/";
+        const FIREBASE_INTERESADOS = "https://davila-4b293-default-rtdb.firebaseio.com/interesados.json";
+        const FIREBASE_INTERESADOS_BASE = "https://davila-4b293-default-rtdb.firebaseio.com/interesados/";
 
         // MAPA DE CIUDADES Y ZONAS
         const ubicaciones = {
@@ -437,6 +663,11 @@
 
         document.getElementById('fechaCarga').valueAsDate = new Date();
         document.getElementById('ultimaComunicacion').valueAsDate = new Date();
+        document.getElementById('fechaContactoInteresado').valueAsDate = new Date();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            cargarDashboard();
+        });
 
         function actualizarZonas(idCiudad, idZona, esBuscador = false) {
             const ciudadSel = document.getElementById(idCiudad).value;
@@ -500,6 +731,61 @@
             return Promise.all(promesas);
         }
 
+        async function cargarDashboard() {
+            try {
+                const resProp = await fetch(FIREBASE_URL);
+                const dataProp = await resProp.json();
+
+                const resInt = await fetch(FIREBASE_INTERESADOS);
+                const dataInt = await resInt.json();
+
+                let totalCasas = 0;
+                let propietariosSet = new Set();
+                let reservas = 0;
+                let vendidas = 0;
+                let enSeguimiento = 0;
+                let hoy = new Date();
+
+                if (dataProp) {
+                    const ids = Object.keys(dataProp);
+                    totalCasas = ids.length;
+
+                    ids.forEach(id => {
+                        const item = dataProp[id];
+                        if (item.propietario && item.propietario.telefono) {
+                            propietariosSet.add(item.propietario.telefono);
+                        }
+
+                        const estado = item.estadoProp || 'DISPONIBLE';
+                        if (estado === 'RESERVADA') reservas++;
+                        if (estado === 'VENDIDA') vendidas++;
+
+                        const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
+                        const diffTime = Math.abs(hoy - new Date(ultimaCom));
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if (diffDays > 20) {
+                            enSeguimiento++;
+                        }
+                    });
+                }
+
+                let totalInteresados = 0;
+                if (dataInt) {
+                    totalInteresados = Object.keys(dataInt).length;
+                }
+
+                document.getElementById('statCasas').textContent = totalCasas;
+                document.getElementById('statPropietarios').textContent = propietariosSet.size;
+                document.getElementById('statInteresados').textContent = totalInteresados;
+                document.getElementById('statSeguimiento').textContent = enSeguimiento;
+                document.getElementById('statReservas').textContent = reservas;
+                document.getElementById('statVendidas').textContent = vendidas;
+
+            } catch (err) {
+                console.error("Error al cargar dashboard", err);
+            }
+        }
+
         async function guardarPropiedad(event) {
             event.preventDefault();
             const btn = document.getElementById('btnSubmit');
@@ -516,6 +802,7 @@
                 const payload = {
                     fechaCarga: document.getElementById('fechaCarga').value,
                     ultimaComunicacion: document.getElementById('ultimaComunicacion').value,
+                    estadoProp: document.getElementById('estadoProp').value,
                     urlPropiedad: document.getElementById('urlPropiedad').value.trim(),
                     propietario: {
                         nombre: document.getElementById('nombreProp').value,
@@ -546,11 +833,12 @@
 
                 if(!res.ok) throw new Error('Error de conexión con Firebase');
 
-                showAlert('<i class="fas fa-check-circle me-1"></i> ¡Propiedad y propietario guardados con éxito!');
+                showAlert('<i class="fas fa-check-circle me-1"></i> ¡Propiedad guardada con éxito!');
                 document.getElementById('formPropiedad').reset();
                 document.getElementById('fechaCarga').valueAsDate = new Date();
                 document.getElementById('ultimaComunicacion').valueAsDate = new Date();
                 document.getElementById('zonaProp').innerHTML = '<option value="" disabled selected>-- Seleccione Zona --</option>';
+                cargarDashboard();
 
             } catch (err) {
                 showAlert('Error al guardar: ' + err.message, 'danger');
@@ -560,9 +848,89 @@
             }
         }
 
+        async function guardarInteresado(event) {
+            event.preventDefault();
+            try {
+                const payload = {
+                    nombre: document.getElementById('nombreInteresado').value,
+                    telefono: document.getElementById('telInteresado').value,
+                    email: document.getElementById('emailInteresado').value,
+                    operacion: document.getElementById('operacionInteresado').value,
+                    tipoPropiedad: document.getElementById('tipoPropInteresado').value,
+                    barrioResidencia: document.getElementById('barrioResidenciaInteresado').value,
+                    interes: document.getElementById('detalleInteres').value,
+                    ultimaComunicacion: document.getElementById('fechaContactoInteresado').value
+                };
+
+                const res = await fetch(FIREBASE_INTERESADOS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!res.ok) throw new Error('Error al guardar interesado');
+
+                showAlert('¡Interesado registrado con éxito!');
+                document.getElementById('formInteresado').reset();
+                document.getElementById('fechaContactoInteresado').valueAsDate = new Date();
+                cargarSeguimientoClientes();
+                cargarDashboard();
+            } catch(err) {
+                showAlert('Error al registrar interesado: ' + err.message, 'danger');
+            }
+        }
+
+        async function cargarSeguimientoClientes() {
+            const tbody = document.getElementById('tablaSeguimientoClientes');
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
+
+            try {
+                const res = await fetch(FIREBASE_INTERESADOS);
+                const data = await res.json();
+
+                tbody.innerHTML = '';
+                if(!data) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay clientes interesados registrados.</td></tr>`;
+                    return;
+                }
+
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.nombre}</strong></td>
+                            <td><i class="fas fa-phone-alt me-1 text-muted"></i> ${item.telefono}<br><small><i class="fas fa-envelope me-1 text-muted"></i> ${item.email || 'N/A'}</small></td>
+                            <td><span class="badge bg-dark">${item.operacion || 'N/A'}</span><br><small class="text-muted">${item.tipoPropiedad || 'N/A'}</small></td>
+                            <td>${item.barrioResidencia || 'N/A'}</td>
+                            <td><span class="badge bg-light text-dark border">${item.interes}</span></td>
+                            <td><small><i class="far fa-calendar-alt me-1"></i> ${item.ultimaComunicacion}</small></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger" onclick="eliminarInteresado('${id}')"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch(err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar interesados.</td></tr>`;
+            }
+        }
+
+        async function eliminarInteresado(id) {
+            if(confirm('¿Seguro que deseas eliminar este interesado?')) {
+                try {
+                    await fetch(`${FIREBASE_INTERESADOS_BASE}${id}.json`, { method: 'DELETE' });
+                    showAlert('Interesado eliminado', 'warning');
+                    cargarSeguimientoClientes();
+                    cargarDashboard();
+                } catch(err) {
+                    showAlert('Error al eliminar', 'danger');
+                }
+            }
+        }
+
         async function cargarListado() {
             const tbody = document.getElementById('tablaListado');
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
 
             try {
                 const res = await fetch(FIREBASE_URL);
@@ -570,7 +938,7 @@
 
                 tbody.innerHTML = '';
                 if(!data) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay propiedades guardadas.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">No hay propiedades guardadas.</td></tr>`;
                     return;
                 }
 
@@ -579,7 +947,12 @@
                 Object.keys(data).forEach(id => {
                     const item = data[id];
                     const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
+                    const estado = item.estadoProp || 'DISPONIBLE';
                     
+                    let badgeEstadoColor = 'success';
+                    if(estado === 'RESERVADA') badgeEstadoColor = 'warning text-dark';
+                    if(estado === 'VENDIDA') badgeEstadoColor = 'danger';
+
                     const diffTime = Math.abs(hoy - new Date(ultimaCom));
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     
@@ -599,6 +972,7 @@
                     tbody.innerHTML += `
                         <tr>
                             <td>${alertaHtml}</td>
+                            <td><span class="badge bg-${badgeEstadoColor}">${estado}</span></td>
                             <td><strong>${item.propietario.nombre} ${item.propietario.apellido}</strong><br><small class="text-muted">${item.propietario.telefono}</small></td>
                             <td>${item.propiedad.ciudadOriginal}<br><small class="text-muted">${item.propiedad.zonaOriginal}</small></td>
                             <td><span class="badge bg-secondary">${item.propiedad.ambientes} amb</span></td>
@@ -613,24 +987,21 @@
                     `;
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar datos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Error al cargar datos.</td></tr>`;
             }
         }
 
         async function buscarPropiedades(event) {
             event.preventDefault();
+            const bOperacion = document.getElementById('busOperacion').value.trim().toLowerCase();
+            const bTipoProp = document.getElementById('busTipoProp').value.trim().toLowerCase();
             const bCiudad = document.getElementById('busCiudad').value.trim().toLowerCase();
             const bZona = document.getElementById('busZona').value.trim().toLowerCase();
             const bAmbientes = parseInt(document.getElementById('busAmbientes').value) || 0;
-            const bPresupuesto = parseFloat(document.getElementById('busPresupuesto').value) || 0;
+            const bPresupuestoBase = parseFloat(document.getElementById('busPresupuesto').value) || 0;
 
             const resContainer = document.getElementById('resultadosBusqueda');
             resContainer.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-navy"></div></div>`;
-
-            if(!bCiudad && !bZona && bAmbientes === 0 && bPresupuesto === 0) {
-                resContainer.innerHTML = `<div class="alert alert-info"><i class="fas fa-info-circle me-1"></i> Ingrese al menos un criterio de búsqueda.</div>`;
-                return;
-            }
 
             try {
                 const res = await fetch(FIREBASE_URL);
@@ -642,6 +1013,10 @@
                     return;
                 }
 
+                // Cálculo de rango ±20% para el presupuesto
+                let minPresupuesto = bPresupuestoBase > 0 ? bPresupuestoBase * 0.8 : 0;
+                let maxPresupuesto = bPresupuestoBase > 0 ? bPresupuestoBase * 1.2 : 0;
+
                 let exactas = [];
                 let aproximadas = [];
 
@@ -651,25 +1026,22 @@
 
                     let matchCiudad = !bCiudad || p.ciudad === bCiudad;
                     let matchZona = !bZona || p.zona === bZona;
-                    let matchPresupuesto = bPresupuesto === 0 || p.precio <= bPresupuesto;
                     
+                    // Comprobación de presupuesto con tolerancia del 20%
+                    let matchPresupuesto = bPresupuestoBase === 0 || (p.precio >= minPresupuesto && p.precio <= maxPresupuesto);
                     let matchAmbientesExacto = bAmbientes === 0 || p.ambientes === bAmbientes;
-                    let matchAmbientesAproximado = bAmbientes > 0 && p.ambientes > bAmbientes;
 
                     if (matchCiudad && matchZona && matchPresupuesto && matchAmbientesExacto) {
                         exactas.push({id, item});
                     } 
-                    else if (matchCiudad && matchZona && matchPresupuesto && matchAmbientesAproximado) {
-                        aproximadas.push({id, item, razon: `Posee ${p.ambientes} ambientes (Supera los ${bAmbientes} buscados)`});
-                    } 
-                    else if ((matchCiudad || matchZona) && (matchPresupuesto || matchAmbientesExacto || matchAmbientesAproximado)) {
-                        aproximadas.push({id, item, razon: 'Cumple ubicación o presupuesto parcialmente'});
+                    else if ((matchCiudad || matchZona) && (matchPresupuesto || matchAmbientesExacto)) {
+                        aproximadas.push({id, item, razon: 'Cumple criterios parciales o está dentro del rango flexible'});
                     }
                 });
 
                 let html = '';
                 if(exactas.length === 0 && aproximadas.length === 0) {
-                    html = `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No se encontraron coincidencias.</div>`;
+                    html = `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No se encontraron coincidencias con los filtros aplicados.</div>`;
                 }
 
                 if(exactas.length > 0) {
@@ -678,8 +1050,8 @@
                 }
 
                 if(aproximadas.length > 0) {
-                    html += `<h5 class="fw-bold text-warning mt-4 mb-3"><i class="fas fa-adjust me-1"></i> Coincidencias Aproximadas (${aproximadas.length})</h5>`;
-                    aproximadas.forEach(r => html += renderCardPropiedad(r.id, r.item, 'warning', 'Aproximada: ' + r.razon));
+                    html += `<h5 class="fw-bold text-warning mt-4 mb-3"><i class="fas fa-adjust me-1"></i> Coincidencias Aproximadas / Rango ±20% (${aproximadas.length})</h5>`;
+                    aproximadas.forEach(r => html += renderCardPropiedad(r.id, r.item, 'warning', r.razon));
                 }
 
                 resContainer.innerHTML = html;
@@ -691,6 +1063,7 @@
         function renderCardPropiedad(id, item, statusColor, badgeText) {
             const p = item.propiedad;
             const prop = item.propietario;
+            const estado = item.estadoProp || 'DISPONIBLE';
             const foto = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : 'https://via.placeholder.com/300x200?text=Sin+Imagen';
 
             const btnWeb = item.urlPropiedad 
@@ -705,7 +1078,10 @@
                                 <img src="${foto}" class="property-thumb">
                             </div>
                             <div class="col-12 col-md-6">
-                                <span class="badge bg-${statusColor} mb-2">${badgeText}</span>
+                                <div class="mb-2">
+                                    <span class="badge bg-${statusColor} me-1">${badgeText}</span>
+                                    <span class="badge bg-secondary">${estado}</span>
+                                </div>
                                 <h5 class="fw-bold mb-1">${p.ambientes} Ambientes en ${p.ciudadOriginal}</h5>
                                 <p class="text-muted small mb-2">Zona: ${p.zonaOriginal}</p>
                                 <p class="mb-1 small"><strong>M²:</strong> ${p.m2Vivienda} cubiertos / ${p.m2Lote} lote</p>
@@ -733,6 +1109,7 @@
                 const p = item.propiedad;
                 const prop = item.propietario;
                 const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
+                const estado = item.estadoProp || 'DISPONIBLE';
 
                 let galeria = '';
                 if(p.fotos && p.fotos.length > 0) {
@@ -758,14 +1135,26 @@
                                 <li><strong>Fecha Carga:</strong> ${item.fechaCarga}</li>
                                 <li class="mt-2 text-danger"><strong>Última Comunicación:</strong> <span id="txtUltimaCom">${ultimaCom}</span></li>
                             </ul>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small">Cambiar Estado</label>
+                                <select class="form-select form-select-sm" id="nuevoEstadoProp" onchange="actualizarEstado('${id}')">
+                                    <option value="DISPONIBLE" ${estado==='DISPONIBLE'?'selected':''}>DISPONIBLE</option>
+                                    <option value="RESERVADA" ${estado==='RESERVADA'?'selected':''}>RESERVADA</option>
+                                    <option value="VENDIDA" ${estado==='VENDIDA'?'selected':''}>VENDIDA</option>
+                                </select>
+                            </div>
+
+                            <label class="form-label small">Actualizar Fecha Comunicación</label>
                             <div class="input-group input-group-sm mb-3">
                                 <input type="date" id="nuevaFechaCom" class="form-control" value="${ultimaCom}">
-                                <button class="btn btn-outline-success" onclick="actualizarComunicacion('${id}')">Actualizar Contacto Hoy</button>
+                                <button class="btn btn-outline-success" onclick="actualizarComunicacion('${id}')">Actualizar Hoy</button>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <h6 class="fw-bold text-primary">Propiedad</h6>
                             <ul class="list-unstyled small">
+                                <li><strong>Estado Actual:</strong> <span class="badge bg-primary">${estado}</span></li>
                                 <li><strong>Ubicación:</strong> ${p.ciudadOriginal} (${p.zonaOriginal})</li>
                                 <li><strong>Precio:</strong> $${p.precio.toLocaleString()}</li>
                                 <li><strong>Ambientes:</strong> ${p.ambientes}</li>
@@ -785,9 +1174,24 @@
                         <div class="d-flex flex-wrap gap-2">${galeria}</div>
                     </div>
                 `;
-                new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+                new bootstrap.Modal(document.getElementById('modalDetalleBody').closest('.modal')).show();
             } catch (err) {
                 alert('Error al obtener detalles');
+            }
+        }
+
+        async function actualizarEstado(id) {
+            const nuevoEstado = document.getElementById('nuevoEstadoProp').value;
+            try {
+                await fetch(`${FIREBASE_BASE}${id}/estadoProp.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(nuevoEstado)
+                });
+                showAlert('¡Estado de la propiedad actualizado!', 'success');
+                cargarListado();
+                cargarDashboard();
+            } catch(err) {
+                alert('Error al actualizar estado');
             }
         }
 
@@ -802,6 +1206,7 @@
                 showAlert('¡Fecha de última comunicación actualizada con éxito!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalDetalle')).hide();
                 cargarListado();
+                cargarDashboard();
             } catch(err) {
                 alert('Error al actualizar fecha');
             }
@@ -813,6 +1218,7 @@
                     await fetch(`${FIREBASE_BASE}${id}.json`, { method: 'DELETE' });
                     showAlert('Registro eliminado', 'warning');
                     cargarListado();
+                    cargarDashboard();
                 } catch(err) {
                     showAlert('Error al eliminar', 'danger');
                 }
