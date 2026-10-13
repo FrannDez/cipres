@@ -114,8 +114,9 @@
             color: white;
             font-weight: 600;
             border: none;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 8px;
+            transition: all 0.3s ease;
         }
 
         .btn-gold:hover {
@@ -154,14 +155,6 @@
             padding: 4px 8px;
             border-radius: 6px;
             font-weight: 600;
-        }
-
-        .import-box {
-            background-color: #eef2f7;
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
         }
 
         @media (max-width: 768px) {
@@ -224,18 +217,8 @@
             <!-- 1. CARGAR PROPIEDAD -->
             <div class="tab-pane fade show active" id="tab-carga" role="tabpanel">
                 <div class="main-card">
-                    
-                    <!-- HERRAMIENTA DE IMPORTACIÓN DESDE WEB -->
-                    <div class="import-box">
-                        <h6 class="fw-bold text-primary mb-2"><i class="fas fa-cloud-download-alt me-1"></i> Importador Automático desde la Web</h6>
-                        <p class="small text-muted mb-3">Pega la URL de una publicación de <code>inmobiliariagabrielgomez.com</code> para autocompletar la ficha de la propiedad.</p>
-                        <div class="input-group">
-                            <input type="url" id="urlImportar" class="form-control" placeholder="https://www.inmobiliariagabrielgomez.com/propiedades/...">
-                            <button class="btn btn-navy" type="button" onclick="importarDesdeWeb()"><i class="fas fa-magic me-1"></i> Extraer Datos</button>
-                        </div>
-                    </div>
-
                     <form id="formPropiedad" onsubmit="guardarPropiedad(event)">
+                        
                         <div class="section-header">1. DATOS DEL PROPIETARIO Y SEGUIMIENTO</div>
                         <div class="row g-3 mb-4">
                             <div class="col-12 col-md-4">
@@ -264,24 +247,51 @@
                             </div>
                         </div>
 
-                        <div class="section-header">2. DATOS TÉCNICOS DE LA PROPIEDAD</div>
+                        <div class="section-header">2. DATOS TÉCNICOS Y PUBLICACIÓN</div>
                         <div class="row g-3 mb-4">
-                            <div class="col-6 col-md-3">
+                            <div class="col-12">
+                                <label class="form-label"><i class="fas fa-link me-1"></i> URL de la Publicación Web (Para ver todas las fotos HD)</label>
+                                <input type="url" class="form-control" id="urlPropiedad" placeholder="https://www.inmobiliariagabrielgomez.com/propiedad/568565">
+                            </div>
+                            
+                            <!-- SELECCIONADOR DE CIUDAD Y ZONA -->
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Ciudad / Localidad</label>
+                                <select class="form-select" id="ciudadProp" onchange="actualizarZonas('ciudadProp', 'zonaProp')" required>
+                                    <option value="" disabled selected>-- Seleccione Ciudad --</option>
+                                    <option value="Barrios Privados">Barrios Privados</option>
+                                    <option value="Nueva Atlantis">Nueva Atlantis</option>
+                                    <option value="Mar de Ajó">Mar de Ajó</option>
+                                    <option value="San Bernardo">San Bernardo</option>
+                                    <option value="Costa Azul">Costa Azul</option>
+                                    <option value="La Lucila del Mar">La Lucila del Mar</option>
+                                    <option value="Aguas Verdes">Aguas Verdes</option>
+                                    <option value="Costa del Este">Costa del Este</option>
+                                    <option value="Mar del Tuyú">Mar del Tuyú</option>
+                                    <option value="Santa Teresita">Santa Teresita</option>
+                                    <option value="Costa Chica">Costa Chica</option>
+                                    <option value="Las Toninas">Las Toninas</option>
+                                    <option value="San Clemente del Tuyú">San Clemente del Tuyú</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Zona / Barrio</label>
+                                <select class="form-select" id="zonaProp" required>
+                                    <option value="" disabled selected>-- Seleccione Zona --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-2">
                                 <label class="form-label">Ambientes</label>
                                 <input type="number" class="form-control" id="ambientesProp" min="1" required>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <label class="form-label">Ciudad</label>
-                                <input type="text" class="form-control" id="ciudadProp" placeholder="Ej. Mar de Ajó" required>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <label class="form-label">Zona / Barrio</label>
-                                <input type="text" class="form-control" id="zonaProp" placeholder="Ej. Centro / San Rafael" required>
-                            </div>
-                            <div class="col-6 col-md-3">
+                            
+                            <div class="col-6 col-md-2">
                                 <label class="form-label">Precio (\$ / USD)</label>
                                 <input type="number" class="form-control" id="precioProp" required>
                             </div>
+                            
                             <div class="col-6 col-md-4">
                                 <label class="form-label">M² Vivienda (Cubiertos)</label>
                                 <input type="number" class="form-control" id="m2Vivienda" required>
@@ -296,10 +306,10 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Comentarios / Descripción</label>
-                                <textarea class="form-control" id="comentarioProp" rows="3"></textarea>
+                                <textarea class="form-control" id="comentarioProp" rows="3" placeholder="Observaciones generales de la propiedad..."></textarea>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Fotos (Compresión Base64)</label>
+                                <label class="form-label">Fotos Locales (Compresión Base64)</label>
                                 <input type="file" class="form-control" id="fotosProp" accept="image/*" multiple>
                             </div>
                         </div>
@@ -309,24 +319,46 @@
                 </div>
             </div>
 
-            <!-- 2. BUSCADOR -->
+            <!-- 2. BUSCADOR DE INTERESADOS -->
             <div class="tab-pane fade" id="tab-buscar" role="tabpanel">
                 <div class="main-card">
                     <div class="section-header">BUSCADOR DE INTERESADOS (REQUISITOS)</div>
                     <form id="formBusqueda" onsubmit="buscarPropiedades(event)">
                         <div class="row g-3 mb-4">
+                            
+                            <!-- SELECCIONADOR BUSCADOR -->
                             <div class="col-12 col-md-3">
                                 <label class="form-label">Ciudad de Interés</label>
-                                <input type="text" class="form-control" id="busCiudad">
+                                <select class="form-select" id="busCiudad" onchange="actualizarZonas('busCiudad', 'busZona', true)">
+                                    <option value="">-- Todas las Ciudades --</option>
+                                    <option value="Barrios Privados">Barrios Privados</option>
+                                    <option value="Nueva Atlantis">Nueva Atlantis</option>
+                                    <option value="Mar de Ajó">Mar de Ajó</option>
+                                    <option value="San Bernardo">San Bernardo</option>
+                                    <option value="Costa Azul">Costa Azul</option>
+                                    <option value="La Lucila del Mar">La Lucila del Mar</option>
+                                    <option value="Aguas Verdes">Aguas Verdes</option>
+                                    <option value="Costa del Este">Costa del Este</option>
+                                    <option value="Mar del Tuyú">Mar del Tuyú</option>
+                                    <option value="Santa Teresita">Santa Teresita</option>
+                                    <option value="Costa Chica">Costa Chica</option>
+                                    <option value="Las Toninas">Las Toninas</option>
+                                    <option value="San Clemente del Tuyú">San Clemente del Tuyú</option>
+                                </select>
                             </div>
+
                             <div class="col-12 col-md-3">
                                 <label class="form-label">Zona</label>
-                                <input type="text" class="form-control" id="busZona">
+                                <select class="form-select" id="busZona">
+                                    <option value="">-- Todas las Zonas --</option>
+                                </select>
                             </div>
+
                             <div class="col-6 col-md-3">
                                 <label class="form-label">Ambientes buscados</label>
                                 <input type="number" class="form-control" id="busAmbientes" min="1" placeholder="Ej. 3">
                             </div>
+
                             <div class="col-6 col-md-3">
                                 <label class="form-label">Presupuesto Máximo</label>
                                 <input type="number" class="form-control" id="busPresupuesto">
@@ -354,7 +386,7 @@
                                     <th>Ubicación</th>
                                     <th>Amb.</th>
                                     <th>Precio</th>
-                                    <th>Fotos</th>
+                                    <th>Fotos / Enlace</th>
                                     <th class="text-end">Acciones</th>
                                 </tr>
                             </thead>
@@ -386,8 +418,41 @@
         const FIREBASE_URL = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades.json";
         const FIREBASE_BASE = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades/";
 
+        // MAPA DE CIUDADES Y ZONAS
+        const ubicaciones = {
+            "Barrios Privados": ["Costa Esmeralda", "Villa Robles"],
+            "Nueva Atlantis": ["Centro / General"],
+            "Mar de Ajó": ["Centro", "Norte", "Villa Clelia", "Casuarinas"],
+            "San Bernardo": ["Centro", "Ezcurra Medrano"],
+            "Costa Azul": ["Centro / General"],
+            "La Lucila del Mar": ["Centro", "El Pinar"],
+            "Aguas Verdes": ["Centro / General"],
+            "Costa del Este": ["Comercial", "La Reserva"],
+            "Mar del Tuyú": ["Centro / General"],
+            "Santa Teresita": ["Barrio Las Quintas", "Barrio Parque Golf", "Jagüel", "Jagüel del medio", "Centro"],
+            "Costa Chica": ["Centro / General"],
+            "Las Toninas": ["Centro / General"],
+            "San Clemente del Tuyú": ["El Tala", "Centro", "Punta Rasa"]
+        };
+
         document.getElementById('fechaCarga').valueAsDate = new Date();
         document.getElementById('ultimaComunicacion').valueAsDate = new Date();
+
+        function actualizarZonas(idCiudad, idZona, esBuscador = false) {
+            const ciudadSel = document.getElementById(idCiudad).value;
+            const zonaSelect = document.getElementById(idZona);
+            
+            zonaSelect.innerHTML = esBuscador ? '<option value="">-- Todas las Zonas --</option>' : '<option value="" disabled selected>-- Seleccione Zona --</option>';
+
+            if (ciudadSel && ubicaciones[ciudadSel]) {
+                ubicaciones[ciudadSel].forEach(z => {
+                    const opt = document.createElement('option');
+                    opt.value = z;
+                    opt.textContent = z;
+                    zonaSelect.appendChild(opt);
+                });
+            }
+        }
 
         function showAlert(message, type = 'success') {
             const container = document.getElementById('alertContainer');
@@ -397,115 +462,6 @@
             </div>`;
             setTimeout(() => { container.innerHTML = ''; }, 4500);
         }
-
-        async function importarDesdeWeb() {
-    const urlInput = document.getElementById('urlImportar').value.trim();
-    if (!urlInput) {
-        showAlert('Por favor ingresa la URL de la propiedad.', 'warning');
-        return;
-    }
-
-    showAlert('Extrayendo datos de la publicación...', 'info');
-
-    // Extraer ID de la propiedad desde la URL si existe (ej: 568565)
-    const matchId = urlInput.match(/\/propiedad\/(\d+)/) || urlInput.match(/\/(\d+)\$/);
-    const propId = matchId ? matchId[1] : null;
-
-    try {
-        // Intento 1: Obtener el contenido a través del proxy de consulta
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(urlInput)}`;
-        const res = await fetch(proxyUrl);
-        const json = await res.json();
-
-        if (!json.contents) throw new Error('No se pudo obtener el contenido HTML');
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(json.contents, 'text/html');
-        const textContent = doc.body ? doc.body.innerText : "";
-
-        // 1. EXTRAER PRECIO (USD 38.000)
-        let precioEncontrado = false;
-        const priceRegex = /USD\s*([\d\.\,]+)/i;
-        const priceMatch = textContent.match(priceRegex) || doc.title.match(priceRegex);
-        
-        if (priceMatch) {
-            const num = priceMatch[1].replace(/\./g, '').replace(',', '.');
-            document.getElementById('precioProp').value = parseFloat(num);
-            precioEncontrado = true;
-        }
-
-        // 2. EXTRAER AMBIENTES (ej: 3 Ambientes)
-        const ambMatch = textContent.match(/(\d+)\s*Ambientes?/i);
-        if (ambMatch) {
-            document.getElementById('ambientesProp').value = parseInt(ambMatch[1]);
-        }
-
-        // 3. EXTRAER SUPERFICIE TOTAL (ej: Sup. total 422m2 o 422 m²)
-        const supMatch = textContent.match(/(?:Sup\.?\s*total|lote|superficie)?\s*(\d+)\s*m[2²]/i);
-        if (supMatch) {
-            const valM2 = parseInt(supMatch[1]);
-            document.getElementById('m2Lote').value = valM2;
-            document.getElementById('m2Vivienda').value = valM2;
-        }
-
-        // 4. DETECTAR CIUDAD Y ZONA
-        const textLower = textContent.toLowerCase();
-        if (textLower.includes('mar de ajo') || textLower.includes('mar de ajó')) {
-            document.getElementById('ciudadProp').value = 'Mar de Ajó';
-        } else if (textLower.includes('san bernardo')) {
-            document.getElementById('ciudadProp').value = 'San Bernardo';
-        } else if (textLower.includes('san clemente')) {
-            document.getElementById('ciudadProp').value = 'San Clemente';
-        } else if (textLower.includes('la lucila')) {
-            document.getElementById('ciudadProp').value = 'La Lucila del Mar';
-        }
-
-        // Asignar Zona por defecto o detección
-        document.getElementById('zonaProp').value = 'Centro / General';
-
-        // 5. EXTRAER DESCRIPCIÓN Y SERVICIOS
-        let descripcion = "";
-        const hAcerca = Array.from(doc.querySelectorAll('h1, h2, h3, h4, strong, div')).find(el => 
-            el.innerText && el.innerText.toLowerCase().includes('acerca de la propiedad')
-        );
-
-        if (hAcerca && hAcerca.nextElementSibling) {
-            descripcion = hAcerca.nextElementSibling.innerText.trim();
-        } else {
-            // Extracción alternativa por bloques de párrafo
-            const ps = Array.from(doc.querySelectorAll('p')).map(p => p.innerText.trim()).filter(t => t.length > 30);
-            descripcion = ps.join("\n\n");
-        }
-
-        if (!descripcion) {
-            descripcion = doc.title || "Publicación importada desde la web oficial.";
-        }
-
-        document.getElementById('comentarioProp').value = descripcion;
-        document.getElementById('serviciosProp').value = "Luz, Gas Natural, Agua Corriente";
-
-        showAlert('<i class="fas fa-check-circle me-1"></i> ¡Datos extraídos correctamente! Revisa los campos y completa los datos del cliente.', 'success');
-
-    } catch (error) {
-        console.error('Error importando:', error);
-
-        // Fallback específico para la propiedad de prueba si la API del proxy falla por CORS
-        if (propId === "568565" || urlInput.includes("568565")) {
-            document.getElementById('precioProp').value = 38000;
-            document.getElementById('ambientesProp').value = 3;
-            document.getElementById('m2Lote').value = 422;
-            document.getElementById('m2Vivienda').value = 160;
-            document.getElementById('ciudadProp').value = 'Mar de Ajó';
-            document.getElementById('zonaProp').value = 'Azopardo e/ La Marejada';
-            document.getElementById('serviciosProp').value = 'Luz, Gas, Agua, Cloacas';
-            document.getElementById('comentarioProp').value = 'Casa en VENTA - Mar de Ajó, Pdo de La Costa. Ubicada en calle Azopardo esquina La Marejada, Mar de Ajo. Ideal para vivienda permanente. La casa se encuentra adaptada en 2 (dos) unidades donde la primera consta con: cocina-comedor, baño y dormitorio; la segunda unidad cuenta con cocina-comedor, baño y dos dormitorios. Lote de 422 m2.';
-            
-            showAlert('<i class="fas fa-check-circle me-1"></i> Datos autocompletados con éxito (Propiedad ID 568565).', 'success');
-        } else {
-            showAlert('No se pudo acceder a la URL por restricciones de CORS del servidor. Completa los campos manualmente.', 'warning');
-        }
-    }
-}
 
         async function convertirArchivosBase64(files) {
             const promesas = Array.from(files).map(file => {
@@ -560,6 +516,7 @@
                 const payload = {
                     fechaCarga: document.getElementById('fechaCarga').value,
                     ultimaComunicacion: document.getElementById('ultimaComunicacion').value,
+                    urlPropiedad: document.getElementById('urlPropiedad').value.trim(),
                     propietario: {
                         nombre: document.getElementById('nombreProp').value,
                         apellido: document.getElementById('apellidoProp').value,
@@ -593,6 +550,7 @@
                 document.getElementById('formPropiedad').reset();
                 document.getElementById('fechaCarga').valueAsDate = new Date();
                 document.getElementById('ultimaComunicacion').valueAsDate = new Date();
+                document.getElementById('zonaProp').innerHTML = '<option value="" disabled selected>-- Seleccione Zona --</option>';
 
             } catch (err) {
                 showAlert('Error al guardar: ' + err.message, 'danger');
@@ -634,6 +592,10 @@
                         ? `<img src="${item.propiedad.fotos[0]}" style="width: 50px; height: 40px; object-fit: cover; border-radius: 4px;">` 
                         : `<span class="badge bg-light text-dark">Sin foto</span>`;
 
+                    const linkBtn = item.urlPropiedad 
+                        ? `<a href="${item.urlPropiedad}" target="_blank" class="btn btn-sm btn-outline-warning ms-1" title="Ver en Web Oficial"><i class="fas fa-external-link-alt"></i></a>` 
+                        : '';
+
                     tbody.innerHTML += `
                         <tr>
                             <td>${alertaHtml}</td>
@@ -643,8 +605,9 @@
                             <td><strong class="text-success">$${item.propiedad.precio.toLocaleString()}</strong></td>
                             <td>${fotoPreview}</td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${id}')" title="Ver / Actualizar Comunicación"><i class="fas fa-eye"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="eliminarPropiedad('${id}')"><i class="fas fa-trash-alt"></i></button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${id}')" title="Ver Detalle"><i class="fas fa-eye"></i></button>
+                                ${linkBtn}
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="eliminarPropiedad('${id}')"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
                     `;
@@ -730,6 +693,10 @@
             const prop = item.propietario;
             const foto = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : 'https://via.placeholder.com/300x200?text=Sin+Imagen';
 
+            const btnWeb = item.urlPropiedad 
+                ? `<a href="${item.urlPropiedad}" target="_blank" class="btn btn-sm btn-gold w-100 mb-2"><i class="fas fa-external-link-alt me-1"></i> Ver Publicación Web</a>` 
+                : '';
+
             return `
                 <div class="card prop-card mb-3 border-start border-4 border-${statusColor}">
                     <div class="card-body">
@@ -749,7 +716,8 @@
                                 <h4 class="fw-bold text-success">$${p.precio.toLocaleString()}</h4>
                                 <p class="small mb-1"><strong>Propietario:</strong><br>${prop.nombre} ${prop.apellido}</p>
                                 <p class="small text-muted mb-2">${prop.telefono}</p>
-                                <button class="btn btn-sm btn-outline-dark w-100" onclick="verDetalle('${id}')">Ver Más</button>
+                                ${btnWeb}
+                                <button class="btn btn-sm btn-outline-dark w-100" onclick="verDetalle('${id}')">Ver Detalle</button>
                             </div>
                         </div>
                     </div>
@@ -772,8 +740,12 @@
                         galeria += `<img src="${f}" class="rounded border" style="width: 120px; height: 90px; object-fit: cover;">`;
                     });
                 } else {
-                    galeria = '<p class="text-muted small">Sin fotos.</p>';
+                    galeria = '<p class="text-muted small">Sin fotos cargadas localmente.</p>';
                 }
+
+                const btnWebModal = item.urlPropiedad 
+                    ? `<a href="${item.urlPropiedad}" target="_blank" class="btn btn-sm btn-gold mt-2 d-inline-block"><i class="fas fa-external-link-alt me-1"></i> Abrir Publicación Web Oficial</a>` 
+                    : '<span class="text-muted small">Sin URL registrada</span>';
 
                 document.getElementById('modalDetalleBody').innerHTML = `
                     <div class="row">
@@ -800,14 +772,16 @@
                                 <li><strong>Metros:</strong> ${p.m2Vivienda} m² / Lote: ${p.m2Lote} m²</li>
                                 <li><strong>Servicios:</strong> ${p.servicios}</li>
                             </ul>
+                            <strong>Enlace a Publicación:</strong><br>
+                            ${btnWebModal}
                         </div>
                     </div>
-                    <div class="mt-2">
+                    <div class="mt-3">
                         <strong>Comentarios:</strong>
                         <p class="small text-muted bg-light p-2 rounded">${p.comentario || 'Sin observaciones'}</p>
                     </div>
                     <div class="mt-3">
-                        <strong class="d-block mb-2">Fotos:</strong>
+                        <strong class="d-block mb-2">Fotos Locales:</strong>
                         <div class="d-flex flex-wrap gap-2">${galeria}</div>
                     </div>
                 `;
