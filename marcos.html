@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS (Mapa Interactivo) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     
     <style>
         :root {
@@ -38,6 +40,7 @@
             object-fit: contain;
         }
 
+        /* Hero dinámico según estado */
         .hero-section {
             background: linear-gradient(135deg, var(--primary-navy) 0%, #0f172a 100%);
             color: white;
@@ -45,10 +48,23 @@
             margin-bottom: -45px;
             border-bottom-left-radius: 20px;
             border-bottom-right-radius: 20px;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+        .hero-rojo {
+            background: linear-gradient(135deg, #b02a37 0%, #621b22 100%) !important;
+            color: white !important;
+        }
+        .hero-amarillo {
+            background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%) !important;
+            color: #000 !important;
+        }
+        .hero-amarillo p {
+            color: #212529 !important;
+            opacity: 0.85;
         }
 
         .nav-selector-container {
-            max-width: 1000px;
+            max-width: 1150px;
             margin: 0 auto;
         }
 
@@ -67,15 +83,15 @@
             flex: 1;
             text-align: center;
             border-radius: 40px;
-            padding: 10px 15px;
+            padding: 8px 10px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: #555;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
             border: none;
             white-space: nowrap;
         }
@@ -159,6 +175,17 @@
             font-weight: 600;
         }
 
+        /* Contenedor del mapa de selección y solapa */
+        #mapaCarga, #mapaGeneral {
+            width: 100%;
+            height: 350px;
+            border-radius: 10px;
+            border: 1px solid #ced4da;
+        }
+        #mapaGeneral {
+            height: 550px;
+        }
+
         /* Dashboard Stat Cards */
         .stat-card {
             background: white;
@@ -218,11 +245,11 @@
         </div>
     </header>
 
-    <!-- Hero -->
-    <section class="hero-section text-center">
+    <!-- Hero Dinámico -->
+    <section class="hero-section text-center" id="heroSection">
         <div class="container">
             <h2 class="fw-bold mb-1">Panel de Control & Gestión</h2>
-            <p class="text-light opacity-75 mb-0">Administración de propietarios, propiedades e interesados</p>
+            <p class="text-light opacity-75 mb-0">Administración avanzada de propiedades, propietarios e interesados</p>
         </div>
     </section>
 
@@ -234,16 +261,22 @@
                     <button class="nav-link active" id="tab-dash-btn" data-bs-toggle="pill" data-bs-target="#tab-dash" type="button" onclick="cargarDashboard()"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="tab-carga-btn" data-bs-toggle="pill" data-bs-target="#tab-carga" type="button"><i class="fas fa-plus-circle"></i> <span>Cargar Propiedad</span></button>
+                    <button class="nav-link" id="tab-carga-btn" data-bs-toggle="pill" data-bs-target="#tab-carga" type="button" onclick="setTimeout(initMapaCarga, 200)"><i class="fas fa-plus-circle"></i> <span>Cargar</span></button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="tab-buscar-btn" data-bs-toggle="pill" data-bs-target="#tab-buscar" type="button"><i class="fas fa-search-dollar"></i> <span>Buscador Interesados</span></button>
+                    <button class="nav-link" id="tab-buscar-btn" data-bs-toggle="pill" data-bs-target="#tab-buscar" type="button"><i class="fas fa-search-dollar"></i> <span>Buscador</span></button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="tab-seguimiento-btn" data-bs-toggle="pill" data-bs-target="#tab-seguimiento" type="button" onclick="cargarSeguimientoClientes()"><i class="fas fa-users-cog"></i> <span>Seguimiento Clientes</span></button>
+                    <button class="nav-link" id="tab-seguimiento-btn" data-bs-toggle="pill" data-bs-target="#tab-seguimiento" type="button" onclick="cargarSeguimientoClientes()"><i class="fas fa-users-cog"></i> <span>Interesados</span></button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="tab-listado-btn" data-bs-toggle="pill" data-bs-target="#tab-listado" type="button" onclick="cargarListado()"><i class="fas fa-layer-group"></i> <span>Listado General</span></button>
+                    <button class="nav-link" id="tab-listado-btn" data-bs-toggle="pill" data-bs-target="#tab-listado" type="button" onclick="cargarListado()"><i class="fas fa-layer-group"></i> <span>Propiedades</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-mapa-btn" data-bs-toggle="pill" data-bs-target="#tab-mapa" type="button" onclick="setTimeout(initMapaGeneral, 200)"><i class="fas fa-map-marked-alt"></i> <span>Mapa</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-vendidas-btn" data-bs-toggle="pill" data-bs-target="#tab-vendidas" type="button" onclick="cargarVendidas()"><i class="fas fa-check-double"></i> <span>Vendidas</span></button>
                 </li>
             </ul>
         </div>
@@ -257,14 +290,14 @@
                 <div class="main-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div class="section-header mb-0">ESTADÍSTICAS GENERALES DE LA INMOBILIARIA</div>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarDashboard()"><i class="fas fa-sync-alt me-1"></i> Actualizar Métricas</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarDashboard()"><i class="fas fa-sync-alt me-1"></i> Actualizar</button>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-12 col-md-4">
                             <div class="stat-card">
                                 <div>
-                                    <p class="stat-label">Casas Cargadas</p>
+                                    <p class="stat-label">Propiedades</p>
                                     <h3 class="stat-value" id="statCasas">0</h3>
                                 </div>
                                 <i class="fas fa-home stat-icon"></i>
@@ -291,7 +324,7 @@
                         <div class="col-12 col-md-4">
                             <div class="stat-card border-left-warning" style="border-left-color: #ffc107;">
                                 <div>
-                                    <p class="stat-label">En Seguimiento</p>
+                                    <p class="stat-label">En Seguimiento (>20d)</p>
                                     <h3 class="stat-value" id="statSeguimiento">0</h3>
                                 </div>
                                 <i class="fas fa-clock stat-icon"></i>
@@ -336,7 +369,7 @@
                             </div>
                             <div class="col-12 col-md-3">
                                 <label class="form-label">Estado de la Propiedad</label>
-                                <select class="form-select fw-bold text-primary" id="estadoProp" required>
+                                <select class="form-select fw-bold text-primary" id="estadoProp" onchange="cambiarColorHero(this.value)" required>
                                     <option value="DISPONIBLE">DISPONIBLE</option>
                                     <option value="RESERVADA">RESERVADA</option>
                                     <option value="VENDIDA">VENDIDA</option>
@@ -360,13 +393,37 @@
                             </div>
                         </div>
 
-                        <div class="section-header">2. DATOS TÉCNICOS Y PUBLICACIÓN</div>
+                        <div class="section-header">2. UBICACIÓN EN MAPA Y DATOS TÉCNICOS</div>
                         <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label"><i class="fas fa-map-marker-alt text-danger me-1"></i> Haga clic en el mapa para marcar la ubicación exacta de la propiedad</label>
+                                <div id="mapaCarga"></div>
+                                <input type="hidden" id="latProp" value="-36.6853">
+                                <input type="hidden" id="lngProp" value="-56.6744">
+                            </div>
+
                             <div class="col-12">
                                 <label class="form-label"><i class="fas fa-link me-1"></i> URL de la Publicación Web</label>
                                 <input type="url" class="form-control" id="urlPropiedad" placeholder="https://www.inmobiliariagabrielgomez.com/propiedad/568565">
                             </div>
                             
+                            <div class="col-12 col-md-4">
+                                <label class="form-label">Tipo de Propiedad</label>
+                                <select class="form-select" id="tipoInmueble" required>
+                                    <option value="" disabled selected>-- Seleccione Tipo --</option>
+                                    <option value="Casa">Casa</option>
+                                    <option value="Depto">Depto</option>
+                                    <option value="Cochera">Cochera</option>
+                                    <option value="Local comercial">Local comercial</option>
+                                    <option value="Oficina">Oficina</option>
+                                    <option value="Terreno">Terreno</option>
+                                    <option value="PH">PH</option>
+                                    <option value="Quinta">Quinta</option>
+                                    <option value="Campo">Campo</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+
                             <div class="col-12 col-md-4">
                                 <label class="form-label">Ciudad / Localidad</label>
                                 <select class="form-select" id="ciudadProp" onchange="actualizarZonas('ciudadProp', 'zonaProp')" required>
@@ -384,6 +441,7 @@
                                     <option value="Costa Chica">Costa Chica</option>
                                     <option value="Las Toninas">Las Toninas</option>
                                     <option value="San Clemente del Tuyú">San Clemente del Tuyú</option>
+                                    <option value="General Lavalle">General Lavalle</option>
                                 </select>
                             </div>
 
@@ -426,6 +484,9 @@
                             </div>
                         </div>
 
+                        <!-- Contenedor para mostrar match con interesados -->
+                        <div id="matchInteresadosAlerta" class="mb-3"></div>
+
                         <button type="submit" id="btnSubmit" class="btn btn-gold btn-lg w-100"><i class="fas fa-save me-2"></i> Guardar en Base de Datos</button>
                     </form>
                 </div>
@@ -434,7 +495,7 @@
             <!-- 2. BUSCADOR DE INTERESADOS -->
             <div class="tab-pane fade" id="tab-buscar" role="tabpanel">
                 <div class="main-card">
-                    <div class="section-header">BUSCADOR DE INTERESADOS (FILTROS Y RANGO ±20%)</div>
+                    <div class="section-header">BUSCADOR DE PROPIEDADES (RANGO ±20%)</div>
                     <form id="formBusqueda" onsubmit="buscarPropiedades(event)">
                         <div class="row g-3 mb-4">
                             <div class="col-12 col-md-4">
@@ -481,6 +542,7 @@
                                     <option value="Costa Chica">Costa Chica</option>
                                     <option value="Las Toninas">Las Toninas</option>
                                     <option value="San Clemente del Tuyú">San Clemente del Tuyú</option>
+                                    <option value="General Lavalle">General Lavalle</option>
                                 </select>
                             </div>
 
@@ -497,7 +559,7 @@
                             </div>
 
                             <div class="col-6 col-md-4">
-                                <label class="form-label">Presupuesto Base (Aplica ±20%)</label>
+                                <label class="form-label">Presupuesto (Aplica ±20%)</label>
                                 <input type="number" class="form-control" id="busPresupuesto" placeholder="Ej. 50000">
                             </div>
                         </div>
@@ -515,7 +577,6 @@
                         <button class="btn btn-outline-secondary btn-sm" onclick="cargarSeguimientoClientes()"><i class="fas fa-sync-alt me-1"></i> Actualizar</button>
                     </div>
                     
-                    <!-- Formulario para agregar / registrar un interesado -->
                     <div class="card bg-light border-0 p-3 mb-4">
                         <h6 class="fw-bold text-primary mb-3"><i class="fas fa-user-plus me-1"></i> Registrar Nuevo Interesado</h6>
                         <form id="formInteresado" onsubmit="guardarInteresado(event)">
@@ -530,7 +591,7 @@
                                 </div>
                                 <div class="col-12 col-md-3">
                                     <label class="form-label">Email</label>
-                                    <input type="email5" class="form-control form-control-sm" id="emailInteresado" placeholder="correo@mail.com" required>
+                                    <input type="email" class="form-control form-control-sm" id="emailInteresado" placeholder="correo@mail.com" required>
                                 </div>
                                 <div class="col-12 col-md-3">
                                     <label class="form-label">Operación</label>
@@ -556,12 +617,16 @@
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-3">
+                                    <label class="form-label">Presupuesto</label>
+                                    <input type="number" class="form-control form-control-sm" id="presupuestoInteresado" placeholder="Ej. 45000" required>
+                                </div>
+                                <div class="col-12 col-md-3">
                                     <label class="form-label">Barrio de Residencia</label>
                                     <input type="text" class="form-control form-control-sm" id="barrioResidenciaInteresado" placeholder="Ej. Centro" required>
                                 </div>
                                 <div class="col-12 col-md-3">
-                                    <label class="form-label">Detalle / Obs. de Interés</label>
-                                    <input type="text" class="form-control form-control-sm" id="detalleInteres" placeholder="Ej. 3 amb" required>
+                                    <label class="form-label">Zona / Ciudad de Interés</label>
+                                    <input type="text" class="form-control form-control-sm" id="detalleInteres" placeholder="Ej. San Bernardo" required>
                                 </div>
                                 <div class="col-12 col-md-3">
                                     <label class="form-label">Último Contacto</label>
@@ -579,10 +644,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Cliente</th>
-                                    <th>Contacto (Tel/Email)</th>
+                                    <th>Contacto</th>
                                     <th>Operación / Tipo</th>
+                                    <th>Presupuesto (±20%)</th>
                                     <th>B. Residencia</th>
-                                    <th>Búsqueda</th>
+                                    <th>Interés</th>
                                     <th>Últ. Contacto</th>
                                     <th class="text-end">Acciones</th>
                                 </tr>
@@ -604,10 +670,10 @@
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Carga / Alerta Seg.</th>
+                                    <th>Alerta Seg. (Propietario)</th>
                                     <th>Estado</th>
                                     <th>Propietario</th>
-                                    <th>Ubicación</th>
+                                    <th>Tipo / Ubicación</th>
                                     <th>Amb.</th>
                                     <th>Precio</th>
                                     <th>Fotos / Enlace</th>
@@ -615,6 +681,43 @@
                                 </tr>
                             </thead>
                             <tbody id="tablaListado"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. MAPA GENERAL DE PROPIEDADES -->
+            <div class="tab-pane fade" id="tab-mapa" role="tabpanel">
+                <div class="main-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header mb-0">MAPA INTERACTIVO DE PROPIEDADES</div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="initMapaGeneral()"><i class="fas fa-sync-alt me-1"></i> Actualizar Mapa</button>
+                    </div>
+                    <p class="text-muted small">Visualiza todas las propiedades geolocalizadas. Los pines muestran en verde las disponibles, en amarillo las reservadas y en rojo las vendidas.</p>
+                    <div id="mapaGeneral"></div>
+                </div>
+            </div>
+
+            <!-- 6. PROPIEDADES VENDIDAS -->
+            <div class="tab-pane fade" id="tab-vendidas" role="tabpanel">
+                <div class="main-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-header mb-0">REGISTRO DE PROPIEDADES VENDIDAS</div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="cargarVendidas()"><i class="fas fa-sync-alt me-1"></i> Actualizar</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Propietario</th>
+                                    <th>Tipo / Ubicación</th>
+                                    <th>Amb.</th>
+                                    <th>Precio de Cierre</th>
+                                    <th>Enlace</th>
+                                    <th class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaVendidas"></tbody>
                         </table>
                     </div>
                 </div>
@@ -628,7 +731,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i> Detalle y Actualización de Comunicación</h5>
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i> Detalle y Actualización de Registro</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="modalDetalleBody"></div>
@@ -636,7 +739,22 @@
         </div>
     </div>
 
+    <!-- Modal Editar Interesado -->
+    <div class="modal fade" id="modalEditarInteresado" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Modificar Interesado</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalEditarInteresadoBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & Leaflet JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
     <script>
         const FIREBASE_URL = "https://davila-4b293-default-rtdb.firebaseio.com/propiedades.json";
@@ -644,11 +762,19 @@
         const FIREBASE_INTERESADOS = "https://davila-4b293-default-rtdb.firebaseio.com/interesados.json";
         const FIREBASE_INTERESADOS_BASE = "https://davila-4b293-default-rtdb.firebaseio.com/interesados/";
 
-        // MAPA DE CIUDADES Y ZONAS
+        let mapCarga = null;
+        let markerCarga = null;
+        let mapGeneral = null;
+        let markersGeneralLayer = null;
+
+        // Proveedor alternativo libre sin API Key
+        const TILE_URL = 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png';
+        const TILE_ATTR = '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
         const ubicaciones = {
             "Barrios Privados": ["Costa Esmeralda", "Villa Robles"],
             "Nueva Atlantis": ["Centro / General"],
-            "Mar de Ajó": ["Centro", "Norte", "Villa Clelia", "Casuarinas"],
+            "Mar de Ajó": ["Centro", "Norte", "Villa Clelia", "Casuarinas", "San Rafael"],
             "San Bernardo": ["Centro", "Ezcurra Medrano"],
             "Costa Azul": ["Centro / General"],
             "La Lucila del Mar": ["Centro", "El Pinar"],
@@ -658,7 +784,8 @@
             "Santa Teresita": ["Barrio Las Quintas", "Barrio Parque Golf", "Jagüel", "Jagüel del medio", "Centro"],
             "Costa Chica": ["Centro / General"],
             "Las Toninas": ["Centro / General"],
-            "San Clemente del Tuyú": ["El Tala", "Centro", "Punta Rasa"]
+            "San Clemente del Tuyú": ["El Tala", "Centro", "Punta Rasa"],
+            "General Lavalle": ["Pavón", "Casco Urbano"]
         };
 
         document.getElementById('fechaCarga').valueAsDate = new Date();
@@ -668,6 +795,91 @@
         window.addEventListener('DOMContentLoaded', () => {
             cargarDashboard();
         });
+
+        function initMapaCarga() {
+            if (!mapCarga) {
+                mapCarga = L.map('mapaCarga').setView([-36.6853, -56.6744], 13);
+                L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTR }).addTo(mapCarga);
+
+                markerCarga = L.marker([-36.6853, -56.6744], {draggable: true}).addTo(mapCarga);
+
+                markerCarga.on('dragend', function(e) {
+                    const pos = markerCarga.getLatLng();
+                    document.getElementById('latProp').value = pos.lat;
+                    document.getElementById('lngProp').value = pos.lng;
+                });
+
+                mapCarga.on('click', function(e) {
+                    markerCarga.setLatLng(e.latlng);
+                    document.getElementById('latProp').value = e.latlng.lat;
+                    document.getElementById('lngProp').value = e.latlng.lng;
+                });
+            } else {
+                mapCarga.invalidateSize();
+            }
+        }
+
+        async function initMapaGeneral() {
+            if (!mapGeneral) {
+                mapGeneral = L.map('mapaGeneral').setView([-36.6853, -56.6744], 11);
+                L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTR }).addTo(mapGeneral);
+                markersGeneralLayer = L.layerGroup().addTo(mapGeneral);
+            } else {
+                mapGeneral.invalidateSize();
+                markersGeneralLayer.clearLayers();
+            }
+
+            try {
+                const res = await fetch(FIREBASE_URL);
+                const data = await res.json();
+                if (!data) return;
+
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    const lat = parseFloat(item.lat) || -36.6853;
+                    const lng = parseFloat(item.lng) || -56.6744;
+                    const estado = item.estadoProp || 'DISPONIBLE';
+                    const p = item.propiedad;
+                    const tipo = p.tipoInmueble || 'Inmueble';
+
+                    let pinColor = '#198754';
+                    if (estado === 'RESERVADA') pinColor = '#ffc107';
+                    if (estado === 'VENDIDA') pinColor = '#dc3545';
+
+                    const customIcon = L.divIcon({
+                        className: 'custom-pin',
+                        html: `<div style="background-color: ${pinColor}; width: 22px; height: 22px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.4);"></div>`,
+                        iconSize: [22, 22],
+                        iconAnchor: [11, 11]
+                    });
+
+                    const foto = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : 'https://via.placeholder.com/150';
+                    const popupContent = `
+                        <div style="width: 180px; font-family: Montserrat, sans-serif;">
+                            <img src="${foto}" style="width:100%; height:100px; object-fit:cover; border-radius:4px; margin-bottom:5px;">
+                            <span class="badge bg-secondary mb-1">${estado}</span>
+                            <h6 style="margin:0; font-weight:bold; font-size:0.9rem;">${tipo} - ${p.ambientes} Amb.</h6>
+                            <p style="margin:0; font-size:0.8rem; color:#666;">${p.ciudadOriginal} (${p.zonaOriginal})</p>
+                            <p style="margin:0; font-size:0.9rem; font-weight:bold; color:green;">$${p.precio.toLocaleString()}</p>
+                            <button class="btn btn-sm btn-outline-dark w-100 mt-2" onclick="verDetalle('${id}')">Ver Detalle</button>
+                        </div>
+                    `;
+
+                    const marker = L.marker([lat, lng], {icon: customIcon}).bindPopup(popupContent);
+                    markersGeneralLayer.addLayer(marker);
+                });
+            } catch(e) { console.error("Error al cargar mapa general", e); }
+        }
+
+        function cambiarColorHero(estado) {
+            const hero = document.getElementById('heroSection');
+            hero.classList.remove('hero-rojo', 'hero-amarillo');
+            if (estado === 'VENDIDA') {
+                hero.classList.add('hero-rojo');
+            } else if (estado === 'RESERVADA') {
+                hero.classList.add('hero-amarillo');
+            }
+        }
 
         function actualizarZonas(idCiudad, idZona, esBuscador = false) {
             const ciudadSel = document.getElementById(idCiudad).value;
@@ -803,6 +1015,8 @@
                     fechaCarga: document.getElementById('fechaCarga').value,
                     ultimaComunicacion: document.getElementById('ultimaComunicacion').value,
                     estadoProp: document.getElementById('estadoProp').value,
+                    lat: document.getElementById('latProp').value,
+                    lng: document.getElementById('lngProp').value,
                     urlPropiedad: document.getElementById('urlPropiedad').value.trim(),
                     propietario: {
                         nombre: document.getElementById('nombreProp').value,
@@ -811,6 +1025,7 @@
                         origen: document.getElementById('origenProp').value
                     },
                     propiedad: {
+                        tipoInmueble: document.getElementById('tipoInmueble').value,
                         ambientes: parseInt(document.getElementById('ambientesProp').value) || 0,
                         zona: document.getElementById('zonaProp').value.trim().toLowerCase(),
                         zonaOriginal: document.getElementById('zonaProp').value,
@@ -838,6 +1053,7 @@
                 document.getElementById('fechaCarga').valueAsDate = new Date();
                 document.getElementById('ultimaComunicacion').valueAsDate = new Date();
                 document.getElementById('zonaProp').innerHTML = '<option value="" disabled selected>-- Seleccione Zona --</option>';
+                document.getElementById('heroSection').classList.remove('hero-rojo', 'hero-amarillo');
                 cargarDashboard();
 
             } catch (err) {
@@ -857,6 +1073,7 @@
                     email: document.getElementById('emailInteresado').value,
                     operacion: document.getElementById('operacionInteresado').value,
                     tipoPropiedad: document.getElementById('tipoPropInteresado').value,
+                    presupuesto: parseFloat(document.getElementById('presupuestoInteresado').value) || 0,
                     barrioResidencia: document.getElementById('barrioResidenciaInteresado').value,
                     interes: document.getElementById('detalleInteres').value,
                     ultimaComunicacion: document.getElementById('fechaContactoInteresado').value
@@ -882,7 +1099,7 @@
 
         async function cargarSeguimientoClientes() {
             const tbody = document.getElementById('tablaSeguimientoClientes');
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>`;
 
             try {
                 const res = await fetch(FIREBASE_INTERESADOS);
@@ -890,29 +1107,73 @@
 
                 tbody.innerHTML = '';
                 if(!data) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay clientes interesados registrados.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">No hay clientes interesados registrados.</td></tr>`;
                     return;
                 }
 
                 Object.keys(data).forEach(id => {
                     const item = data[id];
+                    const pres = item.presupuesto ? `$${item.presupuesto.toLocaleString()} (±20%)` : 'N/A';
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${item.nombre}</strong></td>
                             <td><i class="fas fa-phone-alt me-1 text-muted"></i> ${item.telefono}<br><small><i class="fas fa-envelope me-1 text-muted"></i> ${item.email || 'N/A'}</small></td>
                             <td><span class="badge bg-dark">${item.operacion || 'N/A'}</span><br><small class="text-muted">${item.tipoPropiedad || 'N/A'}</small></td>
+                            <td><strong class="text-success">${pres}</strong></td>
                             <td>${item.barrioResidencia || 'N/A'}</td>
                             <td><span class="badge bg-light text-dark border">${item.interes}</span></td>
                             <td><small><i class="far fa-calendar-alt me-1"></i> ${item.ultimaComunicacion}</small></td>
                             <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editarInteresado('${id}')"><i class="fas fa-edit"></i></button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="eliminarInteresado('${id}')"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
                     `;
                 });
             } catch(err) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar interesados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Error al cargar interesados.</td></tr>`;
             }
+        }
+
+        async function editarInteresado(id) {
+            try {
+                const res = await fetch(`https://davila-4b293-default-rtdb.firebaseio.com/interesados/${id}.json`);
+                const item = await res.json();
+                if(!item) return;
+
+                document.getElementById('modalEditarInteresadoBody').innerHTML = `
+                    <form onsubmit="actualizarInteresado(event, '${id}')">
+                        <div class="mb-2"><label class="form-label small">Nombre</label><input type="text" class="form-control form-control-sm" id="editNombre" value="${item.nombre}" required></div>
+                        <div class="mb-2"><label class="form-label small">Teléfono</label><input type="text" class="form-control form-control-sm" id="editTel" value="${item.telefono}" required></div>
+                        <div class="mb-2"><label class="form-label small">Email</label><input type="email" class="form-control form-control-sm" id="editEmail" value="${item.email || ''}" required></div>
+                        <div class="mb-2"><label class="form-label small">Presupuesto</label><input type="number" class="form-control form-control-sm" id="editPresupuesto" value="${item.presupuesto || ''}" required></div>
+                        <div class="mb-2"><label class="form-label small">Interés</label><input type="text" class="form-control form-control-sm" id="editDetalle" value="${item.interes || ''}" required></div>
+                        <button type="submit" class="btn btn-gold btn-sm w-100 mt-2">Guardar Cambios</button>
+                    </form>
+                `;
+                new bootstrap.Modal(document.getElementById('modalEditarInteresado')).show();
+            } catch(e) { alert('Error al cargar datos para editar'); }
+        }
+
+        async function actualizarInteresado(event, id) {
+            event.preventDefault();
+            const payload = {
+                nombre: document.getElementById('editNombre').value,
+                telefono: document.getElementById('editTel').value,
+                email: document.getElementById('editEmail').value,
+                presupuesto: parseFloat(document.getElementById('editPresupuesto').value) || 0,
+                interes: document.getElementById('editDetalle').value
+            };
+            try {
+                await fetch(`https://davila-4b293-default-rtdb.firebaseio.com/interesados/${id}.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarInteresado')).hide();
+                showAlert('Interesado actualizado con éxito');
+                cargarSeguimientoClientes();
+            } catch(e) { alert('Error al actualizar'); }
         }
 
         async function eliminarInteresado(id) {
@@ -948,6 +1209,7 @@
                     const item = data[id];
                     const ultimaCom = item.ultimaComunicacion || item.fechaCarga;
                     const estado = item.estadoProp || 'DISPONIBLE';
+                    const tipoInm = item.propiedad.tipoInmueble || 'Inmueble';
                     
                     let badgeEstadoColor = 'success';
                     if(estado === 'RESERVADA') badgeEstadoColor = 'warning text-dark';
@@ -956,9 +1218,9 @@
                     const diffTime = Math.abs(hoy - new Date(ultimaCom));
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                     
-                    let alertaHtml = `<small class="text-muted">Últ. contacto: ${ultimaCom}</small>`;
+                    let alertaHtml = `<small class="text-muted">Últ. contacto: ${ultimaCom}</small><br><strong>${diffDays} días sin contacto</strong>`;
                     if(diffDays > 20) {
-                        alertaHtml += `<br><span class="alert-badge-danger"><i class="fas fa-exclamation-triangle me-1"></i> ${diffDays} días sin contacto (>20 días)</span>`;
+                        alertaHtml += `<br><span class="alert-badge-danger"><i class="fas fa-exclamation-triangle me-1"></i> ¡Alerta >20 días!</span>`;
                     }
 
                     const fotoPreview = (item.propiedad.fotos && item.propiedad.fotos.length > 0) 
@@ -974,12 +1236,12 @@
                             <td>${alertaHtml}</td>
                             <td><span class="badge bg-${badgeEstadoColor}">${estado}</span></td>
                             <td><strong>${item.propietario.nombre} ${item.propietario.apellido}</strong><br><small class="text-muted">${item.propietario.telefono}</small></td>
-                            <td>${item.propiedad.ciudadOriginal}<br><small class="text-muted">${item.propiedad.zonaOriginal}</small></td>
+                            <td><span class="badge bg-dark">${tipoInm}</span><br>${item.propiedad.ciudadOriginal}<br><small class="text-muted">${item.propiedad.zonaOriginal}</small></td>
                             <td><span class="badge bg-secondary">${item.propiedad.ambientes} amb</span></td>
                             <td><strong class="text-success">$${item.propiedad.precio.toLocaleString()}</strong></td>
                             <td>${fotoPreview}</td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${id}')" title="Ver Detalle"><i class="fas fa-eye"></i></button>
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${id}')" title="Ver / Editar Detalle"><i class="fas fa-eye"></i></button>
                                 ${linkBtn}
                                 <button class="btn btn-sm btn-outline-danger ms-1" onclick="eliminarPropiedad('${id}')"><i class="fas fa-trash-alt"></i></button>
                             </td>
@@ -991,10 +1253,58 @@
             }
         }
 
+        async function cargarVendidas() {
+            const tbody = document.getElementById('tablaVendidas');
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger"></div></td></tr>`;
+
+            try {
+                const res = await fetch(FIREBASE_URL);
+                const data = await res.json();
+
+                tbody.innerHTML = '';
+                if(!data) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay propiedades registradas.</td></tr>`;
+                    return;
+                }
+
+                let count = 0;
+                Object.keys(data).forEach(id => {
+                    const item = data[id];
+                    const estado = item.estadoProp || 'DISPONIBLE';
+
+                    if (estado === 'VENDIDA') {
+                        count++;
+                        const p = item.propiedad;
+                        const prop = item.propietario;
+                        const tipoInm = p.tipoInmueble || 'Inmueble';
+                        const linkBtn = item.urlPropiedad ? `<a href="${item.urlPropiedad}" target="_blank" class="btn btn-sm btn-outline-danger"><i class="fas fa-external-link-alt"></i> Web</a>` : 'N/A';
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${prop.nombre} ${prop.apellido}</strong><br><small>${prop.telefono}</small></td>
+                                <td><span class="badge bg-dark">${tipoInm}</span><br>${p.ciudadOriginal} (${p.zonaOriginal})</td>
+                                <td>${p.ambientes} amb</td>
+                                <td><strong class="text-danger">$${p.precio.toLocaleString()}</strong></td>
+                                <td>${linkBtn}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="verDetalle('${id}')"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                if(count === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No hay propiedades con estado VENDIDA.</td></tr>`;
+                }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error al cargar vendidas.</td></tr>`;
+            }
+        }
+
         async function buscarPropiedades(event) {
             event.preventDefault();
-            const bOperacion = document.getElementById('busOperacion').value.trim().toLowerCase();
-            const bTipoProp = document.getElementById('busTipoProp').value.trim().toLowerCase();
+            const bTipo = document.getElementById('busTipoProp').value;
             const bCiudad = document.getElementById('busCiudad').value.trim().toLowerCase();
             const bZona = document.getElementById('busZona').value.trim().toLowerCase();
             const bAmbientes = parseInt(document.getElementById('busAmbientes').value) || 0;
@@ -1013,7 +1323,6 @@
                     return;
                 }
 
-                // Cálculo de rango ±20% para el presupuesto
                 let minPresupuesto = bPresupuestoBase > 0 ? bPresupuestoBase * 0.8 : 0;
                 let maxPresupuesto = bPresupuestoBase > 0 ? bPresupuestoBase * 1.2 : 0;
 
@@ -1024,24 +1333,23 @@
                     const item = data[id];
                     const p = item.propiedad;
 
+                    let matchTipo = !bTipo || p.tipoInmueble === bTipo;
                     let matchCiudad = !bCiudad || p.ciudad === bCiudad;
                     let matchZona = !bZona || p.zona === bZona;
-                    
-                    // Comprobación de presupuesto con tolerancia del 20%
                     let matchPresupuesto = bPresupuestoBase === 0 || (p.precio >= minPresupuesto && p.precio <= maxPresupuesto);
                     let matchAmbientesExacto = bAmbientes === 0 || p.ambientes === bAmbientes;
 
-                    if (matchCiudad && matchZona && matchPresupuesto && matchAmbientesExacto) {
+                    if (matchTipo && matchCiudad && matchZona && matchPresupuesto && matchAmbientesExacto) {
                         exactas.push({id, item});
                     } 
-                    else if ((matchCiudad || matchZona) && (matchPresupuesto || matchAmbientesExacto)) {
-                        aproximadas.push({id, item, razon: 'Cumple criterios parciales o está dentro del rango flexible'});
+                    else if ((matchTipo || matchCiudad || matchZona) && (matchPresupuesto || matchAmbientesExacto)) {
+                        aproximadas.push({id, item, razon: 'Cumple criterios parciales o rango ±20%'});
                     }
                 });
 
                 let html = '';
                 if(exactas.length === 0 && aproximadas.length === 0) {
-                    html = `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No se encontraron coincidencias con los filtros aplicados.</div>`;
+                    html = `<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i> No se encontraron coincidencias.</div>`;
                 }
 
                 if(exactas.length > 0) {
@@ -1064,6 +1372,7 @@
             const p = item.propiedad;
             const prop = item.propietario;
             const estado = item.estadoProp || 'DISPONIBLE';
+            const tipoInm = p.tipoInmueble || 'Inmueble';
             const foto = (p.fotos && p.fotos.length > 0) ? p.fotos[0] : 'https://via.placeholder.com/300x200?text=Sin+Imagen';
 
             const btnWeb = item.urlPropiedad 
@@ -1081,6 +1390,7 @@
                                 <div class="mb-2">
                                     <span class="badge bg-${statusColor} me-1">${badgeText}</span>
                                     <span class="badge bg-secondary">${estado}</span>
+                                    <span class="badge bg-dark">${tipoInm}</span>
                                 </div>
                                 <h5 class="fw-bold mb-1">${p.ambientes} Ambientes en ${p.ciudadOriginal}</h5>
                                 <p class="text-muted small mb-2">Zona: ${p.zonaOriginal}</p>
@@ -1120,95 +1430,88 @@
                     galeria = '<p class="text-muted small">Sin fotos cargadas localmente.</p>';
                 }
 
-                const btnWebModal = item.urlPropiedad 
-                    ? `<a href="${item.urlPropiedad}" target="_blank" class="btn btn-sm btn-gold mt-2 d-inline-block"><i class="fas fa-external-link-alt me-1"></i> Abrir Publicación Web Oficial</a>` 
-                    : '<span class="text-muted small">Sin URL registrada</span>';
-
                 document.getElementById('modalDetalleBody').innerHTML = `
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="fw-bold text-primary">Propietario y Contacto</h6>
-                            <ul class="list-unstyled small">
-                                <li><strong>Nombre:</strong> ${prop.nombre} ${prop.apellido}</li>
-                                <li><strong>Teléfono:</strong> ${prop.telefono}</li>
-                                <li><strong>Origen:</strong> ${prop.origen}</li>
-                                <li><strong>Fecha Carga:</strong> ${item.fechaCarga}</li>
-                                <li class="mt-2 text-danger"><strong>Última Comunicación:</strong> <span id="txtUltimaCom">${ultimaCom}</span></li>
-                            </ul>
-                            
-                            <div class="mb-3">
-                                <label class="form-label small">Cambiar Estado</label>
-                                <select class="form-select form-select-sm" id="nuevoEstadoProp" onchange="actualizarEstado('${id}')">
+                            <h6 class="fw-bold text-primary">Propietario y Contacto (Modificable)</h6>
+                            <div class="mb-2"><label class="form-label small">Nombre</label><input type="text" class="form-control form-control-sm" id="modPropNombre" value="${prop.nombre}"></div>
+                            <div class="mb-2"><label class="form-label small">Apellido</label><input type="text" class="form-control form-control-sm" id="modPropApellido" value="${prop.apellido}"></div>
+                            <div class="mb-2"><label class="form-label small">Teléfono</label><input type="text" class="form-control form-control-sm" id="modPropTel" value="${prop.telefono}"></div>
+                            <div class="mb-2"><label class="form-label small">Última Comunicación</label><input type="date" class="form-control form-control-sm" id="modPropCom" value="${ultimaCom}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">Propiedad y Estado</h6>
+                            <div class="mb-2">
+                                <label class="form-label small">Estado</label>
+                                <select class="form-select form-select-sm" id="modEstadoProp">
                                     <option value="DISPONIBLE" ${estado==='DISPONIBLE'?'selected':''}>DISPONIBLE</option>
                                     <option value="RESERVADA" ${estado==='RESERVADA'?'selected':''}>RESERVADA</option>
                                     <option value="VENDIDA" ${estado==='VENDIDA'?'selected':''}>VENDIDA</option>
                                 </select>
                             </div>
-
-                            <label class="form-label small">Actualizar Fecha Comunicación</label>
-                            <div class="input-group input-group-sm mb-3">
-                                <input type="date" id="nuevaFechaCom" class="form-control" value="${ultimaCom}">
-                                <button class="btn btn-outline-success" onclick="actualizarComunicacion('${id}')">Actualizar Hoy</button>
+                            <div class="mb-2">
+                                <label class="form-label small">Tipo de Propiedad</label>
+                                <select class="form-select form-select-sm" id="modTipoInmueble">
+                                    <option value="Casa" ${p.tipoInmueble==='Casa'?'selected':''}>Casa</option>
+                                    <option value="Depto" ${p.tipoInmueble==='Depto'?'selected':''}>Depto</option>
+                                    <option value="Cochera" ${p.tipoInmueble==='Cochera'?'selected':''}>Cochera</option>
+                                    <option value="Local comercial" ${p.tipoInmueble==='Local comercial'?'selected':''}>Local comercial</option>
+                                    <option value="Oficina" ${p.tipoInmueble==='Oficina'?'selected':''}>Oficina</option>
+                                    <option value="Terreno" ${p.tipoInmueble==='Terreno'?'selected':''}>Terreno</option>
+                                    <option value="PH" ${p.tipoInmueble==='PH'?'selected':''}>PH</option>
+                                    <option value="Quinta" ${p.tipoInmueble==='Quinta'?'selected':''}>Quinta</option>
+                                    <option value="Campo" ${p.tipoInmueble==='Campo'?'selected':''}>Campo</option>
+                                    <option value="Otros" ${p.tipoInmueble==='Otros'?'selected':''}>Otros</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="fw-bold text-primary">Propiedad</h6>
-                            <ul class="list-unstyled small">
-                                <li><strong>Estado Actual:</strong> <span class="badge bg-primary">${estado}</span></li>
-                                <li><strong>Ubicación:</strong> ${p.ciudadOriginal} (${p.zonaOriginal})</li>
-                                <li><strong>Precio:</strong> $${p.precio.toLocaleString()}</li>
-                                <li><strong>Ambientes:</strong> ${p.ambientes}</li>
-                                <li><strong>Metros:</strong> ${p.m2Vivienda} m² / Lote: ${p.m2Lote} m²</li>
-                                <li><strong>Servicios:</strong> ${p.servicios}</li>
-                            </ul>
-                            <strong>Enlace a Publicación:</strong><br>
-                            ${btnWebModal}
+                            <div class="mb-2"><label class="form-label small">Precio ($)</label><input type="number" class="form-control form-control-sm" id="modPrecio" value="${p.precio}"></div>
+                            <div class="mb-2"><label class="form-label small">Comentarios</label><textarea class="form-control form-control-sm" id="modComentario">${p.comentario || ''}</textarea></div>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <strong>Comentarios:</strong>
-                        <p class="small text-muted bg-light p-2 rounded">${p.comentario || 'Sin observaciones'}</p>
-                    </div>
-                    <div class="mt-3">
+                    <button class="btn btn-gold btn-sm w-100 mt-3" onclick="guardarEdicionPropiedad('${id}')"><i class="fas fa-save me-1"></i> Guardar Modificaciones</button>
+                    <div class="mt-3 border-top pt-3">
                         <strong class="d-block mb-2">Fotos Locales:</strong>
                         <div class="d-flex flex-wrap gap-2">${galeria}</div>
                     </div>
                 `;
-                new bootstrap.Modal(document.getElementById('modalDetalleBody').closest('.modal')).show();
+                if(mapGeneral) mapGeneral.closePopup();
+                new bootstrap.Modal(document.getElementById('modalDetalle')).show();
             } catch (err) {
                 alert('Error al obtener detalles');
             }
         }
 
-        async function actualizarEstado(id) {
-            const nuevoEstado = document.getElementById('nuevoEstadoProp').value;
+        async function guardarEdicionPropiedad(id) {
             try {
-                await fetch(`${FIREBASE_BASE}${id}/estadoProp.json`, {
-                    method: 'PUT',
-                    body: JSON.stringify(nuevoEstado)
-                });
-                showAlert('¡Estado de la propiedad actualizado!', 'success');
-                cargarListado();
-                cargarDashboard();
-            } catch(err) {
-                alert('Error al actualizar estado');
-            }
-        }
+                const payload = {
+                    ultimaComunicacion: document.getElementById('modPropCom').value,
+                    estadoProp: document.getElementById('modEstadoProp').value,
+                    propietario: {
+                        nombre: document.getElementById('modPropNombre').value,
+                        apellido: document.getElementById('modPropApellido').value,
+                        telefono: document.getElementById('modPropTel').value
+                    },
+                    propiedad: {
+                        tipoInmueble: document.getElementById('modTipoInmueble').value,
+                        precio: parseFloat(document.getElementById('modPrecio').value) || 0,
+                        comentario: document.getElementById('modComentario').value
+                    }
+                };
 
-        async function actualizarComunicacion(id) {
-            const nuevaFecha = document.getElementById('nuevaFechaCom').value;
-            if(!nuevaFecha) return;
-            try {
-                await fetch(`${FIREBASE_BASE}${id}/ultimaComunicacion.json`, {
-                    method: 'PUT',
-                    body: JSON.stringify(nuevaFecha)
+                await fetch(`https://davila-4b293-default-rtdb.firebaseio.com/propiedades/${id}.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
-                showAlert('¡Fecha de última comunicación actualizada con éxito!', 'success');
+
                 bootstrap.Modal.getInstance(document.getElementById('modalDetalle')).hide();
+                showAlert('¡Registro actualizado con éxito!');
                 cargarListado();
                 cargarDashboard();
-            } catch(err) {
-                alert('Error al actualizar fecha');
+                cargarVendidas();
+                if(mapGeneral) initMapaGeneral();
+            } catch(e) {
+                alert('Error al actualizar registro');
             }
         }
 
@@ -1219,6 +1522,8 @@
                     showAlert('Registro eliminado', 'warning');
                     cargarListado();
                     cargarDashboard();
+                    cargarVendidas();
+                    if(mapGeneral) initMapaGeneral();
                 } catch(err) {
                     showAlert('Error al eliminar', 'danger');
                 }
