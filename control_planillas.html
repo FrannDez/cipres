@@ -128,7 +128,7 @@
         /* FORMULARIO DE INGRESO DE DATOS */
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 15px;
             margin-bottom: 15px;
         }
@@ -210,48 +210,22 @@
             font-weight: 700;
         }
 
-        /* BOTONES INTERACTIVOS DE LA TABLA */
-        .status-toggle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 6px 10px;
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
             border-radius: 6px;
             font-weight: 700;
-            font-size: 0.78rem;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s ease;
+            font-size: 0.75rem;
         }
 
-        .toggle-cargado-si {
+        .badge-success {
             background-color: #d1fae5;
             color: #065f46;
-            border: 1px solid #a7f3d0;
         }
 
-        .toggle-cargado-no {
-            background-color: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-        }
-
-        .toggle-devuelto-si {
+        .badge-pending {
             background-color: #fef3c7;
             color: #92400e;
-            border: 1px solid #fde68a;
-        }
-
-        .toggle-devuelto-no {
-            background-color: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #cbd5e1;
-        }
-
-        .status-toggle:hover {
-            filter: brightness(0.95);
-            transform: scale(1.03);
         }
 
         /* BOTONES */
@@ -372,7 +346,7 @@
     <!-- FORMULARIO DE CARGA -->
     <div class="card" id="seccionFormulario">
         <div class="card-header">
-            <h2 id="tituloFormulario">Cargar Nuevo Sobre / Registro</h2>
+            <h2 id="tituloFormulario">Cargar Nuevo Registro</h2>
         </div>
         
         <form id="formPlanBonaerense">
@@ -395,8 +369,22 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="inputUsuario">Usuario que Carga:</label>
-                    <input type="text" id="inputUsuario" class="form-control" placeholder="Ej: DBLANCO, HOSP. MDA..." required>
+                    <label for="selectMes">Mes de Carga:</label>
+                    <select id="selectMes" class="form-control" required>
+                        <option value="">Seleccionar mes...</option>
+                        <option value="Enero">Enero</option>
+                        <option value="Febrero">Febrero</option>
+                        <option value="Marzo">Marzo</option>
+                        <option value="Abril">Abril</option>
+                        <option value="Mayo">Mayo</option>
+                        <option value="Junio">Junio</option>
+                        <option value="Julio">Julio</option>
+                        <option value="Agosto">Agosto</option>
+                        <option value="Septiembre">Septiembre</option>
+                        <option value="Octubre">Octubre</option>
+                        <option value="Noviembre">Noviembre</option>
+                        <option value="Diciembre">Diciembre</option>
+                    </select>
                 </div>
 
                 <div class="checkbox-group">
@@ -410,7 +398,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Sobre en la Nube</button>
+            <button type="submit" class="btn btn-block" id="btnGuardar">Guardar Registro en la Nube</button>
             <button type="button" class="btn btn-secondary btn-block" id="btnCancelarEdicion" style="display: none; margin-top: 8px;">Cancelar Edición</button>
         </form>
     </div>
@@ -423,7 +411,7 @@
         
         <div class="actions-bar">
             <div style="display: flex; gap: 10px; align-items: center; width: 100%; max-width: 400px;">
-                <input type="text" id="inputBuscar" class="form-control" placeholder="🔍 Buscar por Escuela, Efector o Usuario...">
+                <input type="text" id="inputBuscar" class="form-control" placeholder="🔍 Buscar por Escuela, Efector o Mes...">
             </div>
             <button class="btn btn-secondary" id="btnExportar">📥 Guardar Copia (JSON)</button>
         </div>
@@ -435,9 +423,9 @@
                         <th>Escuela</th>
                         <th>Efector</th>
                         <th>Código</th>
-                        <th>Cargado (Haz clic para cambiar)</th>
-                        <th>Usuario</th>
-                        <th>Devuelto (Haz clic para cambiar)</th>
+                        <th>Cargado</th>
+                        <th>Mes</th>
+                        <th>Devuelto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -462,7 +450,7 @@
 <!-- CÓDIGO JS CON FIREBASE v10 (MODULAR) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
     const CLAVE_ADMIN = "Cristo25";
 
@@ -473,16 +461,18 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // NUEVA CARPETA / RUTA ESPECÍFICA EN FIREBASE
     const dbRef = ref(db, 'plan_bonaerense');
+
     let baseDeDatos = {};
 
-    // Escuchar cambios en Firebase
+    // Escuchar cambios en la base de datos de Firebase
     onValue(dbRef, (snapshot) => {
         baseDeDatos = snapshot.val() || {};
         renderizarTabla();
     });
 
-    // Guardar nuevo sobre o actualizar entero
+    // Envío del Formulario (Crear / Modificar)
     document.getElementById('formPlanBonaerense').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -491,12 +481,13 @@
         const efector = document.getElementById('inputEfector').value.trim();
         const codigo = document.getElementById('inputCodigo').value.trim();
         const cargado = document.getElementById('checkCargado').checked;
-        const usuario = document.getElementById('inputUsuario').value.trim();
+        const mes = document.getElementById('selectMes').value;
         const devuelto = document.getElementById('checkDevuelto').checked;
 
-        const registro = { escuela, efector, codigo, cargado, usuario, devuelto, timestamp: Date.now() };
+        const registro = { escuela, efector, codigo, cargado, mes, devuelto, timestamp: Date.now() };
 
         if (editKey) {
+            // Actualizar registro existente
             set(ref(db, `plan_bonaerense/${editKey}`), registro)
                 .then(() => {
                     alert('¡Registro actualizado correctamente!');
@@ -504,17 +495,18 @@
                 })
                 .catch((error) => alert('Error al actualizar: ' + error.message));
         } else {
+            // Crear nuevo registro con clave autogenerada por Firebase
             const nuevoRef = push(dbRef);
             set(nuevoRef, registro)
                 .then(() => {
-                    alert('¡Sobre guardado correctamente!');
+                    alert('¡Registro guardado correctamente!');
                     resetearFormulario();
                 })
                 .catch((error) => alert('Error al guardar: ' + error.message));
         }
     });
 
-    // Renderizado de tabla con controles de toggle directos
+    // Renderizado de la tabla con filtro opcional de búsqueda
     function renderizarTabla() {
         const tbody = document.getElementById('tablaRegistrosBody');
         const filtro = document.getElementById('inputBuscar').value.toLowerCase();
@@ -523,7 +515,7 @@
         const keys = Object.keys(baseDeDatos);
 
         if (keys.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay registros cargados aún en el Plan Bonaerense.</td></tr>';
             return;
         }
 
@@ -531,12 +523,12 @@
             const item = baseDeDatos[key];
             return item.escuela.toLowerCase().includes(filtro) ||
                    item.efector.toLowerCase().includes(filtro) ||
-                   item.usuario.toLowerCase().includes(filtro) ||
+                   (item.mes && item.mes.toLowerCase().includes(filtro)) ||
                    (item.codigo && item.codigo.toLowerCase().includes(filtro));
         });
 
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros coincidentes.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros que coincidan con la búsqueda.</td></tr>';
             return;
         }
 
@@ -549,15 +541,15 @@
                 <td>${item.efector}</td>
                 <td>${item.codigo || '-'}</td>
                 <td>
-                    <button class="status-toggle ${item.cargado ? 'toggle-cargado-si' : 'toggle-cargado-no'} btn-toggle-cargado" data-key="${key}" data-estado="${item.cargado}">
-                        ${item.cargado ? '☑ CARGADO' : '☐ PENDIENTE'}
-                    </button>
+                    ${item.cargado 
+                        ? '<span class="status-badge badge-success">☑ Cargado</span>' 
+                        : '<span class="status-badge badge-pending">☐ Pendiente</span>'}
                 </td>
-                <td><strong>${item.usuario}</strong></td>
+                <td><strong>${item.mes || '-'}</strong></td>
                 <td>
-                    <button class="status-toggle ${item.devuelto ? 'toggle-devuelto-si' : 'toggle-devuelto-no'} btn-toggle-devuelto" data-key="${key}" data-estado="${item.devuelto}">
-                        ${item.devuelto ? '☑ DEVUELTO' : '☐ NO DEVUELTO'}
-                    </button>
+                    ${item.devuelto 
+                        ? '<span class="status-badge badge-pending">☑ Sí</span>' 
+                        : '<span class="status-badge">☐ No</span>'}
                 </td>
                 <td>
                     <div class="card-actions">
@@ -569,24 +561,7 @@
             tbody.appendChild(tr);
         });
 
-        // Eventos para cambiar estado posterior a la carga
-        document.querySelectorAll('.btn-toggle-cargado').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const key = e.currentTarget.getAttribute('data-key');
-                const estadoActual = e.currentTarget.getAttribute('data-estado') === 'true';
-                cambiarEstadoPosterior(key, 'cargado', !estadoActual);
-            });
-        });
-
-        document.querySelectorAll('.btn-toggle-devuelto').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const key = e.currentTarget.getAttribute('data-key');
-                const estadoActual = e.currentTarget.getAttribute('data-estado') === 'true';
-                cambiarEstadoPosterior(key, 'devuelto', !estadoActual);
-            });
-        });
-
-        // Modificar / Eliminar
+        // Eventos de botones Modificar/Eliminar
         document.querySelectorAll('.btn-modificar').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const key = e.currentTarget.getAttribute('data-key');
@@ -602,19 +577,9 @@
         });
     }
 
-    // Función rápida para tildar/destildar después de haber cargado el sobre
-    function cambiarEstadoPosterior(key, campo, nuevoValor) {
-        const actualizaciones = {};
-        actualizaciones[`plan_bonaerense/${key}/${campo}`] = nuevoValor;
-
-        update(ref(db), actualizaciones)
-            .then(() => console.log(`Campo ${campo} actualizado.`))
-            .catch(err => alert("Error al actualizar estado: " + err.message));
-    }
-
-    // Editar registro completo
+    // Cargar datos en el formulario para editar
     function modificarRegistro(key) {
-        const pass = prompt("Introduce la contraseña para modificar el registro completo:");
+        const pass = prompt("Introduce la contraseña autorizada para modificar este registro:");
         if (pass === null) return;
 
         if (pass !== CLAVE_ADMIN) {
@@ -630,7 +595,7 @@
         document.getElementById('inputEfector').value = registro.efector;
         document.getElementById('inputCodigo').value = registro.codigo || '';
         document.getElementById('checkCargado').checked = registro.cargado || false;
-        document.getElementById('inputUsuario').value = registro.usuario;
+        document.getElementById('selectMes').value = registro.mes || '';
         document.getElementById('checkDevuelto').checked = registro.devuelto || false;
 
         document.getElementById('tituloFormulario').innerText = "✏️ Editando Registro";
@@ -656,17 +621,19 @@
         }
     }
 
+    // Resetear formulario a estado inicial
     function resetearFormulario() {
         document.getElementById('formPlanBonaerense').reset();
         document.getElementById('editKey').value = '';
-        document.getElementById('tituloFormulario').innerText = "Cargar Nuevo Sobre / Registro";
-        document.getElementById('btnGuardar').innerText = "Guardar Sobre en la Nube";
+        document.getElementById('tituloFormulario').innerText = "Cargar Nuevo Registro";
+        document.getElementById('btnGuardar').innerText = "Guardar Registro en la Nube";
         document.getElementById('btnCancelarEdicion').style.display = 'none';
     }
 
     document.getElementById('btnCancelarEdicion').addEventListener('click', resetearFormulario);
     document.getElementById('inputBuscar').addEventListener('input', renderizarTabla);
 
+    // Exportar datos a JSON
     document.getElementById('btnExportar').addEventListener('click', () => {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(baseDeDatos));
         const downloadAnchor = document.createElement('a');
