@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="estilos.css">
 
-    <!-- Librería SheetJS para importar Excel inicial -->
+    <!-- Librería SheetJS para importar Excel inicial si fuera necesario -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -25,30 +25,12 @@
             padding: 20px;
             text-align: center;
             border-bottom: 4px solid #2563eb;
-            position: relative;
         }
 
         .logo-img {
             max-width: 180px;
             height: auto;
             margin-bottom: 10px;
-        }
-
-        /* Estilo para el botón oculto */
-        .btn-secret {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: transparent;
-            border: none;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .btn-secret:hover {
-            color: white;
         }
 
         .container {
@@ -75,9 +57,6 @@
             border-bottom: 2px solid #f3f4f6;
             padding-bottom: 10px;
             margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .card-header h2 {
@@ -125,9 +104,19 @@
         }
 
         .btn:hover { background: #1d4ed8; }
-        .btn-success { background: #10b981; }
-        .btn-success:hover { background: #059669; }
         .btn-block { width: 100%; display: block; font-size: 1rem; }
+        
+        .btn-sm {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .btn-sm:hover { background: #0284c7; }
 
         .table-responsive {
             overflow-x: auto;
@@ -166,14 +155,7 @@
             white-space: pre-wrap;
         }
 
-        .input-edit {
-            width: 90%;
-            padding: 6px;
-            border: 1px solid #3b82f6;
-            border-radius: 4px;
-            font-family: 'Montserrat', sans-serif;
-        }
-
+        /* Notificación Toast */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -201,16 +183,13 @@
     </div>
     <h1>Actualización de Nomencladores por RIPTE</h1>
     <p>Secretaría de Salud - Municipalidad de La Costa</p>
-    
-    <!-- Botón discreto/oculto -->
-    <button class="btn-secret" onclick="activarModoEdicion()" title="Administrar precios">🔒</button>
 </header>
 
 <div class="container">
 
     <!-- SOLAPAS -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="cambiarSolapa('actualizacion')">📊 Cálculo y Actualización RIPTE</button>
+        <button class="tab-btn active" onclick="cambiarSolapa('actualizacion')">📊 Calculo y Actualización RIPTE</button>
         <button class="tab-btn" onclick="cambiarSolapa('historico')">📁 Historial de Períodos Guardados</button>
     </div>
 
@@ -243,14 +222,6 @@
                     <input type="number" id="inputPorcentaje" step="0.01" placeholder="Ej: 4.5" oninput="calcularEnVivo()">
                 </div>
                 <div class="input-group">
-                    <label for="selectRedondeo">Redondeo RIPTE (Hacia arriba):</label>
-                    <select id="selectRedondeo" onchange="renderizarTabla()">
-                        <option value="ninguno">Sin redondeo (Exacto)</option>
-                        <option value="10">Decena Superior ($10)</option>
-                        <option value="100" selected>Centena Superior ($100)</option>
-                    </select>
-                </div>
-                <div class="input-group">
                     <label for="selectMes">Mes Afectado:</label>
                     <select id="selectMes">
                         <option value="01">Enero</option>
@@ -280,6 +251,7 @@
                         <option value="TODOS">-- Todos los Módulos --</option>
                     </select>
                 </div>
+                <!-- BÚSQUEDA POR CÓDIGO O NOMBRE -->
                 <div class="input-group">
                     <label for="inputBusqueda">Buscar por Código o Nombre:</label>
                     <input type="text" id="inputBusqueda" placeholder="Ej: CON.01 o Consulta..." oninput="renderizarTabla()">
@@ -290,20 +262,20 @@
         <div class="card">
             <div class="card-header">
                 <h2>Vista Previa de Precios Nomenclados</h2>
-                <button id="btnGuardarBase" class="btn btn-success" style="display: none;" onclick="guardarCambiosBaseBD()">💾 Guardar Precios Base Editados</button>
             </div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
                             <th style="width: 15%;">Código</th>
-                            <th style="width: 55%;">Descripción / Práctica</th>
+                            <th style="width: 45%;">Descripción / Práctica</th>
                             <th style="width: 15%;">Valor Base ($)</th>
                             <th style="width: 15%;">Nuevo Valor RIPTE ($)</th>
+                            <th style="width: 10%;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaNomencladorBody">
-                        <tr><td colspan="4" style="text-align:center;">Cargando catálogo base...</td></tr>
+                        <tr><td colspan="5" style="text-align:center;">Cargando catálogo base...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -361,27 +333,6 @@
     const db = getDatabase(app);
 
     let catalogoBase = []; 
-    let modoEdicionActivo = false;
-
-    // Formateador de moneda argentina ($ 15.084)
-    const formatearMoneda = (valor) => {
-        return new Intl.NumberFormat('es-AR', {
-            style: 'currency',
-            currency: 'ARS',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        }).format(valor);
-    };
-
-    // Función para aplicar redondeo siempre hacia arriba (Ceiling)
-    function aplicarRedondeoUp(valor, regla) {
-        if (regla === '100') {
-            return Math.ceil(valor / 100) * 100;
-        } else if (regla === '10') {
-            return Math.ceil(valor / 10) * 10;
-        }
-        return valor;
-    }
 
     function mostrarToast(mensaje, esError = false) {
         const toast = document.getElementById('toast');
@@ -390,27 +341,6 @@
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
-
-    // Activación oculta con clave
-    window.activarModoEdicion = function() {
-        if (modoEdicionActivo) {
-            modoEdicionActivo = false;
-            document.getElementById('btnGuardarBase').style.display = 'none';
-            mostrarToast("Modo edición desactivado.");
-            renderizarTabla();
-            return;
-        }
-
-        const password = prompt("Ingrese la clave para editar precios base:");
-        if (password === "Cristo25") {
-            modoEdicionActivo = true;
-            document.getElementById('btnGuardarBase').style.display = 'inline-block';
-            mostrarToast("¡Modo edición activado!");
-            renderizarTabla();
-        } else if (password !== null) {
-            mostrarToast("Clave incorrecta.", true);
-        }
-    };
 
     window.cambiarSolapa = function(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -436,8 +366,11 @@
             } else {
                 catalogoBase = [
                     { tipo: 'modulo', nombre: 'PRESTACIONES AMBULATORIAS' },
-                    { tipo: 'item', codigo: 'CON.01', descripcion: 'Consulta médica o profesional', valor: 15084, modulo: 'PRESTACIONES AMBULATORIAS' },
-                    { tipo: 'item', codigo: 'CON.02', descripcion: 'Teleconsulta', valor: 15084, modulo: 'PRESTACIONES AMBULATORIAS' }
+                    { tipo: 'item', codigo: 'CON.01', descripcion: 'Consulta médica o profesional', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
+                    { tipo: 'item', codigo: 'CON.02', descripcion: 'Teleconsulta', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
+                    { tipo: 'modulo', nombre: 'CIRUGÍA ODONTOLÓGICA' },
+                    { tipo: 'item', codigo: 'ODO.60', descripcion: 'Tomografía volumétrica ambos maxilares', valor: 37.28, modulo: 'CIRUGÍA ODONTOLÓGICA' },
+                    { tipo: 'item', codigo: 'ODO.64', descripcion: 'Drenaje de absceso intrabucal\nHemorragia\nExtracción de cuerpo extraño\nFrenectomía', valor: 33.40, modulo: 'CIRUGÍA ODONTOLÓGICA' }
                 ];
             }
 
@@ -458,21 +391,11 @@
         });
     }
 
-    window.actualizarValorMemoria = function(index, nuevoValor) {
-        catalogoBase[index].valor = parseFloat(nuevoValor) || 0;
-        window.calcularEnVivo();
-    };
-
-    window.actualizarDescMemoria = function(index, nuevaDesc) {
-        catalogoBase[index].descripcion = nuevaDesc;
-    };
-
     window.renderizarTabla = function() {
         const tbody = document.getElementById('tablaNomencladorBody');
         const moduloFiltro = document.getElementById('filtroModulo').value;
         const busqueda = document.getElementById('inputBusqueda').value.toLowerCase().trim();
         const pct = parseFloat(document.getElementById('inputPorcentaje').value) || 0;
-        const reglaRedondeo = document.getElementById('selectRedondeo').value;
         const factor = 1 + (pct / 100);
 
         tbody.innerHTML = '';
@@ -483,7 +406,7 @@
                     if (!busqueda) {
                         const tr = document.createElement('tr');
                         tr.className = 'modulo-row';
-                        tr.innerHTML = `<td colspan="4">${registro.nombre}</td>`;
+                        tr.innerHTML = `<td colspan="5">${registro.nombre}</td>`;
                         tbody.appendChild(tr);
                     }
                 }
@@ -494,48 +417,58 @@
                     (registro.descripcion && registro.descripcion.toLowerCase().includes(busqueda));
 
                 if (coincideModulo && coincideBusqueda) {
-                    const valBase = parseFloat(registro.valor) || 0;
-                    let nuevoValor = valBase * factor;
-                    
-                    if (reglaRedondeo !== 'ninguno') {
-                        nuevoValor = aplicarRedondeoUp(nuevoValor, reglaRedondeo);
-                    }
-
+                    const nuevoValor = (parseFloat(registro.valor) * factor).toFixed(2);
                     const tr = document.createElement('tr');
-                    
-                    if (modoEdicionActivo) {
-                        tr.innerHTML = `
-                            <td><strong>${registro.codigo || ''}</strong></td>
-                            <td><input type="text" class="input-edit" value="${registro.descripcion}" onchange="actualizarDescMemoria(${index}, this.value)"></td>
-                            <td><input type="number" class="input-edit" value="${valBase}" step="0.01" oninput="actualizarValorMemoria(${index}, this.value)"></td>
-                            <td><strong class="val-ripte" style="color: #2563eb;">${formatearMoneda(nuevoValor)}</strong></td>
-                        `;
-                    } else {
-                        tr.innerHTML = `
-                            <td><strong>${registro.codigo || ''}</strong></td>
-                            <td class="pre-wrap">${registro.descripcion}</td>
-                            <td class="val-base">${formatearMoneda(valBase)}</td>
-                            <td><strong class="val-ripte" style="color: #2563eb;">${formatearMoneda(nuevoValor)}</strong></td>
-                        `;
-                    }
-
+                    tr.innerHTML = `
+                        <td><strong>${registro.codigo || ''}</strong></td>
+                        <td class="pre-wrap">${registro.descripcion}</td>
+                        <td class="val-base">${parseFloat(registro.valor).toFixed(2)}</td>
+                        <td><strong class="val-ripte" style="color: #2563eb;">${nuevoValor}</strong></td>
+                        <td><button class="btn-sm" onclick="modificarValorBase(${index})">✏️ Modificar</button></td>
+                    `;
                     tbody.appendChild(tr);
                 }
             }
         });
     };
 
-    window.guardarCambiosBaseBD = async function() {
-        try {
-            await set(ref(db, 'nomenclador_base'), catalogoBase);
-            mostrarToast("¡Valores base de Firebase actualizados correctamente!");
-        } catch (err) {
-            mostrarToast("Error al guardar cambios: " + err.message, true);
-        }
-    };
-
     window.calcularEnVivo = function() {
         window.renderizarTabla();
+    };
+
+    // FUNCIÓN PARA MODIFICAR EL VALOR BASE CON CLAVE
+    window.modificarValorBase = async function(index) {
+        const claveIngresada = prompt("Ingrese la clave de seguridad para modificar el valor base:");
+        
+        if (claveIngresada === null) return; // Cancelado por el usuario
+        
+        if (claveIngresada !== "mardeajo") {
+            mostrarToast("Clave incorrecta. No se realizaron cambios.", true);
+            return;
+        }
+
+        const itemActual = catalogoBase[index];
+        const nuevoValorStr = prompt(`Ingrese el nuevo valor base para [${itemActual.codigo || 'Sin código'}] ${itemActual.descripcion}:`, itemActual.valor);
+        
+        if (nuevoValorStr === null) return;
+
+        const nuevoValor = parseFloat(nuevoValorStr.replace(',', '.'));
+        if (isNaN(nuevoValor) || nuevoValor < 0) {
+            mostrarToast("Por favor, ingrese un número válido.", true);
+            return;
+        }
+
+        // Actualizar localmente
+        catalogoBase[index].valor = nuevoValor;
+
+        try {
+            // Guardar en la base de datos de Firebase
+            await set(ref(db, 'nomenclador_base'), catalogoBase);
+            renderizarTabla();
+            mostrarToast("¡Valor base actualizado en la base de datos con éxito!");
+        } catch (err) {
+            mostrarToast("Error al guardar el nuevo valor: " + err.message, true);
+        }
     };
 
     window.procesarExcel = function() {
@@ -582,13 +515,7 @@
                         if (typeof col2 === 'number') {
                             valorNum = col2;
                         } else if (typeof col2 === 'string') {
-                            let limpio = col2.replace(/\$/g, '').trim();
-                            if (limpio.includes(',') && limpio.includes('.')) {
-                                limpio = limpio.replace(/\./g, '').replace(',', '.');
-                            } else if (limpio.includes(',')) {
-                                limpio = limpio.replace(',', '.');
-                            }
-                            valorNum = parseFloat(limpio) || 0;
+                            valorNum = parseFloat(col2.replace('$', '').replace('.', '').replace(',', '.').trim()) || 0;
                         }
 
                         nuevoCatalogo.push({
@@ -623,7 +550,6 @@
         const pct = parseFloat(document.getElementById('inputPorcentaje').value);
         const mes = document.getElementById('selectMes').value;
         const anio = document.getElementById('selectAnio').value;
-        const reglaRedondeo = document.getElementById('selectRedondeo').value;
 
         if (isNaN(pct)) {
             mostrarToast("Por favor, ingrese un porcentaje RIPTE válido.", true);
@@ -635,18 +561,12 @@
 
         const datosAjustados = catalogoBase.map(item => {
             if (item.tipo === 'item') {
-                const valBase = parseFloat(item.valor) || 0;
-                let nuevoVal = valBase * factor;
-                if (reglaRedondeo !== 'ninguno') {
-                    nuevoVal = aplicarRedondeoUp(nuevoVal, reglaRedondeo);
-                }
-
                 return {
                     codigo: item.codigo || '',
                     descripcion: item.descripcion,
                     modulo: item.modulo,
-                    valorBase: valBase,
-                    valorActualizado: nuevoVal
+                    valorBase: item.valor,
+                    valorActualizado: parseFloat((item.valor * factor).toFixed(2))
                 };
             }
             return item;
@@ -655,7 +575,6 @@
         try {
             await set(ref(db, `carpetas_ripte/${nombreCarpetaPeriodo}`), {
                 porcentajeAplicado: pct,
-                redondeoAplicado: reglaRedondeo,
                 fechaRegistro: new Date().toISOString(),
                 items: datosAjustados
             });
@@ -713,7 +632,7 @@
                 tr.innerHTML = `
                     <td><strong>${reg.codigo || ''}</strong></td>
                     <td class="pre-wrap">${reg.descripcion}</td>
-                    <td><strong>${formatearMoneda(reg.valorActualizado)}</strong></td>
+                    <td><strong>$ ${parseFloat(reg.valorActualizado).toFixed(2)}</strong></td>
                 `;
                 tbody.appendChild(tr);
             }
