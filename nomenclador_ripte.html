@@ -222,6 +222,14 @@
                     <input type="number" id="inputPorcentaje" step="0.01" placeholder="Ej: 4.5" oninput="calcularEnVivo()">
                 </div>
                 <div class="input-group">
+                    <label for="selectRedondeo">Redondeo RIPTE (Hacia arriba):</label>
+                    <select id="selectRedondeo" onchange="calcularEnVivo()">
+                        <option value="decena_ceil" selected>Decena Superior ($10)</option>
+                        <option value="decena_round">Decena más Cercana ($10)</option>
+                        <option value="sin_redondeo">Sin Redondeo (2 decimales)</option>
+                    </select>
+                </div>
+                <div class="input-group">
                     <label for="selectMes">Mes Afectado:</label>
                     <select id="selectMes">
                         <option value="01">Enero</option>
@@ -231,8 +239,8 @@
                         <option value="05">Mayo</option>
                         <option value="06">Junio</option>
                         <option value="07">Julio</option>
-                        <option value="08" selected>Agosto</option>
-                        <option value="09">Septiembre</option>
+                        <option value="08">Agosto</option>
+                        <option value="09" selected>Septiembre</option>
                         <option value="10">Octubre</option>
                         <option value="11">Noviembre</option>
                         <option value="12">Diciembre</option>
@@ -334,6 +342,17 @@
 
     let catalogoBase = []; 
 
+    // Función que aplica el redondeo según lo seleccionado en la interfaz
+    function aplicarRedondeo(valor) {
+        const modo = document.getElementById('selectRedondeo').value;
+        if (modo === 'decena_ceil') {
+            return Math.ceil(valor / 10) * 10; // Redondea siempre a la decena superior (Hacia arriba)
+        } else if (modo === 'decena_round') {
+            return Math.round(valor / 10) * 10; // Redondea a la decena más cercana
+        }
+        return valor; // Sin redondeo
+    }
+
     function mostrarToast(mensaje, esError = false) {
         const toast = document.getElementById('toast');
         toast.innerText = mensaje;
@@ -369,8 +388,8 @@
                     { tipo: 'item', codigo: 'CON.01', descripcion: 'Consulta médica o profesional', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
                     { tipo: 'item', codigo: 'CON.02', descripcion: 'Teleconsulta', valor: 15.08, modulo: 'PRESTACIONES AMBULATORIAS' },
                     { tipo: 'modulo', nombre: 'CIRUGÍA ODONTOLÓGICA' },
-                    { tipo: 'item', codigo: 'ODO.60', descripcion: 'Tomografía volumétrica ambos maxilares', valor: 37.28, modulo: 'CIRUGÍA ODONTOLÓGICA' },
-                    { tipo: 'item', codigo: 'ODO.64', descripcion: 'Drenaje de absceso intrabucal\nHemorragia\nExtracción de cuerpo extraño\nFrenectomía', valor: 33.40, modulo: 'CIRUGÍA ODONTOLÓGICA' }
+                    { tipo: 'item', codigo: 'ODO.04', descripcion: 'Aplicación de flúor (FFA), tópico de ambas arcadas, con o sin cubeta a realizarse pre y post tratamiento', valor: 1115, modulo: 'CIRUGÍA ODONTOLÓGICA' },
+                    { tipo: 'item', codigo: 'ODO.60', descripcion: 'Tomografía volumétrica ambos maxilares', valor: 37.28, modulo: 'CIRUGÍA ODONTOLÓGICA' }
                 ];
             }
 
@@ -417,13 +436,15 @@
                     (registro.descripcion && registro.descripcion.toLowerCase().includes(busqueda));
 
                 if (coincideModulo && coincideBusqueda) {
-                    const nuevoValor = (parseFloat(registro.valor) * factor).toFixed(2);
+                    const valorCalculado = parseFloat(registro.valor) * factor;
+                    const nuevoValor = aplicarRedondeo(valorCalculado).toFixed(2);
+                    
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${registro.codigo || ''}</strong></td>
                         <td class="pre-wrap">${registro.descripcion}</td>
-                        <td class="val-base">${parseFloat(registro.valor).toFixed(2)}</td>
-                        <td><strong class="val-ripte" style="color: #2563eb;">${nuevoValor}</strong></td>
+                        <td class="val-base">$ ${parseFloat(registro.valor).toLocaleString('es-AR')}</td>
+                        <td><strong class="val-ripte" style="color: #2563eb;">$ ${parseFloat(nuevoValor).toLocaleString('es-AR')}</strong></td>
                         <td><button class="btn-sm" onclick="modificarValorBase(${index})">✏️ Modificar</button></td>
                     `;
                     tbody.appendChild(tr);
@@ -561,12 +582,13 @@
 
         const datosAjustados = catalogoBase.map(item => {
             if (item.tipo === 'item') {
+                const valorCalculado = item.valor * factor;
                 return {
                     codigo: item.codigo || '',
                     descripcion: item.descripcion,
                     modulo: item.modulo,
                     valorBase: item.valor,
-                    valorActualizado: parseFloat((item.valor * factor).toFixed(2))
+                    valorActualizado: parseFloat(aplicarRedondeo(valorCalculado).toFixed(2))
                 };
             }
             return item;
@@ -632,7 +654,7 @@
                 tr.innerHTML = `
                     <td><strong>${reg.codigo || ''}</strong></td>
                     <td class="pre-wrap">${reg.descripcion}</td>
-                    <td><strong>$ ${parseFloat(reg.valorActualizado).toFixed(2)}</strong></td>
+                    <td><strong>$ ${parseFloat(reg.valorActualizado).toLocaleString('es-AR')}</strong></td>
                 `;
                 tbody.appendChild(tr);
             }
